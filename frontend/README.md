@@ -1,20 +1,10 @@
-# Mlezi caregiver workspace
+# Mlezi — React and Convex
 
-React + Vite frontend for the Flask API. Includes caregiver registration, login,
-profile creation, viewing, editing, and a public preview.
+Mlezi uses JavaScript/React for the frontend and JavaScript functions on Convex for authentication, application data and uploads. Vite builds the frontend. There is no Flask server, Python application dependency, port-5000 proxy, or alternative authentication backend.
 
 ## Run locally
 
-Start the backend in a separate terminal:
-
-```bash
-cd backend
-source .venv/bin/activate
-flask --app app:create_app db upgrade
-flask --app app:create_app run --port 5000
-```
-
-Then start the frontend from the repository root:
+From the repository root:
 
 ```bash
 cd frontend
@@ -22,49 +12,73 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (normally http://localhost:5173). Vite forwards `/api`
-requests to Flask on port 5000. Backend secrets and Cloudinary credentials belong
-in `backend/.env`, never in frontend environment variables.
+Use the URL Vite prints, normally http://localhost:5173. The app connects directly to the existing cloud backend. Configure these public values in `.env.local`:
 
-For a separately hosted API, set `VITE_API_URL=https://your-api.example/api` at
-build time and configure Flask CORS for the frontend origin. Production hosting
-must route `/api` to Flask if `VITE_API_URL` is omitted. Vite's proxy is development-only.
+```dotenv
+VITE_CONVEX_URL=https://tidy-perch-115.eu-west-1.convex.cloud
+VITE_CONVEX_SITE_URL=https://tidy-perch-115.eu-west-1.convex.site
+```
+
+No `VITE_AUTH_BACKEND`, `VITE_DATA_BACKEND` or `VITE_API_URL` selector is needed or used. Convex is always enabled. Never put API secrets in `VITE_` values. Authentication/email/payment secrets belong in the Convex deployment environment.
+
+After changing backend functions in `convex/`, authenticate/select the intended development project and run:
+
+```bash
+npm run convex:login
+npm run convex:dev
+npm run convex:check
+```
+
+`convex:dev` currently deploys once to the selected development deployment. `SITE_URL` on Convex must match the frontend origin for redirects and private-file CORS. Do not deploy to production just to run locally.
 
 ## Checks
 
 ```bash
-npm run build
 npm run lint
-node --test tests/api.test.mjs
+npm run test:convex
+npm run test:auth-ui
+node --test tests/consent.test.mjs tests/search.test.mjs
+npm run build
 ```
 
-From `backend`, run `.venv/bin/python -m unittest discover -s tests -v`.
-Backend tests use an in-memory database and mocked storage, preserving local data.
+Tests for the retired Flask HTTP/refresh bridge have been replaced by native Convex session/API regression tests. There is no Python test command for the active app.
 
-## Session behavior
+## Authentication and caregiver identity
 
-The access token lives in memory. The refresh token is in sessionStorage so a
-reload in the same tab can restore the session; closing the tab ends persistence.
-Requests automatically refresh expired access tokens. Sign out clears browser
-credentials; server-side token revocation is not implemented. Script-readable
-refresh storage should be revisited with an HttpOnly-cookie design before launch.
+Convex Auth provides password signup/sign-in, email verification, OTP, magic links, reset and session revocation. Resend sends account emails; the test sender is restricted and must be replaced by a verified domain before public launch. Existing imported accounts link only after verified email ownership. Historical password hashes were not migrated.
 
-## Caregiver journey
+The provider stores session credentials in the browser tab's sessionStorage. The application uses a single authenticated Convex client and never reads old Flask refresh tokens or calls `/api/auth/refresh`. Private file HTTP requests carry Convex authorization. Errors from an older account cannot sign out a newer account.
 
-Create a caregiver account or sign in with an existing account. Accounts without
-a profile see the creation form; other caregivers see their saved profile.
-A photo and national ID image are required for initial creation, following the
-existing backend policy. JPEG, PNG, and WebP images are accepted, at most 5 MB each.
-Real uploads require working Cloudinary credentials. ID uploads are authenticated
-assets and are never returned in profile responses.
+Caregivers without a stored photo are restricted to profile setup, legal/privacy requests and sign-out. New profiles require a photo, private national ID, private selfie and consent. They enter administrator review. Employer publication/contact access requires a manual identity check and server-enforced 18+ DOB decision; image uploads alone do not prove age/authenticity. Changing name/photo invalidates approval. Employer/admin accounts do not require photos. Admins enroll TOTP before privileged access.
 
-Caregivers can edit their details, phone, work arrangements, pay, skills,
-available weekdays, and photo. Live-out services require a location. Profile
-edits do not require documents to be uploaded again. National ID replacement
-is deliberately excluded from self-service pending the admin workflow.
+New images are fully decoded and re-encoded without metadata; quotas, private-document access logs, suspension, data requests/deletion and retention jobs are implemented. See [security implementation](../Documentation/production-security-implementation.md) for limits and remaining operational checks.
 
-The public preview at `#/caregivers/<id>` excludes account contact fields and ID
-references. Users must avoid placing private information in their free-text bio.
+## Employer workspace, memberships and payments
 
-Employer search, contact unlocking, payments, certificate submission/admin
-verification, password reset, and email verification are separate milestones.
+Employers can search approved adult caregivers, shortlist, unlock contacts with an active pass, manage their account, and write public reviews. Rating aggregates update automatically. Identity approval, Premium and reputation are separate.
+
+Plans remain KES 300/30 days and KES 500/90 days for employer access, and KES 500/365 days for caregiver Premium. Renewals are manual and extend an unexpired plan. Expiry preserves previously unlocked contacts, subject to identity/safety restrictions and deletion.
+
+Paystack is the chosen upcoming gateway for M-Pesa, cards and bank channels supported/enabled for the Kenyan business. Payment checkout remains disabled; no live payment integration is being activated by this cleanup. Direct Daraja draft code is not connected to the checkout. Never use sandbox confirmations to grant live membership.
+
+## Cookies and public pages
+
+The public landing page is `/`; regional guides are at `/east-africa/`, `/kenya/`, `/uganda/`, `/burundi/` and `/rwanda/`. Privacy/Cookie/Terms pages use `/privacy/`, `/cookies/` and `/terms/`. The private application is `/app/#/workspace`. Old hash links redirect while preserving email sign-in codes. The logo is `src/assets/logo.png`.
+
+`npm run build` pre-renders public HTML and generates robots/sitemap files. Indexing is off until the real HTTPS `VITE_APP_ORIGIN` is set and `VITE_SITE_INDEXABLE=true` is explicitly enabled for production; supported host previews force it off. Read the [SEO and regional discovery guide](../Documentation/seo-and-regional-discovery.md) before launch. `npm run test:seo` verifies crawl controls and local keyword matching.
+
+Cookie consent remembers accept/decline for 180 days. Optional search preferences and Google Fonts load only after acceptance. Declining leaves essential authentication available. No advertising/analytics tracker is installed.
+
+## Production and retired files
+
+The domain, public support inbox and legal operator details are not chosen. Notices remain launch drafts. `npm run build:production` intentionally blocks publication until production configuration, legal review, backup restore, alerts and real Auth tests are complete. Normal `npm run build` remains available for development checks.
+
+The retired `backend/` directory was removed on 29 October 2026 after checking the completed Convex migration. A restricted, Git-ignored `.backups/flask-retired-*.tar.gz` archive preserves the former source, original local database and local configuration for recovery. It is sensitive: do not publish it or extract it into the running app. Generated virtual environments/caches were excluded; archived source files were verified before deletion. Existing Convex records and cloud assets were not deleted.
+
+Older documents describe the historical migration and may contain retired Flask commands. This README and [Flask retirement notes](../Documentation/flask-retirement.md) define the current setup.
+
+## Cookie/security testing with a friend
+
+Cookies and baseline access controls are already implemented. Run `npm run security:check` for the automated security regression/build checks, then `npm run test:preview` for a loopback built preview with response security headers. `npm run security:headers -- http://127.0.0.1:4173` checks those headers; use an HTTPS staging URL and `--require-https` for a hosted test. HTTP preview cannot validate TLS, HSTS or Secure-cookie behavior.
+
+Use the [tester guide](../Documentation/security-testing-guide.md) and [finding template](../Documentation/security-test-report-template.md). Use an isolated deployment with synthetic data and separate tester accounts. Resend's owner-only test sender currently limits friend signup until a verified sending domain is configured. Do not share your owner/admin credentials, MFA seed or API secrets. No public hosting or active penetration scan is started by these commands.

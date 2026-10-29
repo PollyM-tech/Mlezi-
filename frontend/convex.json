@@ -1,0 +1,9 @@
+{
+  "$schema": "https://static.convex.dev/schema/convex.schema.json",
+  "functions": "convex/",
+  "node": {
+    "externalPackages": [
+      "sharp"
+    ]
+  }
+}

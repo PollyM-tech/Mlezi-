@@ -1,10 +1,17 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { fileURLToPath } from 'node:url'
+import { previewHeaders, developmentHeaders } from './security-headers.mjs'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: { manifest: true },
   server: {
-    proxy: { '/api': 'http://127.0.0.1:5000' },
+    host: '127.0.0.1', headers: developmentHeaders,
+    fs: {
+      strict: true, allow: [fileURLToPath(new URL('.', import.meta.url))],
+      deny: ['**/.env', '**/.env.*', '**/*.{crt,pem,key,p12,pfx,cer,der}', '**/.npmrc', '**/.yarnrc.yml', '**/.git/**', '**/.backups/**', '**/private-exports/**'],
+    },
   },
+  preview: { host: '127.0.0.1', port: 4173, strictPort: true, headers: previewHeaders },
 })

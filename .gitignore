@@ -1,0 +1,25 @@
+# Credentials and local configuration at every project level
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+# Local exports, databases and build artifacts
+**/node_modules/
+**/dist/
+**/.venv/
+**/__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.sqlite3
+private-exports/
+
+# Private retirement backups; never publish credentials or old databases.
+/.backups/
+
+# Keep nested private backup directories out of commits as well.
+**/.backups/

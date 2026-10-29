@@ -5,23 +5,48 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender-public.mjs",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "convex:login": "convex login",
+    "convex:dev": "convex dev --once",
+    "convex:check": "node --env-file=.env.local scripts/check-convex.mjs",
+    "convex:auth:setup": "node scripts/setup-convex-auth.mjs",
+    "test:convex": "vitest run --config vitest.convex.config.js",
+    "test:auth-ui": "vitest run --config vitest.auth-ui.config.js",
+    "convex:accounts:import": "node scripts/import-convex-accounts.mjs",
+    "convex:data:import": "node scripts/import-convex-data.mjs",
+    "production:check": "node --env-file-if-exists=.env.local scripts/production-check.mjs",
+    "convex:admin:setup": "node scripts/setup-admin-security.mjs",
+    "convex:backup": "node scripts/backup-convex.mjs",
+    "build:production": "npm run production:check && npm run build",
+    "security:headers": "node scripts/check-security-headers.mjs",
+    "security:check": "npm run lint && npm run test:convex && npm run test:auth-ui && node --test tests/consent.test.mjs tests/search.test.mjs tests/security-config.test.mjs tests/seo.test.mjs && npm run build",
+    "test:preview": "npm run build && vite preview --host 127.0.0.1",
+    "test:seo": "node --test tests/seo.test.mjs"
   },
   "dependencies": {
+    "@auth/core": "^0.41.1",
+    "@convex-dev/auth": "^0.0.96",
+    "convex": "^1.48.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "convex-test": "^0.0.65",
     "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",
     "globals": "^17.12.0",
-    "vite": "^8.3.0"
+    "jsdom": "^30.1.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.5"
   }
 }
