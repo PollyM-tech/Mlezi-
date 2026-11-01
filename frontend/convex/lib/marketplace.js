@@ -42,7 +42,8 @@ export async function publicProfile(ctx, p, account) {
     verification_status: p.identityStatus, adult_confirmed: p.identityStatus === 'verified' && typeof p.adultConfirmedAt === 'number', premium_active: active(p.premiumExpiresAt), rating_avg: p.ratingAverage, review_count: p.reviewCount }
   if (account) {
     result.phone = account.phone || null; result.premium_expires_at = iso(p.premiumExpiresAt)
-    result.national_id_uploaded = !!await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).unique()
+    const documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).unique()
+    result.national_id_uploaded = !!documents?.nationalId && (documents.nationalId.provider !== 'convex' || !!await ctx.db.system.get(documents.nationalId.storageId))
   }
   return result
 }

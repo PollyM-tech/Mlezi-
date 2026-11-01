@@ -143,11 +143,11 @@ async function saveProfile(ctx, data, creating, requestedId) {
   let nationalId
   if (data.national_id) nationalId = await claimAsset(ctx, data.national_id, a._id, 'national_id')
   if (old) {
-    if ((fields.name !== old.name || fields.photo) && ['verified', 'pending'].includes(old.identityStatus)) {
+    if (fields.photo && old.identityStatus === 'pending') {
       fields.identityStatus = 'unverified'
       fields.adultConfirmedAt = undefined
       const pending = await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', old._id)).filter(q => q.eq(q.field('status'), 'pending')).collect()
-      for (const s of pending) await ctx.db.patch(s._id, { status: 'rejected', rejectionReason: 'Your name or profile photo changed. Please submit a new identity check.', reviewedAt: Date.now() })
+      for (const s of pending) await ctx.db.patch(s._id, { status: 'rejected', rejectionReason: 'Your profile photo changed while review was pending. Please submit a new identity check.', reviewedAt: Date.now() })
     }
     await ctx.db.patch(old._id, { ...fields, updatedAt: Date.now() })
   }
@@ -224,8 +224,16 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   if (path === '/verification/submit' && method === 'POST') {
     const { profile: p, account } = await owned(ctx, 'caregivers', 'caregiver')
     if (['verified', 'pending'].includes(p.identityStatus)) fail('An identity check is already approved or pending', 409)
-    const documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).unique()
-    if (!documents || !await hasProfilePhoto(ctx, account) || documents.nationalId.provider === 'convex' && !await ctx.db.system.get(documents.nationalId.storageId)) fail('A stored ID and profile photo are required before identity review')
+    let documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).unique()
+    const storedId = documents?.nationalId && (documents.nationalId.provider !== 'convex' || await ctx.db.system.get(documents.nationalId.storageId))
+    if (data.national_id) {
+      if (storedId) fail('National ID replacement requires administrator assistance')
+      const nationalId = await claimAsset(ctx, data.national_id, account._id, 'national_id')
+      if (documents) await ctx.db.patch(documents._id, { nationalId })
+      else await ctx.db.insert('caregiverDocuments', { caregiverId: p._id, nationalId })
+      documents = { nationalId }
+    }
+    if (!documents || !await hasProfilePhoto(ctx, account) || documents.nationalId.provider === 'convex' && !await ctx.db.system.get(documents.nationalId.storageId)) fail('Upload your national ID and profile photo before identity review')
     if (data.consent !== 'true') fail('Confirm permission to compare your selfie and ID')
     const selfie = await claimAsset(ctx, data.selfie, account._id, 'selfie')
     const id = await ctx.db.insert('verificationSubmissions', { caregiverId: p._id, selfie, profileName: p.name, profilePhoto: p.photo, status: 'pending', submittedAt: Date.now() })
@@ -246,7 +254,7 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
       if (approve) { if (data.adult_confirmed !== true) fail('Confirm that you checked the ID date of birth and the applicant is at least 18'); confirmAdult(data.birth_date) }
       const documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).unique()
       if (approve && (!documents || !await hasProfilePhoto(ctx, await ctx.db.get(p.accountId)) || s.selfie?.provider === 'convex' && !await ctx.db.system.get(s.selfie.storageId) || documents.nationalId.provider === 'convex' && !await ctx.db.system.get(documents.nationalId.storageId))) fail('All three identity images must be present before approval')
-      if (approve && (!s.selfie || s.profileName !== p.name || JSON.stringify(s.profilePhoto) !== JSON.stringify(p.photo))) fail('Identity details changed or evidence is incomplete. Request a fresh submission.', 409)
+      if (approve && (!s.selfie || JSON.stringify(s.profilePhoto) !== JSON.stringify(p.photo))) fail('Identity details changed or evidence is incomplete. Request a fresh submission.', 409)
       await audit(ctx, a._id, `identity_${approve ? 'approved' : 'rejected'}`, s._id)
       await ctx.db.patch(s._id, { status: approve ? 'approved' : 'rejected', reviewedBy: a._id, reviewedAt: Date.now(), adultConfirmedAt: approve ? Date.now() : undefined, rejectionReason: approve ? undefined : reason })
       await ctx.db.patch(p._id, { identityStatus: approve ? 'verified' : 'rejected', adultConfirmedAt: approve ? Date.now() : undefined })

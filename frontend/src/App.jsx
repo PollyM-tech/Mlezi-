@@ -1,3 +1,4 @@
+import { currentAppRoute, navigateApp } from './lib/routes.js'
 import { useEffect, useState } from 'react'
 import LegalPage from './components/LegalPage'
 import SupportInbox from './components/SupportInbox.jsx'
@@ -25,7 +26,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [editing, setEditing] = useState(false)
-  const [route, setRoute] = useState(window.location.hash)
+  const [route, setRoute] = useState(currentAppRoute)
   const [reload, setReload] = useState(0)
   const routePath = route.split('?')[0]
   const routeParams = new URLSearchParams(route.split('?')[1] || '')
@@ -44,11 +45,11 @@ export default function App() {
   const contactsPage = routePath === '#/contacts'
 
   useEffect(() => {
-    function changed() { setRoute(window.location.hash); setError(''); setNotice(''); setEditing(false); setLoading(true) }
-    function expired() { setUser(null); setProfile(null); setEditing(false); setNotice('Your session has expired. Please sign in again.'); if (!['', '#/', '#/home'].includes(window.location.hash.split('?')[0])) window.location.hash = '#/signin' }
-    window.addEventListener('hashchange', changed)
+    function changed() { setRoute(currentAppRoute()); setError(''); setNotice(''); setEditing(false); setLoading(true) }
+    function expired() { setUser(null); setProfile(null); setEditing(false); setNotice('Your session has expired. Please sign in again.'); if (!['', '#/', '#/home'].includes(currentAppRoute().split('?')[0])) navigateApp('#/signin') }
+    window.addEventListener('hashchange', changed); window.addEventListener('popstate', changed)
     window.addEventListener('mlezi-session-expired', expired)
-    return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('mlezi-session-expired', expired) }
+    return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('popstate', changed); window.removeEventListener('mlezi-session-expired', expired) }
   }, [])
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function App() {
         if (!active) return
         setUser(account)
         if (account && (joining || signin)) {
-          window.location.hash = '#/workspace'
+          navigateApp('#/workspace')
           return
         }
         if (publicId) {
@@ -81,18 +82,14 @@ export default function App() {
     return () => { active = false }
   }, [route, publicId, membership, browsing, shortlist, signin, accountPage, contactsPage, landing, joining, reload])
 
-  async function logout() {
-    try { await clearSession() } catch { setNotice('Unable to sign out. Please try again.'); return }
-     setUser(null); setProfile(null); setError(''); setNotice('You’ve signed out. See you soon.'); setEditing(false)
-    window.location.hash = '#/signin'
-  }
+  function logout() { void clearSession() }
   function saved(result) {
     setProfile(result); setEditing(false); setNotice(profile ? 'Your changes have been saved.' : 'Your caregiver profile is ready. Welcome to Mlezi!'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   return <div className="app-shell">
     <CookieConsent />
-    {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions"><a className="text-button" href="#/browse">Find care</a>{user ? <><span className="account-email">{user.email}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="#/signin">Sign in / join</a>}</div></header>}
-    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href="#/workspace">{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`#/caregivers/${profile.id}`}>Public preview ↗</a>}{user.role === 'employer' && <><a href="#/browse">Find caregivers</a><a href="#/shortlist">My shortlist</a><a href="#/contacts">My contacts</a><a href="#/account">My account</a></>}{user.role !== 'admin' && <a href="#/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Contact-access pass'}</a>}<a href="#/support">Support</a><a href="#/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
+    {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions"><a className="text-button" href="/caregivers">Find care</a>{user ? <><span className="account-email">{user.email}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="/signin">Sign in / join</a>}</div></header>}
+    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href="/workspace">{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`/caregivers/${profile.id}`}>Public preview ↗</a>}{user.role === 'employer' && <><a href="/caregivers">Find caregivers</a><a href="/shortlist">My shortlist</a><a href="/contacts">My contacts</a><a href="/account">My account</a></>}{user.role !== 'admin' && <a href="/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Contact-access pass'}</a>}<a href="/tickets">Support</a><a href="/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
     <main id="main-content" className={landing ? 'landing-main' : undefined}>
       {notice && <div className="alert success" role="status">{notice}<button className="dismiss" aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></div>}
       {legal ? <LegalPage type={legal} /> : landing ? <Landing user={user} /> : loading ? <section className="card state-panel" role="status"><div className="spinner" /><h2>Getting things ready…</h2><p>Loading your Mlezi workspace.</p></section>

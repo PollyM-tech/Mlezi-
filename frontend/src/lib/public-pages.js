@@ -1,3 +1,4 @@
+import { appRoute, appHref } from './routes.js'
 // Public editorial pages only. Never add accounts, contacts or identity evidence here.
 export const PUBLIC_PAGES = [
   { path: '/support/', title: 'Support & private help tickets | Mlezi', description: 'Get help with your Mlezi account, profile or technical issue. Open a private support ticket or check replies without sharing the operator’s personal contact details.' },
@@ -48,11 +49,21 @@ export function siteConfig(env = {}) {
   return { origin, indexable }
 }
 
-// Old email links and bookmarks remain usable; keep code and other query params.
+// Preserve legacy email codes, filters and bookmarks while removing hash URLs.
 export function entryRoute({ pathname, hash = '', search = '' }) {
   const legal = hash.match(/^#\/(privacy|cookies|terms)(?:\?|$)/)
   if (legal) return { redirect: `/${legal[1]}/${search}` }
-  if (pathname === '/' && (hash.startsWith('#/') && !['#/', '#/home'].includes(hash) || new URLSearchParams(search).has('code'))) return { redirect: `/app/${search}${hash || '#/signin'}` }
-  if (/^\/app\/?$/.test(pathname)) return { private: true }
+  if ((pathname === '/' || /^\/app\/?$/.test(pathname)) && hash.startsWith('#/')) {
+    if (['#/', '#/home'].includes(hash)) return pathname === '/' ? {page: publicPage('/')} : {redirect: '/'}
+    const destination = appHref(hash)
+    if (destination) {
+      const url = new URL(destination, 'https://mlezi.local')
+      for (const [key,value] of new URLSearchParams(search)) url.searchParams.set(key,value)
+      return {redirect: url.pathname + url.search}
+    }
+  }
+  if (pathname === '/' && new URLSearchParams(search).has('code')) return {redirect: `/signin${search}`}
+  if (/^\/app\/?$/.test(pathname)) return {redirect: `/signin${search}`}
+  if (appRoute({pathname, search})) return {private: true}
   return { page: publicPage(pathname) }
 }

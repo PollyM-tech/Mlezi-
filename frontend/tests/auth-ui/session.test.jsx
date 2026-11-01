@@ -14,7 +14,7 @@ vi.mock('@convex-dev/auth/react', () => ({
   useAuthActions: () => ({ signIn: state.signIn, signOut: state.signOut }),
 }))
 vi.mock('convex/react', () => ({ useConvexAuth: () => state.serverAuth || state.auth, useQuery: () => state.query, useMutation: () => state.mutation }))
-vi.mock('../../src/lib/convexClient.js', () => ({ getConvexClient: () => ({}) }))
+vi.mock('../../src/lib/convexClient.js', () => ({ getConvexClient: () => ({}), detachConvexClient: vi.fn() }))
 vi.mock('../../src/App.jsx', () => ({ default: () => <p>Regular Mlezi app</p> }))
 beforeEach(() => {
   sessionStorage.clear()
@@ -38,8 +38,9 @@ it('revoked sessions get a sign-in recovery screen instead of crashing', async (
   state.auth.isAuthenticated = true; state.query = { status: 'expired', account: null }
   render(<ConvexSession />)
   expect(screen.getByText('Your session has expired or is no longer valid.')).toBeTruthy()
-  await userEvent.click(screen.getByRole('button', { name: 'Back to sign in' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Return to homepage' }))
   expect(state.signOut).toHaveBeenCalledOnce()
+  expect(window.location.pathname).toBe('/')
 })
 
 it.each(['#/signin', '#/join?role=employer'])('opens the workspace once an authenticated account is ready on %s', route => {
@@ -48,7 +49,7 @@ it.each(['#/signin', '#/join?role=employer'])('opens the workspace once an authe
   state.auth.isAuthenticated = true
   state.query = { status: 'ready', account: { id: 'account-1', role: 'employer' } }
   view.rerender(<ConvexSession />)
-  expect(window.location.hash).toBe('#/workspace')
+  expect(window.location.pathname).toBe('/workspace'); expect(window.location.hash).toBe('')
   expect(screen.getByText('Regular Mlezi app')).toBeTruthy()
 })
 it('waits for server authentication before rendering the signed-in app', () => {

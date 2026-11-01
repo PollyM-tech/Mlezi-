@@ -9,3 +9,10 @@ export function getConvexClient() {
   if (!client) client = new ConvexReactClient(url)
   return client
 }
+
+// Leave the retiring connection alive only for its outstanding revocation.
+// A new visit to the app receives a fresh client with no private query cache.
+export function detachConvexClient(expected) {
+  if (client === expected) client = undefined
+  expected.clearAuth?.()
+}

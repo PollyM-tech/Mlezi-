@@ -79,7 +79,7 @@ it('magic links are high-entropy, single-use and expire', async () => {
 it('blocks email auth when sender configuration is missing', async () => {
   const t = convexTest(schema, modules)
   vi.stubEnv('AUTH_RESEND_KEY', '')
-  expect(await t.query(api.accounts.authSettings)).toEqual({ emailReady: false })
+  expect(await t.query(api.accounts.authSettings)).toMatchObject({ emailReady: false })
   await expect(sign(t, 'email-otp', { email: 'unconfigured@example.test' })).rejects.toThrow('not configured')
   expect(sent).toHaveLength(0)
 })
@@ -140,4 +140,10 @@ it('recovery does not create credentials or send email for an unknown address', 
   expect(sent).toHaveLength(0)
   expect(await t.run(ctx => ctx.db.query('authAccounts').collect())).toHaveLength(0)
   await expect(sign(t, 'password-recovery', { flow: 'signIn', email: 'unknown@example.test' })).rejects.toThrow('Invalid password recovery')
+})
+
+it('explains the email-provider test-sender restriction without exposing provider response details', async () => {
+  const t=convexTest(schema,modules)
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({message:'You can only send testing emails to your own email address private-operator@example.test'}),{status:403})))
+  await expect(sign(t,'password',{flow:'signUp',email:'newperson@example.test',password:'Testing123!'})).rejects.toThrow('Enter that exact address')
 })

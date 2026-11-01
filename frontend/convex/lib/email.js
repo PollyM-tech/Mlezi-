@@ -40,7 +40,14 @@ export function emailProvider(id, kind = 'otp') {
           signal: AbortSignal.timeout(15000),
         })
       } catch { throw new ConvexError('Unable to send your email. Please try again shortly.') }
-      if (!response.ok) throw new ConvexError('Unable to send your email. Please try again shortly.')
+      if (!response.ok) {
+        const detail = await response.json().catch(() => ({}))
+        if (response.status === 403 && /only send testing|own email/i.test(String(detail.message || ''))) throw new ConvexError('This test sender can only send to the email address used for the Resend account. Enter that exact address. To test with other addresses, verify a sending domain first.')
+        if (response.status === 403 && /verify.*domain|domain.*verif/i.test(String(detail.message || ''))) throw new ConvexError('The sending domain is not verified. The operator must verify a sending domain before sending emails from it.')
+        if ([401, 403].includes(response.status)) throw new ConvexError('Email delivery is not authorized. The operator needs to check the email provider credentials and verified sender.')
+        if (response.status === 429) throw new ConvexError('Too many email requests. Wait a few minutes and try again.')
+        throw new ConvexError('Unable to send your email. Please try again shortly.')
+      }
     },
   })
 }

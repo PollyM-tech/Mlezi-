@@ -121,3 +121,5 @@ Set Vercel Root Directory to `frontend`. The sole Vercel configuration is
 Existing security headers remain in that file. A mistakenly created, malformed root
 `vercel.json` was removed on 1 November 2026. Keep indexing disabled while testing;
 a successful build does not complete the separate production readiness checks.
+
+See [registration, upload and one-time identity fixes](../Documentation/registration-upload-fixes.md) for local testing, trusted frontend origins and email-provider requirements.

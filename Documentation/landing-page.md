@@ -102,3 +102,15 @@ image is prefetched after initial paint, rather than downloading every slide at
 once. These are the original PNGs, so image bandwidth still reflects their sizes.
 The first background is included in pre-rendered HTML and uses Vite's asset map.
 Timing, wraparound, automatic playback, visibility and cleanup have UI tests.
+
+## Laptop review refinements and clean URLs
+
+The care dropdowns start with “Select care type” and “Select work arrangement”, with native dropdown indicators and outlined controls. “Brighter” now uses an upright serif. Care-category cards no longer use decorative icons/arrows, and the public-review/Premium star and diamond were removed. Regional joining links use deep green with an underline. The approved mother-and-children reading illustration is now the sole hero image; other generated child portraits are no longer bundled for the homepage. Original source assets are retained. Real photographs can replace it later when suitable licensed/consented images are supplied.
+
+The application now uses browser paths: `/caregiver` and `/employer` for registration, `/signin`, `/caregivers`, `/caregivers/:id`, `/workspace`, `/shortlist`, `/contacts`, `/account`, `/identity`, `/membership`, `/privacy-account` and `/tickets`. Guest support stays at `/support/`. Old `/app/#/...` bookmarks and email links redirect to clean destinations while preserving codes and filter parameters. Browser Back/Forward and internal links use the History API. API/function paths and authorization rules have not changed.
+
+The build produces noindex application shells for direct visits and refreshes. Vercel rewrites clean application and dynamic caregiver URLs to that shell; local preview applies the same application-shell routing and applies the existing security headers plus noindex headers to application routes. Private URLs stay out of the sitemap. Public editorial/regional pages retain their existing routes and metadata. Encoded asset filenames are resolved during pre-rendering.
+
+Email/password registration, OTP and magic links still use the same Resend delivery service. Test mode clearly explains its recipient restriction; it is not bypassed. The confirmed test-recipient issue requires using the Resend-account email until the operator verifies a sending domain. These local changes have not been deployed, and domain/provider configuration remains an operator step.
+
+Validation: 50 UI tests, 55 backend tests, nine routing/SEO/security configuration checks, lint and the production build passed. Local preview HTTP checks confirmed 200 responses with noindex application HTML and no public canonical URL for all 14 clean application/profile routes. Browser navigation tests cover entering signup from the homepage and returning with Back. No public deployment or live email request was made. Vercel routing follows its [documented rewrite configuration](https://vercel.com/docs/routing/rewrites); the hosted preview should be checked after deployment.

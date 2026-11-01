@@ -11,7 +11,7 @@ function ownAccount(account) {
     name: account.name || null, legacyId: account.legacyId ?? null, emailVerified: true }
 }
 
-export const authSettings = query({ args: {}, handler: () => ({ emailReady: emailIsConfigured() }) })
+export const authSettings = query({ args: {}, handler: () => ({ emailReady: emailIsConfigured(), testSender: /@resend\.dev>?$/i.test(process.env.AUTH_EMAIL_FROM || '') }) })
 export const me = query({ args: {}, handler: async ctx => ownAccount(await accountIdentity(ctx)) })
 export const current = query({ args: { refresh: v.optional(v.number()) }, handler: async ctx => {
   try {

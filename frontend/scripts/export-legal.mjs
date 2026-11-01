@@ -10,7 +10,7 @@ await mkdir(dir, { recursive: true })
 for (const [type, page] of Object.entries(LEGAL_CONTENT)) {
   const lines = [`# Mlezi ${page.title}`, '', `Prepared 1 November 2026 · Version ${LEGAL_VERSION}`, '',
     '**Pre-launch review copy. Not a legal approval or publication authorization.**', '',
-    `Operator name supplied: ${legal.entity}`, `Business structure: ${legal.structure}`, `Registration: ${legal.registration || 'Confirm if applicable'}`, `Service address: ${legal.address}`, 'Support route: /support/ and /app/#/privacy-account', '',
+    `Operator name supplied: ${legal.entity}`, `Business structure: ${legal.structure}`, `Registration: ${legal.registration || 'Confirm if applicable'}`, `Service address: ${legal.address}`, 'Support route: /support/ and /privacy-account', '',
     ...page.sections.flatMap((section, i) => [`## ${i + 1}. ${section.title}`, '', ...(section.paragraphs || []).flatMap(p => [p, '']), ...(section.items || []).map(item => `- ${item}`), '']),
     ...(type === 'privacy' ? ['ODPC complaint route: https://www.odpc.go.ke/file-a-complaint/', ''] : []),
     'Source: frontend/src/lib/legal-content.js. Export again after changing the live policy text.', '',

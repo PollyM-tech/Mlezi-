@@ -16,7 +16,7 @@ it('opens with keyboard focus, shows an answer and restores focus on Escape', as
   await user.click(screen.getByRole('button', { name: 'Can I browse before paying?' }))
   expect(screen.getByRole('heading', { level: 3 }).textContent).toContain('browse before paying')
   expect(document.activeElement).toBe(screen.getByRole('heading', { level: 3 }))
-  expect(screen.getByRole('link', { name: 'Browse caregivers' }).getAttribute('href')).toBe('/app/#/browse')
+  expect(screen.getByRole('link', { name: 'Browse caregivers' }).getAttribute('href')).toBe('/caregivers')
   await user.keyboard('{Escape}')
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(document.activeElement).toBe(launcher)

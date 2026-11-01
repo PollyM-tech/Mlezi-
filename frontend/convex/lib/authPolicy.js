@@ -1,3 +1,4 @@
+import { trustedWebOrigins } from './webOrigins.js'
 import { ConvexError } from 'convex/values'
 
 export function normalizeEmail(value) {
@@ -20,9 +21,9 @@ export function registrationDetails({ role, phone, name }) {
   return { role, phone: phone.trim(), name: name.trim() }
 }
 
-export function safeRedirect(redirectTo, siteUrl) {
+export function safeRedirect(redirectTo, siteUrl, additionalOrigins = '') {
   const site = new URL(siteUrl)
   const target = new URL(redirectTo, site)
-  if (target.origin !== site.origin || target.username || target.password) throw new ConvexError('Invalid sign-in destination.')
+  if (!trustedWebOrigins(siteUrl, additionalOrigins).has(target.origin) || target.username || target.password) throw new ConvexError('Invalid sign-in destination.')
   return target.toString()
 }

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { useAuthActions } from '@convex-dev/auth/react'
+import { useSignOut } from '../lib/signOut.js'
 import { api } from '../../convex/_generated/api.js'
 export default function AdminSecurity() {
   const status = useQuery(api.adminSecurity.status), begin = useMutation(api.adminSecurity.begin), verify = useMutation(api.adminSecurity.verify)
-  const { signOut } = useAuthActions()
+  const signOut = useSignOut()
   const [setup,setSetup]=useState(null), [error,setError]=useState(''),[busy,setBusy]=useState(false)
   async function start(){setBusy(true);setError('');try{setSetup(await begin())}catch(e){setError(typeof e.data==='string'?e.data:'Unable to start authenticator setup.')}finally{setBusy(false)}}
   async function submit(e){e.preventDefault();setBusy(true);setError('');try{const result=await verify({code:new FormData(e.currentTarget).get('code')});if(!result.ok)setError(result.error);else setSetup(null)}catch(e){setError(typeof e.data==='string'?e.data:'Unable to verify code.')}finally{setBusy(false)}}

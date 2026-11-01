@@ -23,7 +23,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   jwt: { durationMs: 15 * 60 * 1000 },
   signIn: { maxFailedAttempsPerHour: 10 },
   callbacks: {
-    redirect: ({ redirectTo }) => safeRedirect(redirectTo, process.env.SITE_URL),
+    redirect: ({ redirectTo }) => safeRedirect(redirectTo, process.env.SITE_URL, process.env.APP_ALLOWED_ORIGINS),
     createOrUpdateUser,
   },
 })

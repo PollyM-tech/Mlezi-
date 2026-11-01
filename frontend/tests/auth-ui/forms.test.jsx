@@ -32,7 +32,7 @@ it('magic-link and OTP choices request the right methods and show retry paths', 
   await user.selectOptions(screen.getByLabelText('How would you like to continue?'), 'magic')
   await user.type(screen.getByLabelText('Email address'), 'person@example.test')
   await user.click(screen.getByRole('button', { name: 'Send magic link' }))
-  expect(mocks.signIn).toHaveBeenCalledWith('magic-link', expect.objectContaining({ redirectTo: '/app/#/signin' }))
+  expect(mocks.signIn).toHaveBeenCalledWith('magic-link', expect.objectContaining({ redirectTo: 'http://localhost:5173/signin' }))
   expect(screen.getByText(/Check your email for a sign-in link/)).toBeTruthy()
   await user.click(screen.getByRole('button', { name: 'Use another sign-in method' }))
   await user.selectOptions(screen.getByLabelText('How would you like to continue?'), 'otp')
@@ -69,4 +69,16 @@ it('unconfigured email delivery disables submission with a clear message', () =>
   render(<ConvexAuthForm />)
   expect(screen.getByRole('status').textContent).toContain('being set up')
   expect(screen.getByRole('button', { name: 'Sign in →' }).disabled).toBe(true)
+})
+
+it('explains the shared test-sender limitation and preserves structured delivery errors', async () => {
+ const user=userEvent.setup()
+ mocks.settings={emailReady:true,testSender:true}
+ render(<ConvexAuthForm />)
+ expect(screen.getByRole('status').textContent).toContain('test mode')
+ await user.selectOptions(screen.getByLabelText('How would you like to continue?'),'otp')
+ await user.type(screen.getByLabelText('Email address'),'person@example.test')
+ mocks.signIn.mockRejectedValueOnce({data:{message:'Use the email address used for the Resend account.'}})
+ await user.click(screen.getByRole('button',{name:'Send email code'}))
+ expect(screen.getByRole('alert').textContent).toContain('Resend account')
 })

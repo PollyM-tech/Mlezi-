@@ -142,7 +142,7 @@ boost fields are retained only for historical compatibility.
 - Profile photo selection previews the image before saving. Editing preserves private national ID storage.
 - Identity route: `#/identity`, accessible from the caregiver workspace. Requires a clear private selfie and explicit comparison permission. No Good Conduct document or payment required.
 - Admin workspace lists pending requests. Admin-only links open private national ID and selfie with 60-second signed links and no-store responses. Admin compares these with the public profile photo, confirms legibility/matching, and approves or records a correction reason.
-- Profile name or photo changes revoke approved/pending identity status. Submission snapshots and status checks prevent approving an outdated request. Rejected caregivers can correct their profile and resubmit.
+- Approved identity checks survive profile name/photo changes. Display-name edits also preserve pending checks; a pending photo change invalidates the submission so administrators never approve outdated photo evidence. Rejected caregivers can correct their profile and resubmit.
 - Migration `f617a389d402` was tested on fresh and copied SQLite databases, then applied locally after a private backup; table row counts were preserved.
 - Automated checks cover validation, privacy, role restrictions, travel discovery, availability and identity decisions. Browser checks cover registration, profile creation/editing, pause/resume, selfie submission, admin approval, public profile mobile layout and travel search.
 - Storage was simulated in browser tests. Real Cloudinary upload/private download and actual human identity comparison remain manual checks. M-Pesa activation and live testing remain last, as requested.
@@ -155,7 +155,7 @@ boost fields are retained only for historical compatibility.
 4. Pause availability. In another browser/tab, confirm the caregiver is absent from matching search; existing unlocked contacts still work. Resume and confirm reappearance.
 5. Open Manage your identity check, upload a selfie and give comparison permission. Confirm pending status survives reload.
 6. As an administrator, open the pending request, inspect the temporary private document links and public photo, then approve or give a specific correction reason. Never approve without comparing the evidence.
-7. Confirm approval shows Identity checked. Change the caregiver name or photo and confirm a fresh check is required.
+7. Confirm approval shows Identity checked. Change the caregiver name or photo and confirm approval remains. Separately, change the photo during pending review and confirm a fresh submission is required.
 8. Search as an employer using Travel nanny, local/international scope, age group and language. Check the results match. Check public reviews and caregiver replies using an eligible test employer with a prior unlocked contact.
 
 ### Audit verification results

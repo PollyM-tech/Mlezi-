@@ -90,7 +90,7 @@ stored by the CLI outside the repository.
 - Filter first, then Premium priority and fair rotation.
 - One editable review per eligible employer/caregiver pair; public visibility,
   caregiver replies and admin moderation determine aggregate ratings.
-- Profile name/photo changes require renewed identity checking.
+- Approved identity checks are one-time account checks; profile name/photo edits do not revoke approval. Pending photo changes require fresh evidence.
 - Current service options exclude Part-time, Short notice, separate work/cooking,
   sleep-training, evening and event choices. Travel care remains.
 - Choosing Other as a category or service requires a nonblank description.

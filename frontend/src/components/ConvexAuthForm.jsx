@@ -5,6 +5,7 @@ import { api } from '../../convex/_generated/api.js'
 
 function messageFor(error) {
   if (typeof error?.data === 'string') return error.data
+  if (typeof error?.data?.message === 'string') return error.data.message
   const message = error?.message || ''
   if (/InvalidAccountId|InvalidSecret|Invalid credentials/i.test(message)) return 'The email or password is incorrect. You can also sign in with an email code or magic link.'
   if (/AccountAlreadyExists/i.test(message)) return 'An account already exists. Sign in or use email recovery.'
@@ -49,10 +50,10 @@ export default function ConvexAuthForm({ initialRegistering = false, initialRole
         if (registering) {
           try { sessionStorage.setItem('mlezi-registration-draft', JSON.stringify({ role, phone: fields.get('phone'), name: fields.get('name') || '' })) } catch { /* Details can be entered after verification. */ }
         }
-        const result = await signIn('password', { flow: registering ? 'signUp' : 'signIn', email: address, password: fields.get('password'), redirectTo: '/app/#/signin' })
+        const result = await signIn('password', { flow: registering ? 'signUp' : 'signIn', email: address, password: fields.get('password'), redirectTo: `${window.location.origin}/signin` })
         if (!result.signingIn) { setStep('verify-email'); setNotice('Enter the verification code sent to your email. It expires in 10 minutes.') }
       } else {
-        await signIn(method === 'otp' ? 'email-otp' : 'magic-link', { email: address, redirectTo: '/app/#/signin' })
+        await signIn(method === 'otp' ? 'email-otp' : 'magic-link', { email: address, redirectTo: `${window.location.origin}/signin` })
         setStep(method === 'otp' ? 'otp-code' : 'magic-sent')
         setNotice(method === 'otp' ? 'Enter the email code below. It expires in 10 minutes.' : 'Check your email for a sign-in link. It expires in 10 minutes and can be used once.')
       }
@@ -62,7 +63,7 @@ export default function ConvexAuthForm({ initialRegistering = false, initialRole
   async function resend() {
     setBusy(true); setError('')
     try {
-      await signIn(step === 'otp-code' ? 'email-otp' : step === 'reset-code' ? 'password-recovery' : 'password', { email, ...(step === 'otp-code' ? {} : { flow: step === 'reset-code' ? 'reset' : 'email-verification' }), redirectTo: '/app/#/signin' })
+      await signIn(step === 'otp-code' ? 'email-otp' : step === 'reset-code' ? 'password-recovery' : 'password', { email, ...(step === 'otp-code' ? {} : { flow: step === 'reset-code' ? 'reset' : 'email-verification' }), redirectTo: `${window.location.origin}/signin` })
       setNotice('A new code has been requested. Check your inbox and spam folder.')
     } catch (err) { setError(messageFor(err)) } finally { setBusy(false) }
   }
@@ -71,6 +72,7 @@ export default function ConvexAuthForm({ initialRegistering = false, initialRole
   return <div className="auth-layout"><section className="intro"><span className="eyebrow">CARE THAT MAKES A DIFFERENCE</span><h1>Your care.<br />{' '}Their brighter<br />{' '}<em>beginnings.</em></h1><p>Build your caregiver profile or find care for your family across Kenya.</p></section><section className="card auth-card">
     <span className="eyebrow">YOUR MLEZI WORKSPACE</span><h2>{resetFlow ? 'Reset your password' : codeStep ? 'Check your email' : registering ? 'Start your next chapter' : 'Welcome back'}</h2>
     {step === 'start' && <><div className="tabs" aria-label="Account options"><button type="button" aria-pressed={!registering} disabled={busy} onClick={() => { setRegistering(false); reset() }}>Sign in</button><button type="button" aria-pressed={registering} disabled={busy} onClick={() => { setRegistering(true); reset() }}>Create account</button></div><label>How would you like to continue?<select value={method} disabled={busy} onChange={event => { setMethod(event.target.value); reset() }}><option value="password">Email & password</option><option value="magic">Email me a magic link</option><option value="otp">Email me a one-time code</option></select></label></>}
+    {settings?.testSender && <p className="alert" role="status">Email delivery is in test mode. Public registration needs a verified sending domain; the test sender can only deliver to its approved test recipient.</p>}
     {settings && !settings.emailReady && <p className="alert" role="status">Email sign-in is being set up. Please try again once email delivery is available.</p>}
     {error && <p className="alert error" role="alert">{error}</p>}{notice && <p className="alert success" role="status">{notice}</p>}
     {step === 'magic-sent' ? <button className="text-button" onClick={reset}>Use another sign-in method</button> : <form onSubmit={send}>

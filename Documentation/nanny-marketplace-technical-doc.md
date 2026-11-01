@@ -498,7 +498,7 @@ Expand into a broader children's care, education, and activities marketplace: tu
 
 Caregiver workspace, travel/holiday childcare and childcare while parents work or cook are implemented. Profiles support availability pause/resume, child age groups, languages, travel scope and travel arrangements. Paused profiles remain accessible directly and in saved/unlocked lists but cannot receive new contact unlocks and are excluded from search. Travel category discovery also includes caregivers offering travel as an additional service.
 
-Identity checking now has private selfie submission and an admin review queue with temporary private ID/selfie links, explicit comparison confirmations and rejection reasons. Changing a profile name or photo requires rechecking identity. Payment never grants an identity badge. See `caregiver-implementation.md` for acceptance tests, migration details and remaining live-storage checks. M-Pesa activation remains the final integration task.
+Identity checking now has private selfie submission and an admin review queue with temporary private ID/selfie links, explicit comparison confirmations and rejection reasons. Approved identity checking is a one-time account check: profile name/photo changes preserve approval. Photo changes during a pending review require a fresh submission. Payment never grants an identity badge. See `caregiver-implementation.md` for acceptance tests, migration details and remaining live-storage checks. M-Pesa activation remains the final integration task.
 
 
 ### Care option consolidation — 24 October 2026

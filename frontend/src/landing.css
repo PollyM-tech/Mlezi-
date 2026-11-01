@@ -41,3 +41,10 @@
 @media(prefers-reduced-motion:reduce) { .hero-background-current { animation: none; } }
 
 .landing-hero-content .landing-hero-copy > p { color: #52694f; }
+
+/* Laptop review: clearer choices and quieter visual details. */
+.landing-hero h1 em{font-family:'Palatino Linotype','Book Antiqua',Palatino,serif;font-style:normal;font-weight:400;letter-spacing:-.035em}
+.landing-search select{appearance:auto;-webkit-appearance:menulist;border:1px solid #cbd5c5;border-radius:7px;background-color:#fffefa;padding:10px 12px;min-height:44px;width:100%;cursor:pointer}
+.landing-care-type{padding-right:42px}
+.regional-links a{color:#23533c;text-decoration:underline;text-underline-offset:4px;font-weight:600}
+.regional-links a:hover{color:#163b28}

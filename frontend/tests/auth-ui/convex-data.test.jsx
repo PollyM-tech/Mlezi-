@@ -1,5 +1,6 @@
 import { it, expect, vi, beforeEach } from 'vitest'
-import { nativeConvexApi } from '../../src/lib/convexApi.js'
+import { nativeConvexApi, convexSiteUrl } from '../../src/lib/convexApi.js'
+vi.mock('../../src/lib/imageUpload.js', () => ({ prepareUploadImage: async () => new Blob(['prepared'], {type:'image/jpeg'}) }))
 const state = vi.hoisted(() => ({ query: vi.fn(), mutation: vi.fn() }))
 vi.mock('../../src/lib/convexClient.js', () => ({ getConvexClient: () => state }))
 beforeEach(() => { vi.restoreAllMocks(); state.query.mockReset(); state.mutation.mockReset() })
@@ -25,4 +26,11 @@ it('uploads images to Convex HTTP actions then sends only storage IDs in profile
 it('preserves server validation and permission error status for the UI', async () => {
   state.mutation.mockRejectedValue({ data: { message: 'Renew your contact-access pass', status: 402 } })
   await expect(nativeConvexApi('/contact/unlock/id', { method: 'POST' })).rejects.toMatchObject({ status: 402, message: 'Renew your contact-access pass' })
+})
+
+it('derives the HTTP upload origin when only the cloud URL is configured, and rejects incorrect URLs', () => {
+  expect(convexSiteUrl({ VITE_CONVEX_URL: 'https://example.convex.cloud' })).toBe('https://example.convex.site')
+  expect(() => convexSiteUrl({})).toThrow('not configured')
+  expect(() => convexSiteUrl({ VITE_CONVEX_SITE_URL: 'https://example.convex.cloud' })).toThrow('HTTP Actions')
+  expect(() => convexSiteUrl({ VITE_CONVEX_SITE_URL: 'https://example.convex.site.evil.test' })).toThrow('HTTP Actions')
 })

@@ -30,7 +30,7 @@ The public profile response deliberately excludes phone/email, account bindings 
 
 Uploads use authenticated `/files/upload` HTTP actions. JPEG/PNG/WebP signatures and the 5 MB limit are checked server-side, including streamed requests. The server records owner and upload purpose; mutations cannot claim another person's upload or publish an ID/selfie as a profile photo. Unclaimed uploads expire after one hour. Profile photos alone receive storage URLs in public projections. IDs and selfies are served through `/files/document` after checking a live admin session on every request; permanent storage URLs are never returned. Responses use `no-store`. The admin UI holds temporary browser object URLs, revoking them after 60 seconds, on replacement, or on unmount; already downloaded bytes cannot be revoked remotely.
 
-Identity approval remains separate from Premium and ratings. Name/photo changes reset an approved/pending identity check. Approval requires explicit evidence-comparison confirmations and an unchanged name/photo snapshot.
+Identity approval remains separate from Premium and ratings. Approved checks survive profile name/photo edits. Pending name edits do not invalidate evidence; pending photo changes require resubmission. Approval still requires explicit comparison confirmations and an unchanged photo snapshot.
 
 ## Membership and M-Pesa
 

@@ -1,6 +1,7 @@
 import { internalMutation, internalQuery, httpAction } from './_generated/server.js'
 import { internal } from './_generated/api.js'
 import { v } from 'convex/values'
+import { trustedWebOrigins } from './lib/webOrigins.js'
 import { requireAccount, accountIdentity } from './lib/permissions.js'
 import { fail, find } from './lib/marketplace.js'
 
@@ -25,7 +26,7 @@ export const evidence = internalQuery({ args: { submissionId: v.string(), kind: 
 } })
 function cors(request) {
   const origin = request.headers.get('Origin')
-  return { ...(origin === new URL(process.env.SITE_URL).origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {}), 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Upload-Purpose', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' }
+  return { ...(trustedWebOrigins(process.env.SITE_URL, process.env.APP_ALLOWED_ORIGINS).has(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {}), 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Upload-Purpose', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' }
 }
 export const options = httpAction(async (_ctx, request) => new Response(null, { status: 204, headers: cors(request) }))
 function errorResponse(error, headers) {

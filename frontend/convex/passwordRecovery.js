@@ -40,7 +40,7 @@ export function passwordRecoveryProvider(passwordProvider) {
         }
       }
       return await signInViaProvider(ctx, passwordProvider, {
-        params: { flow: 'reset', email, redirectTo: '/app/#/signin' },
+        params: { flow: 'reset', email, redirectTo: '/signin' },
       })
     },
   })

@@ -1,3 +1,4 @@
+import { APP_PATHS } from '../src/lib/routes.js'
 import { PUBLIC_PAGES, siteConfig } from '../src/lib/public-pages.js'
 
 const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
@@ -27,7 +28,7 @@ export function renderDocument(template, page, markup, env) {
 export function crawlerFiles(env) {
   const { origin, indexable } = siteConfig(env)
   return {
-    robots: indexable ? `User-agent: *\nAllow: /\nDisallow: /app/\nDisallow: /app\n\nSitemap: ${origin}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n',
+    robots: indexable ? `User-agent: *\nAllow: /\nDisallow: /app/\n${Object.keys(APP_PATHS).map(path => `Disallow: ${path}`).join('\n')}\nDisallow: /app\n\nSitemap: ${origin}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n',
     sitemap: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${indexable ? PUBLIC_PAGES.map(page => `\n  <url><loc>${escape(origin + page.path)}</loc></url>`).join('') : ''}\n</urlset>\n`,
   }
 }

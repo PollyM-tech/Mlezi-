@@ -1,3 +1,4 @@
+import { APP_PATHS } from '../src/lib/routes.js'
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { createElement } from 'react'
 import { renderToString } from 'react-dom/server'
@@ -16,14 +17,18 @@ try {
   for (const page of PUBLIC_PAGES) {
     let markup = renderToString(createElement(PublicPages, { page }))
     // SSR imports retain source URLs. Use Vite's exact emitted asset mapping.
-    for (const [source, asset] of Object.entries(manifest)) if (asset.file && !asset.isEntry) markup = markup.replaceAll(`/${source}`, `/${asset.file}`)
+    for (const [source, asset] of Object.entries(manifest)) if (asset.file && !asset.isEntry) {
+      markup = markup.replaceAll(`/${source}`, `/${encodeURI(asset.file)}`).replaceAll(`/${encodeURI(source)}`, `/${encodeURI(asset.file)}`)
+    }
     if (markup.includes('/src/assets/')) throw new Error(`Unresolved public asset on ${page.path}`)
     const dir = `dist${page.path}`
     await mkdir(dir, { recursive: true })
     await writeFile(`${dir}index.html`, renderDocument(template, page, markup, env))
   }
-  await mkdir('dist/app', { recursive: true })
-  await writeFile('dist/app/index.html', renderDocument(template, null, '<p>Open Mlezi with JavaScript enabled to sign in or browse caregivers.</p>', env))
+  for (const path of ['/app', ...Object.keys(APP_PATHS)]) {
+    await mkdir(`dist${path}`, { recursive: true })
+    await writeFile(`dist${path}/index.html`, renderDocument(template, null, '<p>Open Mlezi with JavaScript enabled to sign in or browse caregivers.</p>', env))
+  }
   const notFound = renderDocument(template, null, renderToString(createElement(PublicPages, { page: null })), env).replaceAll('Your account | Mlezi', 'Page not found | Mlezi')
   await writeFile('dist/404.html', notFound)
   const { robots, sitemap } = crawlerFiles(env)
