@@ -71,7 +71,7 @@ Cookie consent remembers accept/decline for 180 days. Optional search preference
 
 ## Production and retired files
 
-The domain, guest-support spam protection and legal operator details are not chosen. Notices remain launch drafts. `npm run build:production` intentionally blocks publication until production configuration, legal review, backup restore, alerts and real Auth tests are complete. Normal `npm run build` remains available for development checks.
+Lintech Telecom is the confirmed operator name and version 1 is marketplace-only. The domain is mlezicare.com. Its business structure/service address, hosting/DNS, email and guest-support configuration remain pending. Notices remain launch drafts. `npm run build:production` intentionally blocks publication until production configuration, legal review, backup restore, alerts and real Auth tests are complete. Normal `npm run build` remains available for development checks.
 
 The retired `backend/` directory was removed on 29 October 2026 after checking the completed Convex migration. A restricted, Git-ignored `.backups/flask-retired-*.tar.gz` archive preserves the former source, original local database and local configuration for recovery. It is sensitive: do not publish it or extract it into the running app. Generated virtual environments/caches were excluded; archived source files were verified before deletion. Existing Convex records and cloud assets were not deleted.
 
@@ -88,10 +88,27 @@ Use the [tester guide](../Documentation/security-testing-guide.md) and [finding 
 
 Public help is at `/support/`; account tickets and the admin queue are at
 `/app/#/support`. Admin replies display as Mlezi Support. Operator phone numbers
-and personal email are not displayed. Signed-out visitors can submit tickets once
-Turnstile is configured and use their private reference/key to check replies.
+and personal email are not displayed. Once Turnstile is configured, signed-out visitors submit the form using their email address. They receive an automatic acknowledgement with a 48-hour commitment; administrator replies are also emailed.
 
 See [support setup and access rules](../Documentation/support-tickets.md).
 Production no longer requires a publicly displayed support email; it requires
 working guest support and `SUPPORT_FLOW_TESTED=true` after the actual journey is
-verified. Email delivery for authentication remains a separate requirement.
+verified. Configure the verified support sender and private SUPPORT_INBOX_EMAIL on Convex. The website does not display this inbox, but email recipients can see the sender/reply address. Authentication email delivery remains required too.
+
+
+## Legal notices and account acknowledgement
+
+`/privacy/`, `/terms/` and `/cookies/` use the shared, versioned text in
+`src/lib/legal-content.js`. Run `npm run legal:export` for matching Markdown review
+copies. See the [review handoff](../Documentation/legal-review-handoff.md) for
+confirmed business scope, unresolved operator facts and qualified review questions.
+
+New account completion requires acceptance of the current terms and acknowledgement
+of the privacy notice; the server records the version and timestamp. Optional
+cookies and identity-comparison permission remain separate. Existing/imported
+accounts are not backfilled with invented consent. Payments remain disabled.
+
+Configure actual `VITE_LEGAL_ENTITY`, `VITE_LEGAL_STRUCTURE`,
+`VITE_LEGAL_SERVICE_ADDRESS` and registration number where applicable. Naming the
+operator alone does not hide draft status. Keep `VITE_LEGAL_REVIEWED=false` and
+`LEGAL_REVIEW_COMPLETE=false` until the final text and facts have qualified review.

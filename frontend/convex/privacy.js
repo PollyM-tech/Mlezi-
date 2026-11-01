@@ -23,7 +23,7 @@ export const exportOwn = mutation({ args: {}, handler: async ctx => {
   const payments = await ctx.db.query('payments').withIndex('by_account', q => q.eq('accountId', a._id)).collect()
   const reviews = await ctx.db.query('reviews').withIndex('by_pair', q => q.eq('employerAccountId', a._id)).collect()
   await audit(ctx, a._id, 'personal_data_export')
-  return { exportedAt: Date.now(), account: { email: a.email, phone: a.phone || null, name: a.name || null, role: a.role }, profile: strip(caregiver || employer), payments: payments.map(strip), reviewsWritten: reviews.map(strip),
+  return { exportedAt: Date.now(), account: { email: a.email, phone: a.phone || null, name: a.name || null, role: a.role, termsAcceptedAt: a.termsAcceptedAt || null, termsVersion: a.termsVersion || null, privacyNoticeVersion: a.privacyNoticeVersion || null }, profile: strip(caregiver || employer), payments: payments.map(strip), reviewsWritten: reviews.map(strip),
     shortlist: employer ? (await ctx.db.query('shortlists').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, createdAt: r.createdAt })) : [],
     contactUnlocks: employer ? (await ctx.db.query('contactUnlocks').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, unlockedAt: r.unlockedAt })) : [],
     identityRequests: caregiver ? (await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', caregiver._id)).collect()).map(strip) : [],
@@ -58,9 +58,15 @@ export const resolve = mutation({ args: { id: v.id('dataRequests') }, handler: a
 export const purge = internalMutation({ args: { accountId: v.id('accounts') }, handler: async (ctx, { accountId }) => {
   const a = await ctx.db.get(accountId)
   if (!a?.deletionRequestedAt || a.deletionRequestedAt + 7 * DAY > Date.now()) return
-  for (const ticket of await ctx.db.query('supportTickets').withIndex('by_account', q => q.eq('accountId', accountId)).collect()) {
+  const supportBatch = await ctx.db.query('supportTickets').withIndex('by_account', q => q.eq('accountId', accountId)).take(10)
+  for (const ticket of supportBatch) {
     for (const message of await ctx.db.query('supportMessages').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(100)) await ctx.db.delete(message._id)
+    for (const email of await ctx.db.query('supportEmails').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(102)) await ctx.db.delete(email._id)
     await ctx.db.delete(ticket._id)
+  }
+  if (supportBatch.length) {
+    await ctx.scheduler.runAfter(0, internal.privacy.purge, { accountId })
+    return
   }
   const assets = new Set(), asset = value => { if (value?.provider === 'convex') assets.add(value.storageId) }
   const caregiver = await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', accountId)).unique()
@@ -92,7 +98,7 @@ export const purge = internalMutation({ args: { accountId: v.id('accounts') }, h
   for (const r of await ctx.db.query('reports').collect()) if (r.reporterId === accountId || r.reportedAccountId === accountId) await ctx.db.patch(r._id, { details: '[Personal details removed after account deletion]' })
   for (const p of await ctx.db.query('payments').withIndex('by_account', q => q.eq('accountId', accountId)).collect()) await ctx.db.patch(p._id, { phone: undefined, resultDescription: undefined })
   // Keep only a pseudonymous account key for financial/audit referential history.
-  await ctx.db.patch(accountId, { email: `deleted-${accountId}@deleted.invalid`, name: 'Deleted account', phone: undefined, authSubject: undefined, legacyId: undefined, suspendedAt: Date.now(), suspensionReason: undefined })
+  await ctx.db.patch(accountId, { email: `deleted-${accountId}@deleted.invalid`, name: 'Deleted account', phone: undefined, termsAcceptedAt: undefined, termsVersion: undefined, privacyNoticeVersion: undefined, authSubject: undefined, legacyId: undefined, suspendedAt: Date.now(), suspensionReason: undefined })
   for (const r of await ctx.db.query('dataRequests').withIndex('by_account', q => q.eq('accountId', accountId)).collect()) await ctx.db.patch(r._id, { details: undefined, status: 'resolved' })
   await audit(ctx, undefined, 'account_personal_data_purged', accountId)
 } })

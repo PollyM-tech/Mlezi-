@@ -78,3 +78,27 @@ by the owner. No website URL, sponsorship tier or additional endorsement is infe
 The supplied Lintech Telecom logo is saved at
 `frontend/src/assets/lintech-logo.png` and imported directly by the section. The artwork keeps its proportions and is included in pre-rendered HTML
 through Vite's asset manifest on build.
+
+Mylescorp Technologies is also listed under Sponsors & Partners using the supplied
+`frontend/src/assets/mylescorp-logo.avif`. Both logos use matching responsive cards;
+no external company URL is inferred.
+
+
+## Rotating hero backgrounds — 1 November 2026
+
+The landing-page hero now uses five supplied background images, starting with
+`bg-image.png`, followed by the reading, playtime, block-building and healthcare
+images. The byte-identical `Warm Mlezi Healthcare Bond (1).png` is not repeated;
+all original files remain untouched. Logos are not part of this slideshow.
+
+Backgrounds change every 10 seconds with a short crossfade and an overlay behind
+the text. No buttons, counters or navigation controls are displayed. Rotation starts automatically,
+pauses in hidden tabs to save resources, and resumes on return. Reduced-motion
+CSS removes the fade while keeping the automatic ten-second image changes.
+
+`HeroSlideshow.jsx` replaces the previous vector hero artwork; it affects only the
+landing hero, leaving account forms and the lower-page content readable. The next
+image is prefetched after initial paint, rather than downloading every slide at
+once. These are the original PNGs, so image bandwidth still reflects their sizes.
+The first background is included in pre-rendered HTML and uses Vite's asset map.
+Timing, wraparound, automatic playback, visibility and cleanup have UI tests.

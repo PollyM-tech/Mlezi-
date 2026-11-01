@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../../convex/schema.js'
 import { api, internal } from '../../convex/_generated/api.js'
+import { LEGAL_VERSION } from '../../convex/lib/legalPolicy.js'
 import { normalizeEmail, validatePassword, safeRedirect } from '../../convex/lib/authPolicy.js'
 import { requireAccount } from '../../convex/lib/permissions.js'
 
@@ -18,31 +19,42 @@ async function identity(t, email = 'person@example.test', verified = true) {
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs() })
 
 describe('Convex account permissions', () => {
+  it('requires current terms acceptance for new accounts and records it without inventing legacy consent', async () => {
+    const t = make(), who = await identity(t)
+    const details = { role: 'employer', phone: '0712345678', name: 'Parent' }
+    await expect(who.client.mutation(api.accounts.register, details)).rejects.toThrow('Read and accept')
+    await expect(who.client.mutation(api.accounts.register, { ...details, termsAccepted: true, termsVersion: 'old-version' })).rejects.toThrow('Read and accept')
+    expect(await t.run(ctx => ctx.db.query('accounts').collect())).toHaveLength(0)
+    const account = await who.client.mutation(api.accounts.register, { ...details, termsAccepted: true, termsVersion: LEGAL_VERSION })
+    const stored = await t.run(ctx => ctx.db.get(account.id))
+    expect(stored.termsVersion).toBe(LEGAL_VERSION); expect(stored.privacyNoticeVersion).toBe(LEGAL_VERSION)
+    expect(stored.termsAcceptedAt).toBeTypeOf('number')
+  })
   it('denies anonymous, unverified and revoked sessions', async () => {
     const t = make()
     await expect(t.query(api.accounts.me)).rejects.toThrow('sign in')
     const unverified = await identity(t, 'unverified@example.test', false)
-    await expect(unverified.client.mutation(api.accounts.register, { role: 'caregiver', phone: '0712345678', name: '' })).rejects.toThrow('Verify your email')
+    await expect(unverified.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: '0712345678', name: '' })).rejects.toThrow('Verify your email')
     const valid = await identity(t)
-    await valid.client.mutation(api.accounts.register, { role: 'caregiver', phone: '0712345678', name: '' })
+    await valid.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: '0712345678', name: '' })
     await t.run(ctx => ctx.db.delete(valid.sessionId))
     await expect(valid.client.query(api.accounts.me)).rejects.toThrow('session has expired')
   })
   it('creates only permitted roles, once, and rejects invalid details', async () => {
     const t = make(), who = await identity(t)
-    await expect(who.client.mutation(api.accounts.register, { role: 'admin', phone: '0712345678', name: '' })).rejects.toThrow()
-    await expect(who.client.mutation(api.accounts.register, { role: 'caregiver', phone: 'bad', name: '' })).rejects.toThrow('phone')
-    const account = await who.client.mutation(api.accounts.register, { role: 'caregiver', phone: '0712345678', name: '' })
+    await expect(who.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'admin', phone: '0712345678', name: '' })).rejects.toThrow()
+    await expect(who.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: 'bad', name: '' })).rejects.toThrow('phone')
+    const account = await who.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: '0712345678', name: '' })
     expect(account.role).toBe('caregiver')
-    const retry = await who.client.mutation(api.accounts.register, { role: 'employer', phone: '0712345678', name: 'Changed role' })
+    const retry = await who.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'employer', phone: '0712345678', name: 'Changed role' })
     expect(retry.id).toBe(account.id); expect(retry.role).toBe('caregiver')
     expect(await t.run(ctx => ctx.db.query('accounts').collect())).toHaveLength(1)
     await expect(who.client.run(ctx => requireAccount(ctx, 'admin'))).rejects.toThrow('permission')
   })
   it('creates a private employer profile and isolates accounts', async () => {
     const t = make(), employer = await identity(t, 'parent@example.test'), caregiver = await identity(t)
-    await employer.client.mutation(api.accounts.register, { role: 'employer', phone: '0712345678', name: 'Parent' })
-    await caregiver.client.mutation(api.accounts.register, { role: 'caregiver', phone: '0798765432', name: '' })
+    await employer.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'employer', phone: '0712345678', name: 'Parent' })
+    await caregiver.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: '0798765432', name: '' })
     const own = await caregiver.client.query(api.accounts.me)
     expect(own.email).toBe('person@example.test')
     expect(own).not.toHaveProperty('authSubject')
@@ -57,7 +69,7 @@ describe('Convex account permissions', () => {
     const admin = await identity(t, 'admin@example.test')
     const account = await admin.client.mutation(api.accounts.ensureExisting)
     expect(account.role).toBe('admin'); expect(account.legacyId).toBe(42)
-    const attemptedChange = await admin.client.mutation(api.accounts.register, { role: 'caregiver', phone: '0712345678', name: '' })
+    const attemptedChange = await admin.client.mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: '0712345678', name: '' })
     expect(attemptedChange.role).toBe('admin')
     const impersonator = await identity(t, 'another@example.test')
     expect(await impersonator.client.mutation(api.accounts.ensureExisting)).toBeNull()

@@ -21,10 +21,12 @@ import type * as lib_authPolicy from "../lib/authPolicy.js";
 import type * as lib_authUsers from "../lib/authUsers.js";
 import type * as lib_discoverySearch from "../lib/discoverySearch.js";
 import type * as lib_email from "../lib/email.js";
+import type * as lib_legalPolicy from "../lib/legalPolicy.js";
 import type * as lib_marketplace from "../lib/marketplace.js";
 import type * as lib_mpesa from "../lib/mpesa.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_security from "../lib/security.js";
+import type * as lib_supportEmail from "../lib/supportEmail.js";
 import type * as marketplace from "../marketplace.js";
 import type * as memberships from "../memberships.js";
 import type * as migration from "../migration.js";
@@ -35,6 +37,7 @@ import type * as privacy from "../privacy.js";
 import type * as retention from "../retention.js";
 import type * as security from "../security.js";
 import type * as support from "../support.js";
+import type * as supportEmail from "../supportEmail.js";
 import type * as supportGuest from "../supportGuest.js";
 
 import type {
@@ -57,10 +60,12 @@ declare const fullApi: ApiFromModules<{
   "lib/authUsers": typeof lib_authUsers;
   "lib/discoverySearch": typeof lib_discoverySearch;
   "lib/email": typeof lib_email;
+  "lib/legalPolicy": typeof lib_legalPolicy;
   "lib/marketplace": typeof lib_marketplace;
   "lib/mpesa": typeof lib_mpesa;
   "lib/permissions": typeof lib_permissions;
   "lib/security": typeof lib_security;
+  "lib/supportEmail": typeof lib_supportEmail;
   marketplace: typeof marketplace;
   memberships: typeof memberships;
   migration: typeof migration;
@@ -71,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   retention: typeof retention;
   security: typeof security;
   support: typeof support;
+  supportEmail: typeof supportEmail;
   supportGuest: typeof supportGuest;
 }>;
 

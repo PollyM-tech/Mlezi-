@@ -5,7 +5,8 @@ import { previewHeaders, developmentHeaders } from './security-headers.mjs'
 
 export default defineConfig({
   plugins: [react()],
-  build: { manifest: true },
+  // Public pre-rendering resolves every source image through this manifest.
+  build: { manifest: true, assetsInlineLimit: 0 },
   server: {
     host: '127.0.0.1', headers: developmentHeaders,
     fs: {

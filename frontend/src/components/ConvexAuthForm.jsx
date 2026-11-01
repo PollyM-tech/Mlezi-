@@ -84,6 +84,6 @@ export default function ConvexAuthForm({ initialRegistering = false, initialRole
     {codeStep && <button className="text-button" disabled={busy || !settings?.emailReady} onClick={resend}>Resend code</button>}
     {step === 'start' && !registering && method === 'password' && <button className="text-button" disabled={busy} onClick={() => { setStep('reset-start'); setError(''); setNotice('') }}>Forgot password?</button>}
     {step !== 'start' && step !== 'magic-sent' && <button className="text-button" disabled={busy} onClick={reset}>Back to sign in</button>}
-    <p className="form-footnote">Magic links and email codes also let you sign in without remembering a password. New users choose their account type after verifying their email.</p>
+    <p className="form-footnote">Read the <a href="/terms/">Terms of use</a> and <a href="/privacy/">Privacy notice</a> before creating an account. You will accept the terms when completing your account.</p><p className="form-footnote">Magic links and email codes also let you sign in without remembering a password. New users choose their account type after verifying their email.</p>
   </section></div>
 }

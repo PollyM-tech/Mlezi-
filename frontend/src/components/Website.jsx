@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import PublicPages from './PublicPages.jsx'
 import CookieConsent from './CookieConsent.jsx'
+import FaqAssistant from './FaqAssistant.jsx'
 import { entryRoute } from '../lib/public-pages.js'
 
 const ConvexSession = lazy(() => import('./ConvexSession.jsx'))
@@ -22,7 +23,7 @@ export default function Website() {
     }
   }, [route])
   if (route.redirect) return <p role="status">Opening Mlezi…</p>
-  if (route.private) return <Suspense fallback={<p role="status">Opening your account…</p>}><ConvexSession /></Suspense>
-  return <><PublicPages page={route.page} /><CookieConsent /></>
+  if (route.private) return <><Suspense fallback={<p role="status">Opening your account…</p>}><ConvexSession /></Suspense><FaqAssistant /></>
+  return <><PublicPages page={route.page} /><CookieConsent /><FaqAssistant /></>
 }
 

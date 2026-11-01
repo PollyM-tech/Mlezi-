@@ -25,3 +25,19 @@
 .landing-partner-logo { display: block; width: 100%; max-width: 240px; height: 100px; object-fit: contain; }
 .landing-partner-name { color: #071b45; font-size: 1.75rem; font-weight: 700; letter-spacing: -.03em; }
 @media(max-width:600px) { .landing-partners { padding-top: 32px; padding-bottom: 32px; } .landing-partner-card { width: 100%; min-height: 116px; } }
+
+/* Full-width hero photos keep the family-care message readable above the image. */
+.landing .landing-hero { display: block; position: relative; isolation: isolate; overflow: hidden; max-width: none; padding: 0; background: #f1e9dc; }
+.landing-hero-content { position: relative; z-index: 1; display: flex; align-items: center; min-height: 600px; box-sizing: border-box; padding-top: 54px; padding-bottom: 94px; }
+.landing-hero-content .landing-hero-copy { width: 59%; max-width: 650px; }
+.hero-slideshow { position: absolute; inset: 0; pointer-events: none; }
+.hero-slideshow-images { position: absolute; inset: 0; z-index: 0; }
+.hero-background-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
+.hero-background-current { animation: hero-image-reveal 900ms ease-out both; }
+.hero-background-shade { position: absolute; inset: 0; background: linear-gradient(90deg,rgba(251,250,245,.99) 0%,rgba(251,250,245,.96) 36%,rgba(251,250,245,.84) 51%,rgba(251,250,245,.20) 74%,rgba(251,250,245,.03) 100%); }
+@keyframes hero-image-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media(max-width:1050px) { .landing-hero-content { min-height: 560px; padding-top: 40px; padding-bottom: 88px; } .landing-hero-content .landing-hero-copy { width: 68%; } }
+@media(max-width:600px) { .landing-hero-content { min-height: 560px; padding-top: 34px; padding-bottom: 90px; } .landing-hero-content .landing-hero-copy { width: 100%; max-width: 450px; } .hero-background-image { object-position: 62% center; } .hero-background-shade { background: linear-gradient(90deg,rgba(251,250,245,.96),rgba(251,250,245,.92) 60%,rgba(251,250,245,.84)); } }
+@media(prefers-reduced-motion:reduce) { .hero-background-current { animation: none; } }
+
+.landing-hero-content .landing-hero-copy > p { color: #52694f; }

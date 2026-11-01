@@ -1,101 +1,125 @@
-# Private support tickets
+# Private support tickets and email follow-up
 
-Implemented 1 November 2026. Convex handles both account and guest conversations;
-there is no new third-party helpdesk or Flask backend.
+Updated 1 November 2026. Convex handles tickets; Resend sends acknowledgements,
+team notifications and support replies. No Flask or separate helpdesk is required.
 
-## Where users get help
+## Visitor journey
 
-- `/support/`: public support page, sign-in recovery instructions, guest submission
-  and returning-guest lookup. Linked from public and account footers and legal pages.
-- `/app/#/support`: account ticket history and conversation. Support remains
-  accessible during caregiver photo setup, suspension and the deletion grace period.
-- Administrators use the same application route for the status-filtered, paginated
-  queue. Admin-panel navigation links to it. Current administrator MFA is required.
+Click Support in the footer to open `/support/`. A signed-out visitor enters an
+email, issue category, subject and message, completes spam protection, and submits.
+The page confirms receipt and shows a ticket reference. No account or saved access
+key is required for this email workflow.
 
-Users choose account, profile, identity, membership, technical, safety, privacy or
-other. Replies appear as **Mlezi Support**, never an administrator’s personal email,
-phone or account ID. Conversations are plain text; file attachments are deliberately
-not accepted. Do not request IDs, passwords, OTPs or payment PINs through tickets.
-Existing identity upload, privacy request and deletion workflows remain separate.
+The automatic email says:
 
-The public privacy notice now links to support rather than publishing an operator
-email. `VITE_PUBLIC_SUPPORT_EMAIL` is no longer required by the production gate.
-The operator’s legal details and final legal review are still required before launch.
-No claim is made that this implementation alone satisfies every legal notice duty.
-Authentication still needs a verified sending domain even if support email is private.
+> Thank you for contacting Mlezi Support. We have received your issue. Our team
+> will address it within 48 hours and follow up with you by email.
 
-## Signed-out access and spam protection setup
+It also includes the ticket reference and a reminder not to send passwords, OTPs,
+identity documents or payment PINs. It does not echo untrusted issue text or links
+back to an unverified email recipient. Forty-eight hours means elapsed hours; it
+is a support-team commitment, not automatic problem resolution.
 
-Guest conversations do not require account creation. Successful submission returns
-a reference and cryptographically random 256-bit access key. Download/save both;
-neither is automatically stored in browser storage or placed in page URLs. The
-database stores only the key’s SHA-256 digest. Anyone holding both values can read,
-reply and resolve that guest ticket; keys cannot be recovered. A guest-provided
-email is optional, private, unverified and does not establish account ownership.
-There are currently no ticket email notifications or automatic account changes.
+Signed-in users retain account ticket history at `/app/#/support`. Admins use the
+same route for their private queue and reply as Mlezi Support. Guest replies from
+admins are saved to the thread AND queued for email delivery. An optional team
+notification is sent to the configured private inbox for each new guest issue.
+The admin queue shows oldest tickets first and displays the 48-hour follow-up due
+at time. Admin MFA is required.
 
-Before guest submissions can work:
+The inbox and operator phone number are not displayed on the website. Email
+recipients necessarily see the sender/reply address. Use a business support sender
+for launch. Direct email replies go to the team's configured inbox; incoming email
+is not automatically imported into the Convex conversation. Staff can also follow
+up directly from that inbox. Email claims never prove account ownership.
 
-1. Create a Cloudflare Turnstile widget for the actual frontend hostname. Include
-   localhost only in a separate development widget if needed.
-2. Set its **public** site key as `VITE_TURNSTILE_SITE_KEY` in the frontend build
-   environment (Vercel and local `.env.local` as appropriate).
-3. Set `TURNSTILE_SECRET_KEY` in the matching Convex deployment, never a `VITE_`
-   variable and never a commit. Set `SUPPORT_ALLOWED_HOSTNAMES` on Convex to exact
-   comma-separated frontend hostnames, without a scheme/path. Do not paste secrets
-   into chat. Deploy frontend and Convex changes to their matching environments.
-4. Test a guest submission, save access, return while signed out, reply from an
-   MFA-authenticated admin, and confirm the reply is visible with the key only.
-   Verify an incorrect key is rejected. Then attest `SUPPORT_FLOW_TESTED=true`.
+## Configuration, without deploying to Vercel first
 
-Public submission is disabled until a frontend key exists; the server independently
-fails closed unless its secret and allowed-hostname list exist. Every token is
-validated server-side for success, expected hostname and action `support`.
-No production bypass is provided. Cloudflare dummy test keys cannot satisfy the
-production readiness check. Test tokens do not demonstrate real production readiness.
+Local frontend testing is supported. Create a development Turnstile widget that
+allows `localhost`; configure the same hostname on the development Convex backend.
+Keep production and development widgets/deployments separate.
 
-Turnstile loads only after the visitor chooses to load the guest anti-spam check.
-The page and cookie/privacy notices explain the provider request. Hosting CSP
-allows its script, iframe and connection domain. Declining optional cookies still
-allows ordinary use and signed-in support; guest submission requires this check.
+Frontend build environment (`frontend/.env.local` and later Vercel):
 
-## Limits and permissions
+- `VITE_TURNSTILE_SITE_KEY`: public widget key.
 
-Account owners can access only their own account tickets; admins need a current
-MFA grant. Guest access requires the exact key/reference. Guest email never links a
-ticket to an existing account. Public responses omit private identifiers and key
-hashes. Only admin detail views expose the optional guest email, marked unverified.
-Queries use indexed pagination, and conversations are bounded to 100 messages.
+Matching Convex deployment environment:
 
-Creation allows five account tickets/day, with a global 100 guest tickets/day
-budget and five per provided guest email/day after CAPTCHA validation. Replies
-and status changes each have a 20/hour limit per account or guest ticket. Subjects
-are limited to 120 characters and messages to 2,000. Queue limits may need tuning
-with actual volume; no limit provides a complete denial-of-service guarantee.
+- `TURNSTILE_SECRET_KEY`: secret widget key.
+- `SUPPORT_ALLOWED_HOSTNAMES`: exact comma-separated frontend hostnames, without
+  scheme, port or path. For local testing this includes `localhost`.
+- `SUPPORT_INBOX_EMAIL`: private team inbox for new-ticket notifications and replies.
+- `SUPPORT_EMAIL_FROM`: optional dedicated sender; falls back to `AUTH_EMAIL_FROM`.
+- `SUPPORT_RESEND_KEY`: optional dedicated API key; falls back to `AUTH_RESEND_KEY`.
 
-Statuses are `open` (awaiting support), `waiting` (support replied), `resolved`.
-An owner reply reopens the ticket. Either side can resolve or reopen it. Audit
-events record action/actor/reference, without message text or access secrets.
+Never put secrets/private team email in `VITE_` variables, commit them or paste
+keys into chat. No new npm package is needed. Turnstile remains independent of
+email follow-up; it protects a form that accepts submissions without signing in.
+It loads only when a visitor chooses the guest spam check, as described in the
+privacy and cookie notices. Server validation checks success, hostname and action.
 
-## Retention and operations
+For real visitor emails, verify a sending domain in Resend. The `resend.dev` test
+sender is restricted and cannot establish public delivery readiness. Frontend
+hosting is not required to verify a sender, but a domain you control is needed.
+The team inbox can be an existing Gmail mailbox while preparing the business inbox;
+this does not permit sending FROM Gmail through Resend without domain verification.
 
-The existing daily retention worker removes resolved tickets 90 days after their
-last update, and other tickets after 180 days without activity. Each sweep handles
-up to 100 tickets per status. Account deletion removes its account-linked tickets
-and messages; account exports include those conversations. Anonymous guest tickets
-are not linked to an account merely by email. Operators must independently handle
-guest erasure requests and verify the appropriate access before disclosing data.
+Production checks require a non-test support sender, private inbox, guest spam
+configuration and `SUPPORT_FLOW_TESTED=true` after real acceptance. Existing legal,
+backup, monitoring, production Convex and authentication checks still apply.
 
-Admins must monitor the queue. There is no external notification, response-time
-guarantee or emergency dispatch. Support cannot grant identity approval, change a
-password or confirm payment by itself. Never use an unverified guest claim as proof.
+## Email reliability and visibility
 
-Production also checks guest anti-spam readiness and actual support acceptance.
-The remaining domain, operator, authentication-email, backup and monitoring launch
-requirements continue to apply.
+Ticket creation and email-job creation commit together. Background jobs retry
+provider failures up to three attempts, using a stable Resend idempotency key.
+Retries finish within minutes; Resend's idempotency window is 24 hours. Manual
+retries after that window can resend an email if an earlier result was ambiguous.
+Jobs show pending/sending/sent/failed in admin ticket details; a failed job can be
+retried by an MFA-authenticated admin. Sent means provider acceptance, not proof of
+inbox delivery. Administrators must monitor failures and their inbox; delivery
+webhook/bounce tracking is not implemented.
 
-Verification covers account isolation, guest-key access, MFA, content/rate limits,
-CAPTCHA failure/success and hostname/action checks, private export/deletion and
-retention, plus UI submissions and configuration-disabled guest forms.
+A worker lease recovers interrupted sends. A separate budget limits support mail
+to 20 attempts/minute and 200/day, alongside existing ticket/reply limits. Provider
+credentials, message text and recipient addresses are not logged by these workers.
+If email configuration is absent, the public action rejects before creating a new
+email-oriented ticket. Guest email is normalized and required on that public API.
 
-Provider reference: [Cloudflare server-side validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
+## Privacy, limits and retention
+
+Account owners access only their own tickets. Guest email is private and unverified;
+it never links a ticket to an account. Legacy guest access-key API support remains
+for already-created conversations; the new form does not require saving those keys.
+Admin detail responses alone expose guest email and delivery status. File uploads
+are not accepted. Support does not approve identities, reset passwords or confirm
+payments by itself.
+
+Five account tickets/day and 100 guest tickets/day are permitted, with five guest
+submissions per provided email/day. Replies/status changes have 20/hour limits;
+subjects allow 120 characters, messages 2,000 and threads 100 messages. Reads use
+indexed pagination. An unverified address and CAPTCHA are not complete protection
+against abuse; monitor actual volume and provider budgets.
+
+Daily retention removes resolved tickets after 90 days without updates and other
+tickets after 180 days. Each sweep handles up to 10 tickets per status. Account
+exports include account-linked support conversations. Account deletion removes
+those tickets, messages and queued-email records in batches of ten. Retention does the same for
+expired guest tickets. Workers check that a ticket still exists before sending;
+an email already handed to its provider cannot be recalled. Guest deletion requests
+require appropriate verification; matching an unverified email is insufficient.
+
+There is no emergency dispatch, automatic incoming-email ingestion, or guarantee
+that a provider-accepted email arrived. Keep final operator/legal notices under
+review for the real business. A public personal contact email is not required by
+the app's production checker.
+
+Verification covers account isolation/MFA, required guest email, CAPTCHA validation,
+48-hour acknowledgement content, team routing, admin reply routing, retry limits,
+idempotency headers, deletion suppression, privacy export/retention and form UX.
+No real emails are sent by these automated tests.
+
+References:
+
+- [Resend sending API](https://resend.com/docs/api-reference/emails/send-email)
+- [Resend idempotency keys](https://resend.com/docs/dashboard/emails/idempotency-keys)
+- [Cloudflare token validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)

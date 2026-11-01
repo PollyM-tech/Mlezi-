@@ -3,14 +3,16 @@ import { internal } from './_generated/api.js'
 import { v } from 'convex/values'
 import { categories, keyHash } from './support.js'
 import { fail, text } from './lib/marketplace.js'
+import { normalizeEmail } from './lib/authPolicy.js'
+import { supportEmailReady } from './lib/supportEmail.js'
 
-export const create = action({ args: { subject: v.string(), category: v.string(), body: v.string(), email: v.optional(v.string()), challenge: v.string(), website: v.optional(v.string()) }, handler: async (ctx, args) => {
+export const create = action({ args: { subject: v.string(), category: v.string(), body: v.string(), email: v.string(), challenge: v.string(), website: v.optional(v.string()) }, handler: async (ctx, args) => {
   const subject = text(args.subject, 'a subject', 120, true), body = text(args.body, 'your message', 2000, true)
   if (!categories.includes(args.category) || args.website) fail('Unable to submit this ticket')
-  const email = text(args.email || '', 'an email', 254).toLowerCase()
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail('Enter a valid email, or leave it blank')
+  const email = normalizeEmail(args.email)
   const secret = process.env.TURNSTILE_SECRET_KEY, allowed = (process.env.SUPPORT_ALLOWED_HOSTNAMES || '').split(',').map(s => s.trim()).filter(Boolean)
   if (!secret || !allowed.length) fail('Guest support is awaiting spam-protection setup. Signed-in support is available.')
+  if (!supportEmailReady()) fail('Support email delivery is being configured. Please try again shortly.')
   if (!args.challenge || args.challenge.length > 2048) fail('Complete the spam-protection check')
   let result
   try {

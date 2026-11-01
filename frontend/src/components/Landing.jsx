@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import logo from '../assets/logo.png'
 import Partners from './Partners.jsx'
+import HeroSlideshow from './HeroSlideshow.jsx'
+import { FAQ_ENTRIES } from '../lib/faq.js'
 
 function Icon({ name, ...props }) {
   const paths = {
@@ -16,59 +18,6 @@ function Icon({ name, ...props }) {
   return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name] || paths.heart}</svg>
 }
 
-// Original vector artwork: decorative illustration, not a real caregiver profile.
-function CareIllustration() {
-  return <svg viewBox="0 0 560 590" role="img" aria-labelledby="care-art-title" className="care-illustration">
-    <title id="care-art-title">Illustration of a caregiver and child building colourful blocks together</title>
-    <defs><linearGradient id="room" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f2e6cf"/><stop offset="1" stopColor="#d7d8bb"/></linearGradient><pattern id="rug" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M0 11h22M11 0v22" stroke="#c5b598" strokeWidth=".7" opacity=".5"/></pattern></defs>
-    <rect x="20" y="15" width="520" height="560" rx="240" fill="#305e48"/>
-    <path d="M65 480V260a215 215 0 0 1 430 0v220Z" fill="url(#room)"/>
-    <path d="M101 319V161a75 75 0 0 1 150 0v158Z" fill="#f9f5e8"/>
-    <path d="M113 305V165a63 63 0 0 1 126 0v140Z" fill="#bfd0bb"/>
-    <path d="M175 103v202m-62-90h126" stroke="#f9f5e8" strokeWidth="8"/>
-    <path d="M114 274q52-55 125-37v68H114" fill="#88a68a"/>
-    <path d="M175 267q33-39 64-41v79h-64" fill="#a7b79c"/>
-    <circle cx="214" cy="165" r="18" fill="#e4ca86"/>
-    <path d="M355 124h75v92h-75z" fill="#ece2c9" stroke="#b7ab88" strokeWidth="5"/>
-    <path d="M393 199v-53m0 31q-31-9-23-27 26 0 23 27m0-7q23-24 29-9-5 20-29 24" stroke="#6f8d68" strokeWidth="4" fill="none"/>
-    <path d="M55 433q225-70 450 0v77q-225 86-450-1Z" fill="#d2c19e"/>
-    <ellipse cx="285" cy="461" rx="197" ry="67" fill="#efe3ca"/>
-    <ellipse cx="285" cy="461" rx="197" ry="67" fill="url(#rug)"/>
-    <path d="M436 351q-30-50-12-90 36 13 24 64 3-70 34-83 23 48-20 95 42-36 55-9-18 32-62 37" fill="#6e8a58"/>
-    <path d="m427 351 13 61h37l13-61" fill="#b57e55"/>
-    <path d="M160 401q-10-66 18-113l77-8q40 33 47 113l-43 36Z" fill="#cc9a55"/>
-    <path d="M186 282v-35h48v35q-24 24-48 0" fill="#885334"/>
-    <ellipse cx="209" cy="223" rx="40" ry="48" fill="#9c6441"/>
-    <path d="M170 234q-15-69 26-75 52-12 57 38l-20-7q-31 13-56 7l-1 36Z" fill="#293c31"/>
-    <circle cx="183" cy="164" r="28" fill="#293c31"/>
-    <path d="m205 237 8 4 9-5" fill="none" stroke="#5f3424" strokeWidth="2.5" strokeLinecap="round"/>
-    <path d="M221 220h1m-24-1h1" stroke="#382c24" strokeWidth="4" strokeLinecap="round"/>
-    <circle cx="176" cy="231" r="5" fill="#d1a85e"/>
-    <path d="M176 329q-19 33-5 59l72 49 17-20-53-49 8-26" fill="#9c6441"/>
-    <path d="M249 312q35 37 52 68l36 26-12 20-51-22q-31-36-44-51" fill="#9c6441"/>
-    <path d="M154 402q-19 34 22 59l90 17 65-10q5-22-14-27l-67-5-38-36" fill="#31533e"/>
-    <path d="m260 470 62 5q28-1 26-13-3-18-34-17" fill="#9c6441"/>
-    <path d="M327 339q-27 28-25 75l64 10 26-41-23-41" fill="#91a6a0"/>
-    <path d="M329 339v-26h31v29" fill="#a16c49"/>
-    <ellipse cx="344" cy="295" rx="28" ry="34" fill="#aa7650"/>
-    <path d="M316 297q-9-49 22-48 35-6 37 30l-16-8-8 9-24-3Z" fill="#303d31"/>
-    <path d="m338 307 7 3 6-4" fill="none" stroke="#633e2a" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M335 292h1m17-1h1" stroke="#382c24" strokeWidth="3" strokeLinecap="round"/>
-    <path d="m323 356-29 29-24 22 13 17 32-19 27-27" fill="#aa7650"/>
-    <path d="M365 361q18 25 13 42l-23 29-18-9 17-27-11-18" fill="#aa7650"/>
-    <path d="M307 411q-21 29 1 51l54 9 29-15q-7-22-34-21l-10-15" fill="#bf7756"/>
-    <path d="m364 463 31 3q18-7 12-15-10-9-28-2" fill="#aa7650"/>
-    <rect x="229" y="443" width="35" height="34" rx="3" fill="#cf8053"/>
-    <rect x="265" y="410" width="34" height="67" rx="3" fill="#dfb766"/>
-    <path d="m260 410 22-29 22 29" fill="#567c65"/>
-    <rect x="306" y="459" width="40" height="22" rx="3" fill="#759798"/>
-    <circle cx="189" cy="492" r="12" fill="#dfb766"/>
-    <path d="m401 481 14-20 18 20" fill="#be7d53"/>
-    <path d="m68 162 8-16 7 16 17 7-17 6-7 17-8-17-16-6Z" fill="#e3c17c"/>
-    <path d="m470 114 5-12 5 12 12 5-12 5-5 12-5-12-12-5Z" fill="#dfb766"/>
-  </svg>
-}
-
 const careTypes = [
   { name: 'Everyday care', detail: 'Nannies & babysitters', category: 'nanny', icon: 'heart', color: 'sage' },
   { name: 'New beginnings', detail: 'Newborn & maternity care', category: 'newborn_maternity_nanny', icon: 'sprout', color: 'sand' },
@@ -77,13 +26,7 @@ const careTypes = [
   { name: 'Care on the go', detail: 'Childcare on trips & holidays', category: 'travel_nanny', icon: 'bag', color: 'sand' },
   { name: 'A little extra support', detail: 'Special needs nannies', category: 'special_needs_nanny', icon: 'sun', color: 'sage' },
 ]
-const questions = [
-  ['Can I browse before paying?', 'Yes. Browsing, filtering, and shortlisting are free. An employer contact-access pass is needed to unlock new caregiver contacts. Contacts you have already unlocked remain available after your pass expires.'],
-  ['What does “Identity checked” mean?', 'It means an identity review has been completed. It is separate from Premium membership and employer ratings. It is not a criminal-background check or a guarantee of future conduct. You should still interview caregivers and check their references.'],
-  ['Is a caregiver’s contact information public?', 'No. Public profiles show experience, services, availability, expected pay, and reviews. Contact details are protected behind employer contact access. National ID documents are never part of a public profile.'],
-  ['Can I join as a caregiver for free?', 'Yes. Creating an account and a basic caregiver profile is free. You will need a profile photo, national ID image and recent selfie to complete your profile. Yearly Premium membership is optional and buys priority visibility, not verification or a guarantee of work.'],
-  ['Does Mlezi employ the caregivers?', 'Mlezi is a marketplace connecting families and caregivers. Families and caregivers discuss the work, pay, references, and care arrangements directly.'],
-]
+const questions = FAQ_ENTRIES.filter(entry => entry.featured).map(entry => [entry.question, entry.answer])
 
 export default function Landing({ user }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -112,9 +55,11 @@ export default function Landing({ user }) {
         {user ? <a className="button primary" href="/app/#/workspace">My workspace <Icon name="arrow" width="17" /></a> : <><a className="landing-signin" href="/app/#/signin">Log in</a><a className="button primary" href="/app/#/join?role=employer">Get started <Icon name="arrow" width="17" /></a></>}
       </nav>
     </header>
-    <section className="landing-hero landing-container">
+    <section className="landing-hero">
+      <HeroSlideshow />
+      <div className="landing-hero-content landing-container">
       <div className="landing-hero-copy"><span className="landing-kicker"><span /> ROOTED IN CARE. MADE FOR KENYA.</span><h1>A little care.<br />A <em>brighter</em>{' '}beginning.</h1><p>For the everyday moments and the big little milestones. Find a caregiver who fits your family, your routine, and your child’s world.</p><div className="landing-hero-actions"><a className="button primary" href="/app/#/browse">Find your caregiver <Icon name="arrow" width="18" /></a><a className="landing-link" href="/app/#/join?role=caregiver">I’m a caregiver <span>↗</span></a></div><div className="landing-reassurance"><span><Icon name="check" width="17" /> Free to browse</span><span><Icon name="check" width="17" /> Your search stays private</span></div></div>
-      <div className="landing-hero-art"><div className="hero-art-label"><Icon name="heart" width="18" /><span>Good care starts<br /><strong>with connection.</strong></span></div><CareIllustration /><div className="hero-art-note"><span className="hero-note-mark">✦</span><div><strong>Care for their world.</strong><span>More room for little discoveries.</span></div></div><span className="hero-art-caption">EVERYDAY CARE. EXTRAORDINARY LITTLE MOMENTS.</span></div>
+      </div>
     </section>
     <section className="landing-search-wrap landing-container" aria-labelledby="landing-search-title"><form className="landing-search" onSubmit={findCare}><div><span className="eyebrow">LET’S FIND YOUR FIT</span><h2 id="landing-search-title">What does care look like for you?</h2></div><label>I’m looking for<select value={category} onChange={e => setCategory(e.target.value)}><option value="nanny">A nanny</option><option value="babysitter">A babysitter</option><option value="newborn_maternity_nanny">Newborn & maternity care</option><option value="early_years_educator">An early-years educator</option><option value="special_needs_nanny">A special needs nanny</option><option value="travel_nanny">A travel nanny</option><option value="occasional_babysitter">On-call / occasional care</option></select></label><label>Work arrangement<select value={arrangement} onChange={e => setArrangement(e.target.value)}><option value="">Any arrangement</option><option value="live_in">Live-in</option><option value="live_out">Live-out / day nanny</option><option value="overnight">Overnight</option><option value="travel">Travel & holidays</option><option value="occasional_backup">On-call / occasional</option></select></label><button className="button primary">Explore care <Icon name="arrow" width="18" /></button></form></section>
     <section id="care-categories" className="landing-section landing-container"><div className="landing-section-heading"><div><span className="eyebrow">EVERY FAMILY IS DIFFERENT</span><h2>A little help, in all the right ways.</h2></div><a className="landing-link" href="/app/#/browse">Explore all caregivers <span>↗</span></a></div><p className="landing-section-intro">From first cuddles to first school days, family trips, or a few hours while you work or cook — find care for the moment you’re in.</p><div className="landing-care-grid">{careTypes.map(type => <a key={type.category || type.service} className="landing-care-type" href={type.service ? `/app/#/browse?service_type=${type.service}` : `/app/#/browse?category=${type.category}`}><span className={`care-type-icon ${type.color}`}><Icon name={type.icon} /></span><h3>{type.name}</h3><p>{type.detail}</p><span className="care-type-arrow" aria-hidden="true">↗</span></a>)}</div></section>

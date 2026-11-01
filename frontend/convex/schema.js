@@ -22,6 +22,7 @@ const privateAsset = v.union(
 // Public caregiver projections must exclude account contact and private evidence.
 export default defineSchema({
   ...authTables,
+  supportEmails: defineTable({ ticketId: v.id('supportTickets'), messageId: v.optional(v.id('supportMessages')), kind: v.union(v.literal('acknowledgement'), v.literal('reply'), v.literal('team')), status: v.union(v.literal('pending'), v.literal('sending'), v.literal('sent'), v.literal('failed')), attempts: v.number(), createdAt: v.number(), lastAttemptAt: optionalNumber, sentAt: optionalNumber }).index('by_ticket', ['ticketId']),
   supportTickets: defineTable({ accountId: v.optional(v.id('accounts')), guestKeyHash: optionalText, guestEmail: optionalText, subject: v.string(), category: v.string(), status: v.union(v.literal('open'), v.literal('waiting'), v.literal('resolved')), messageCount: v.number(), createdAt: v.number(), updatedAt: v.number() }).index('by_account', ['accountId', 'updatedAt']).index('by_status', ['status', 'updatedAt']).index('by_updated', ['updatedAt']),
   supportMessages: defineTable({ ticketId: v.id('supportTickets'), sender: v.union(v.literal('customer'), v.literal('support')), body: v.string(), createdAt: v.number() }).index('by_ticket', ['ticketId']),
   adminMfa: defineTable({ accountId: v.id('accounts'), encryptedSecret: v.string(), enabled: v.boolean(), setupExpiresAt: v.number(), attempts: v.number(), lastStep: optionalNumber }).index('by_account', ['accountId']),
@@ -33,7 +34,7 @@ export default defineSchema({
   uploadedAssets: defineTable({ accountId: v.id('accounts'), storageId: v.id('_storage'), purpose: v.union(v.literal('photo'), v.literal('national_id'), v.literal('selfie')), claimed: v.boolean(), createdAt: v.number() }).index('by_storage', ['storageId']),
   authEmailLimits: defineTable({ email: v.string(), lastSentAt: v.number(), windowStartedAt: v.number(), count: v.number() }).index('by_email', ['email']),
   accounts: defineTable({
-    ...legacy, name: optionalText, authSubject: optionalText, suspendedAt: optionalNumber, suspensionReason: optionalText, deletionRequestedAt: optionalNumber, role, email: v.string(), phone: optionalText, createdAt: v.number(),
+    ...legacy, name: optionalText, authSubject: optionalText, suspendedAt: optionalNumber, suspensionReason: optionalText, deletionRequestedAt: optionalNumber, role, email: v.string(), phone: optionalText, termsAcceptedAt: optionalNumber, termsVersion: optionalText, privacyNoticeVersion: optionalText, createdAt: v.number(),
   }).index('by_auth_subject', ['authSubject']).index('by_email', ['email']).index('by_legacy_id', ['legacyId']),
   caregivers: defineTable({
     ...legacy, accountId: v.id('accounts'), name: v.string(), photoUrl: v.string(),

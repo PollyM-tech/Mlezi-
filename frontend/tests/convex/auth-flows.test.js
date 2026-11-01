@@ -1,3 +1,4 @@
+import { LEGAL_VERSION } from '../../convex/lib/legalPolicy.js'
 import { it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { Buffer } from 'node:buffer'
 import { generateKeyPairSync } from 'node:crypto'
@@ -36,7 +37,7 @@ it('verifies password signup; email OTP links to the same verified user; rejects
   await expect(sign(t, 'password', { flow: 'email-verification', email: 'person@example.test', code: '00000000' })).rejects.toThrow()
   const verified = await sign(t, 'password', { flow: 'email-verification', email: 'person@example.test', code: signupCode })
   expect(verified.tokens.token).toBeTruthy()
-  await clientFor(t, verified).mutation(api.accounts.register, { role: 'caregiver', phone: '0712345678', name: '' })
+  await clientFor(t, verified).mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: '0712345678', name: '' })
   const original = await clientFor(t, verified).query(api.accounts.me)
   await expect(sign(t, 'password', { flow: 'email-verification', email: 'person@example.test', code: signupCode })).rejects.toThrow()
   await t.run(async ctx => { for (const row of await ctx.db.query('authEmailLimits').collect()) await ctx.db.delete(row._id) })
@@ -49,7 +50,7 @@ it('password recovery changes credentials and revokes older sessions', async () 
   const t = convexTest(schema, modules), email = 'recovery@example.test'
   await sign(t, 'password', { flow: 'signUp', email, password: 'OldPassword123!' })
   const original = await sign(t, 'password', { flow: 'email-verification', email, code: code() })
-  await clientFor(t, original).mutation(api.accounts.register, { role: 'employer', phone: '0712345678', name: 'Parent' })
+  await clientFor(t, original).mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'employer', phone: '0712345678', name: 'Parent' })
   await t.run(async ctx => { for (const row of await ctx.db.query('authEmailLimits').collect()) await ctx.db.delete(row._id) })
   await sign(t, 'password', { flow: 'reset', email })
   const recovered = await sign(t, 'password', { flow: 'reset-verification', email, code: code(), newPassword: 'NewPassword123!' })
@@ -91,7 +92,7 @@ it('links a pending password signup after OTP login only when email ownership is
   await t.run(async ctx => { for (const row of await ctx.db.query('authEmailLimits').collect()) await ctx.db.delete(row._id) })
   await sign(t, 'email-otp', { email })
   const otp = await sign(t, 'email-otp', { email, code: code() })
-  const original = await clientFor(t, otp).mutation(api.accounts.register, { role: 'employer', phone: '0712345678', name: 'Parent' })
+  const original = await clientFor(t, otp).mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'employer', phone: '0712345678', name: 'Parent' })
   // An unverified password credential must not grant a session on the verified account.
   await t.run(async ctx => { for (const row of await ctx.db.query('authEmailLimits').collect()) await ctx.db.delete(row._id) })
   expect((await sign(t, 'password', { flow: 'signIn', email, password: 'Testing123!' })).tokens).toBeNull()
@@ -125,7 +126,7 @@ it('recovery preserves passwordless account ownership and revokes its old sessio
   const t = convexTest(schema, modules), email = 'passwordless@example.test'
   await sign(t, 'email-otp', { email })
   const original = await sign(t, 'email-otp', { email, code: code() })
-  const account = await clientFor(t, original).mutation(api.accounts.register, { role: 'caregiver', phone: '0712345678', name: '' })
+  const account = await clientFor(t, original).mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'caregiver', phone: '0712345678', name: '' })
   await t.run(async ctx => { for (const row of await ctx.db.query('authEmailLimits').collect()) await ctx.db.delete(row._id) })
   await sign(t, 'password-recovery', { flow: 'reset', email })
   const reset = await sign(t, 'password', { flow: 'reset-verification', email, code: code(), newPassword: 'NewPassword123!' })

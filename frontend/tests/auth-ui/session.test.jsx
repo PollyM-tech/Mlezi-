@@ -1,21 +1,24 @@
 import { it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ConvexSession from '../../src/components/ConvexSession.jsx'
+import { LEGAL_VERSION } from '../../convex/lib/legalPolicy.js'
 
 const state = vi.hoisted(() => ({
   auth: { isAuthenticated: false, isLoading: false, fetchAccessToken: vi.fn() },
-  signIn: vi.fn(), signOut: vi.fn(), query: undefined,
+  signIn: vi.fn(), signOut: vi.fn(), mutation: vi.fn(), query: undefined,
 }))
 vi.mock('@convex-dev/auth/react', () => ({
   ConvexAuthProvider: ({ children }) => children,
   useConvexAuth: () => state.auth,
   useAuthActions: () => ({ signIn: state.signIn, signOut: state.signOut }),
 }))
-vi.mock('convex/react', () => ({ useConvexAuth: () => state.serverAuth || state.auth, useQuery: () => state.query, useMutation: () => vi.fn() }))
+vi.mock('convex/react', () => ({ useConvexAuth: () => state.serverAuth || state.auth, useQuery: () => state.query, useMutation: () => state.mutation }))
 vi.mock('../../src/lib/convexClient.js', () => ({ getConvexClient: () => ({}) }))
 vi.mock('../../src/App.jsx', () => ({ default: () => <p>Regular Mlezi app</p> }))
 beforeEach(() => {
+  sessionStorage.clear()
+  state.mutation.mockReset().mockResolvedValue(null)
   state.serverAuth = null
   state.auth.isAuthenticated = false; state.auth.isLoading = false; state.query = undefined
   state.signIn.mockReset(); state.signOut.mockReset().mockResolvedValue(undefined)
@@ -85,4 +88,18 @@ it('shows legal pages to a caregiver even while profile access is restricted',()
  render(<ConvexSession />)
  expect(screen.getByRole('heading',{name:'Privacy notice'})).toBeTruthy()
  expect(screen.queryByText('Regular Mlezi app')).toBeNull()
+})
+
+it('requires an unchecked terms acknowledgement when completing a new verified account', async () => {
+  state.auth.isAuthenticated = true; state.query = { status: 'onboarding', account: null }
+  render(<ConvexSession />)
+  const phone = await screen.findByLabelText('Contact phone')
+  const checkbox = screen.getByRole('checkbox', { name: /I am at least 18/ })
+  expect(checkbox.checked).toBe(false); expect(checkbox.required).toBe(true)
+  await userEvent.type(phone, '0712345678')
+  await userEvent.click(screen.getByRole('button', { name: 'Continue to my workspace' }))
+  expect(state.mutation).toHaveBeenCalledTimes(1)
+  await userEvent.click(checkbox)
+  await userEvent.click(screen.getByRole('button', { name: 'Continue to my workspace' }))
+  await waitFor(() => expect(state.mutation).toHaveBeenCalledWith(expect.objectContaining({ termsAccepted: true, termsVersion: LEGAL_VERSION })))
 })

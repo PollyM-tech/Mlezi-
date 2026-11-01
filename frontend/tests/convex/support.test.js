@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../../convex/schema.js'
 import { api, internal } from '../../convex/_generated/api.js'
@@ -17,7 +17,8 @@ async function person(t, role = 'caregiver', suffix = role, mfa = true) {
   return { ...ids, client: t.withIdentity({ subject: `${ids.userId}|${ids.sessionId}` }) }
 }
 const issue = { subject: 'Cannot upload profile', category: 'technical', body: 'The image upload fails.' }
-afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
+beforeEach(() => vi.useFakeTimers())
+afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals() })
 
 it('isolates ticket lists, reads, replies and status changes between accounts', async () => {
   const t = make(), a = await person(t), other = await person(t, 'employer'), admin = await person(t, 'admin')
@@ -71,9 +72,9 @@ it('requires both a guest reference and strong access key and never exposes the 
   await expect(a.client.query(api.support.thread, { id })).rejects.toThrow('not found')
 })
 it('fails closed without Turnstile and rejects failed, wrong-host and wrong-action challenges', async () => {
-  const t = make(), args = { ...issue, challenge: 'test-token' }
+  const t = make(), args = { ...issue, email: 'guest@example.test', challenge: 'test-token' }
   await expect(t.action(api.supportGuest.create, args)).rejects.toThrow('spam-protection setup')
-  vi.stubEnv('TURNSTILE_SECRET_KEY', 'fixture-secret'); vi.stubEnv('SUPPORT_ALLOWED_HOSTNAMES', 'support.example.test')
+  vi.stubEnv('AUTH_RESEND_KEY', 'fixture-resend-key'); vi.stubEnv('AUTH_EMAIL_FROM', 'Mlezi <support@example.test>'); vi.stubEnv('TURNSTILE_SECRET_KEY', 'fixture-secret'); vi.stubEnv('SUPPORT_ALLOWED_HOSTNAMES', 'support.example.test')
   const fetch = vi.fn(); vi.stubGlobal('fetch', fetch)
   for (const result of [{ success: false }, { success: true, action: 'support', hostname: 'evil.example' }, { success: true, action: 'other', hostname: 'support.example.test' }]) {
     fetch.mockResolvedValueOnce({ ok: true, json: async () => result })
@@ -95,9 +96,10 @@ it('purges account-linked conversations and expires closed and inactive guest ti
   await t.mutation(internal.privacy.purge, { accountId: a.accountId })
   expect(await t.run(ctx => ctx.db.get(id))).toBeNull()
   const key = 'c'.repeat(64)
-  const { id: guestId } = await t.mutation(internal.support.createGuest, { ...issue, guestKeyHash: await keyHash(key) })
+  const { id: guestId } = await t.mutation(internal.support.createGuest, { ...issue, guestKeyHash: await keyHash(key), guestEmail: 'guest@example.test' })
   await t.run(ctx => ctx.db.patch(guestId, { status: 'resolved', updatedAt: Date.now() - 91 * DAY }))
   await t.mutation(internal.retention.sweep, {})
   expect(await t.run(ctx => ctx.db.get(guestId))).toBeNull()
   expect(await t.run(ctx => ctx.db.query('supportMessages').collect())).toHaveLength(0)
+  expect(await t.run(ctx => ctx.db.query('supportEmails').collect())).toHaveLength(0)
 })

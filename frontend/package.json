@@ -23,7 +23,8 @@
     "security:headers": "node scripts/check-security-headers.mjs",
     "security:check": "npm run lint && npm run test:convex && npm run test:auth-ui && node --test tests/consent.test.mjs tests/search.test.mjs tests/security-config.test.mjs tests/seo.test.mjs && npm run build",
     "test:preview": "npm run build && vite preview --host 127.0.0.1",
-    "test:seo": "node --test tests/seo.test.mjs"
+    "test:seo": "node --test tests/seo.test.mjs",
+    "legal:export": "node scripts/export-legal.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.41.1",

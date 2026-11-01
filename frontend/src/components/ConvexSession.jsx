@@ -11,6 +11,7 @@ import ProfileForm from './ProfileForm'
 import PrivacyAccount from './PrivacyAccount'
 import CookieConsent from './CookieConsent'
 import App from '../App.jsx'
+import { LEGAL_VERSION } from '../../convex/lib/legalPolicy.js'
 
 function initialDetails() {
   try {
@@ -34,10 +35,10 @@ function CompleteAccount() {
   }, [ensureExisting])
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('')
-    try { await register(details); sessionStorage.removeItem('mlezi-registration-draft') }
+    try { await register({ ...details, termsAccepted: new FormData(event.currentTarget).get('termsAccepted') === 'on', termsVersion: LEGAL_VERSION }); sessionStorage.removeItem('mlezi-registration-draft') }
     catch (err) { setError(typeof err.data === 'string' ? err.data : 'Unable to save your account. Please try again.') } finally { setBusy(false) }
   }
-  return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">EMAIL VERIFIED</span><h1>Complete your account</h1><p>Tell us how you’ll use Mlezi.</p>{error && <p role="alert">{error}</p>}{!checked ? <p role="status">Checking your account…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Caregiver / nanny</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
+  return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">EMAIL VERIFIED</span><h1>Complete your account</h1><p>Tell us how you’ll use Mlezi.</p>{error && <p role="alert">{error}</p>}{!checked ? <p role="status">Checking your account…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Caregiver / nanny</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><label className="checkbox-label"><input name="termsAccepted" type="checkbox" required disabled={busy} />I am at least 18, agree to the <a href="/terms/" target="_blank" rel="noopener">Terms of use</a> and acknowledge the <a href="/privacy/" target="_blank" rel="noopener">Privacy notice</a>. Optional cookies are a separate choice.</label><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
 }
 
 

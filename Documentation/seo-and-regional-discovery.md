@@ -29,8 +29,8 @@ crawling. Netlify non-production contexts and Vercel previews force indexing off
 Before building the reviewed production release:
 
 1. Choose the real domain and legal operator; configure guest support; finish the existing
-   production readiness requirements. No domain has been chosen yet.
-2. Set `VITE_APP_ORIGIN=https://<actual-domain>` and `VITE_SITE_INDEXABLE=true` in
+   production readiness requirements. The owner has chosen `mlezicare.com`; hosting, DNS, email and launch checks are still pending.
+2. Set `VITE_APP_ORIGIN=https://mlezicare.com` and `VITE_SITE_INDEXABLE=true` in
    the production build environment only. The origin must have no path or credentials.
 3. Run `npm run build:production` from `frontend`. Publish `dist` on the configured
    Netlify/Vercel host. Keep its security and private-route headers. Do not configure
