@@ -71,7 +71,7 @@ Cookie consent remembers accept/decline for 180 days. Optional search preference
 
 ## Production and retired files
 
-Lintech Telecom is the confirmed operator name and version 1 is marketplace-only. The domain is mlezicare.com. Its business structure/service address, hosting/DNS, email and guest-support configuration remain pending. Notices remain launch drafts. `npm run build:production` intentionally blocks publication until production configuration, legal review, backup restore, alerts and real Auth tests are complete. Normal `npm run build` remains available for development checks.
+Lintech Telecom is the confirmed operator name and version 1 is marketplace-only. The domain is mlezicare.com. Its business structure/service address, hosting/DNS, email and guest-support configuration remain pending. Notices remain launch drafts. `npm run build:production` checks production configuration, legal review, backup restore, alerts and real Auth tests. At the owner’s request, Vercel now uses ordinary `npm run build` for deployment; run the production checks separately before a public launch. Normal `npm run build` remains available for development checks.
 
 The retired `backend/` directory was removed on 29 October 2026 after checking the completed Convex migration. At the owner’s request, the private local Flask recovery archive and its now-empty `.backups/` directory were permanently deleted on 1 November 2026. No local Flask recovery archive remains. Existing Convex records and cloud assets were not deleted.
 
@@ -112,3 +112,12 @@ Configure actual `VITE_LEGAL_ENTITY`, `VITE_LEGAL_STRUCTURE`,
 `VITE_LEGAL_SERVICE_ADDRESS` and registration number where applicable. Naming the
 operator alone does not hide draft status. Keep `VITE_LEGAL_REVIEWED=false` and
 `LEGAL_REVIEW_COMPLETE=false` until the final text and facts have qualified review.
+
+
+## Vercel project directory
+
+Set Vercel Root Directory to `frontend`. The sole Vercel configuration is
+`frontend/vercel.json`: Vite, install `npm ci`, build `npm run build`, output `dist`.
+Existing security headers remain in that file. A mistakenly created, malformed root
+`vercel.json` was removed on 1 November 2026. Keep indexing disabled while testing;
+a successful build does not complete the separate production readiness checks.

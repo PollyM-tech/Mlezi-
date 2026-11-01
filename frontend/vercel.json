@@ -57,5 +57,9 @@
       ]
     }
   ],
-  "buildCommand": "npm run build:production"
+  "buildCommand": "npm run build",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci"
 }
