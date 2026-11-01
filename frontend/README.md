@@ -71,7 +71,7 @@ Cookie consent remembers accept/decline for 180 days. Optional search preference
 
 ## Production and retired files
 
-The domain, public support inbox and legal operator details are not chosen. Notices remain launch drafts. `npm run build:production` intentionally blocks publication until production configuration, legal review, backup restore, alerts and real Auth tests are complete. Normal `npm run build` remains available for development checks.
+The domain, guest-support spam protection and legal operator details are not chosen. Notices remain launch drafts. `npm run build:production` intentionally blocks publication until production configuration, legal review, backup restore, alerts and real Auth tests are complete. Normal `npm run build` remains available for development checks.
 
 The retired `backend/` directory was removed on 29 October 2026 after checking the completed Convex migration. A restricted, Git-ignored `.backups/flask-retired-*.tar.gz` archive preserves the former source, original local database and local configuration for recovery. It is sensitive: do not publish it or extract it into the running app. Generated virtual environments/caches were excluded; archived source files were verified before deletion. Existing Convex records and cloud assets were not deleted.
 
@@ -82,3 +82,16 @@ Older documents describe the historical migration and may contain retired Flask 
 Cookies and baseline access controls are already implemented. Run `npm run security:check` for the automated security regression/build checks, then `npm run test:preview` for a loopback built preview with response security headers. `npm run security:headers -- http://127.0.0.1:4173` checks those headers; use an HTTPS staging URL and `--require-https` for a hosted test. HTTP preview cannot validate TLS, HSTS or Secure-cookie behavior.
 
 Use the [tester guide](../Documentation/security-testing-guide.md) and [finding template](../Documentation/security-test-report-template.md). Use an isolated deployment with synthetic data and separate tester accounts. Resend's owner-only test sender currently limits friend signup until a verified sending domain is configured. Do not share your owner/admin credentials, MFA seed or API secrets. No public hosting or active penetration scan is started by these commands.
+
+
+## Private support tickets
+
+Public help is at `/support/`; account tickets and the admin queue are at
+`/app/#/support`. Admin replies display as Mlezi Support. Operator phone numbers
+and personal email are not displayed. Signed-out visitors can submit tickets once
+Turnstile is configured and use their private reference/key to check replies.
+
+See [support setup and access rules](../Documentation/support-tickets.md).
+Production no longer requires a publicly displayed support email; it requires
+working guest support and `SUPPORT_FLOW_TESTED=true` after the actual journey is
+verified. Email delivery for authentication remains a separate requirement.

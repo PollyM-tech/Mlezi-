@@ -27,6 +27,7 @@ export const exportOwn = mutation({ args: {}, handler: async ctx => {
     shortlist: employer ? (await ctx.db.query('shortlists').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, createdAt: r.createdAt })) : [],
     contactUnlocks: employer ? (await ctx.db.query('contactUnlocks').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, unlockedAt: r.unlockedAt })) : [],
     identityRequests: caregiver ? (await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', caregiver._id)).collect()).map(strip) : [],
+    supportTickets: await Promise.all((await ctx.db.query('supportTickets').withIndex('by_account', q => q.eq('accountId', a._id)).collect()).map(async ticket => ({ id: ticket._id, subject: ticket.subject, category: ticket.category, status: ticket.status, createdAt: ticket.createdAt, messages: (await ctx.db.query('supportMessages').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(100)).map(m => ({ sender: m.sender, body: m.body, createdAt: m.createdAt })) }))),
     note: 'This portable account export excludes credentials, private file identifiers, and other users’ private contact details. Use a correction request for a copy of your identity evidence or any additional personal records.' }
 } })
 export const request = mutation({ args: { type: v.union(v.literal('deletion'), v.literal('correction')), details: v.string(), confirmEmail: v.optional(v.string()) }, handler: async (ctx, args) => {
@@ -57,6 +58,10 @@ export const resolve = mutation({ args: { id: v.id('dataRequests') }, handler: a
 export const purge = internalMutation({ args: { accountId: v.id('accounts') }, handler: async (ctx, { accountId }) => {
   const a = await ctx.db.get(accountId)
   if (!a?.deletionRequestedAt || a.deletionRequestedAt + 7 * DAY > Date.now()) return
+  for (const ticket of await ctx.db.query('supportTickets').withIndex('by_account', q => q.eq('accountId', accountId)).collect()) {
+    for (const message of await ctx.db.query('supportMessages').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(100)) await ctx.db.delete(message._id)
+    await ctx.db.delete(ticket._id)
+  }
   const assets = new Set(), asset = value => { if (value?.provider === 'convex') assets.add(value.storageId) }
   const caregiver = await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', accountId)).unique()
   const employer = await ctx.db.query('employers').withIndex('by_account', q => q.eq('accountId', accountId)).unique()

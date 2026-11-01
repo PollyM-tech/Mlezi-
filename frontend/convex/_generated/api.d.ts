@@ -34,6 +34,8 @@ import type * as passwordRecovery from "../passwordRecovery.js";
 import type * as privacy from "../privacy.js";
 import type * as retention from "../retention.js";
 import type * as security from "../security.js";
+import type * as support from "../support.js";
+import type * as supportGuest from "../supportGuest.js";
 
 import type {
   ApiFromModules,
@@ -68,6 +70,8 @@ declare const fullApi: ApiFromModules<{
   privacy: typeof privacy;
   retention: typeof retention;
   security: typeof security;
+  support: typeof support;
+  supportGuest: typeof supportGuest;
 }>;
 
 /**

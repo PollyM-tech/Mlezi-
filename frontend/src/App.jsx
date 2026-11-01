@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import LegalPage from './components/LegalPage'
+import SupportInbox from './components/SupportInbox.jsx'
 import PrivacyAccount from './components/PrivacyAccount'
 import ConvexAuthForm from './components/ConvexAuthForm'
 import ProfileForm from './components/ProfileForm'
@@ -33,6 +34,7 @@ export default function App() {
   const publicId = /^#\/caregivers\/([a-zA-Z0-9]+)$/.exec(route)?.[1]
   const legal = ['#/privacy', '#/cookies', '#/terms'].includes(routePath) ? routePath.slice(2) : null
   const privacyAccount = routePath === '#/privacy-account'
+  const supportPage = routePath === '#/support'
   const identity = routePath === '#/identity'
   const membership = routePath === '#/membership'
   const browsing = routePath === '#/browse'
@@ -90,7 +92,7 @@ export default function App() {
   return <div className="app-shell">
     <CookieConsent />
     {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions"><a className="text-button" href="#/browse">Find care</a>{user ? <><span className="account-email">{user.email}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="#/signin">Sign in / join</a>}</div></header>}
-    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href="#/workspace">{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`#/caregivers/${profile.id}`}>Public preview ↗</a>}{user.role === 'employer' && <><a href="#/browse">Find caregivers</a><a href="#/shortlist">My shortlist</a><a href="#/contacts">My contacts</a><a href="#/account">My account</a></>}{user.role !== 'admin' && <a href="#/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Contact-access pass'}</a>}<a href="#/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
+    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href="#/workspace">{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`#/caregivers/${profile.id}`}>Public preview ↗</a>}{user.role === 'employer' && <><a href="#/browse">Find caregivers</a><a href="#/shortlist">My shortlist</a><a href="#/contacts">My contacts</a><a href="#/account">My account</a></>}{user.role !== 'admin' && <a href="#/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Contact-access pass'}</a>}<a href="#/support">Support</a><a href="#/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
     <main id="main-content" className={landing ? 'landing-main' : undefined}>
       {notice && <div className="alert success" role="status">{notice}<button className="dismiss" aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></div>}
       {legal ? <LegalPage type={legal} /> : landing ? <Landing user={user} /> : loading ? <section className="card state-panel" role="status"><div className="spinner" /><h2>Getting things ready…</h2><p>Loading your Mlezi workspace.</p></section>
@@ -98,6 +100,7 @@ export default function App() {
         : publicId && profile ? <ProfileView key={profile.id} profile={profile} user={user} />
         : browsing ? <Discovery key={route} user={user} initialFilters={Object.fromEntries(routeParams)} />
         : !user ? <ConvexAuthForm key={route} initialRegistering={joining} initialRole={routeParams.get('role') === 'employer' ? 'employer' : 'caregiver'} />
+        : supportPage ? <SupportInbox admin={user.role === 'admin'} />
         : privacyAccount ? <PrivacyAccount />
         : membership ? <Membership key={user.id} user={user} />
         : user.role === 'employer' && accountPage ? <EmployerAccount onSaved={updated => setUser(current => ({ ...current, phone: updated.phone, profile: { ...current.profile, name: updated.name } }))} />
@@ -108,6 +111,6 @@ export default function App() {
         : user.role === 'caregiver' && (editing || !profile) ? <ProfileForm key={profile?.id || 'new'} user={user} profile={profile} onSaved={saved} onCancel={() => setEditing(false)} />
         : user.role === 'caregiver' ? <><CaregiverOverview profile={profile} onUpdated={setProfile} onEdit={() => setEditing(true)} /><ProfileView key={profile.id} profile={profile} user={user} owner onEdit={() => { setEditing(true); setNotice('') }} /></>
         : <AdminPanel />}
-    </main>{!landing && <footer><a className="brand official-brand footer-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi" /></a><p>Care begins with people.</p><p><a href="/privacy/">Privacy</a> · <a href="/cookies/">Cookies</a> · <a href="/terms/">Terms</a></p><span>Made for families and caregivers in Kenya</span></footer>}
+    </main>{!landing && <footer><a className="brand official-brand footer-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi" /></a><p>Care begins with people.</p><p><a href="/support/">Support</a> · <a href="/privacy/">Privacy</a> · <a href="/cookies/">Cookies</a> · <a href="/terms/">Terms</a></p><span>Made for families and caregivers in Kenya</span></footer>}
   </div>
 }

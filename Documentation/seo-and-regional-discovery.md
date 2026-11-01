@@ -5,7 +5,7 @@ Implemented 29 October 2026. Convex remains the only application backend.
 ## Public search visibility
 
 The build now pre-renders readable HTML for `/`, `/east-africa/`, `/kenya/`,
-`/uganda/`, `/burundi/`, `/rwanda/`, `/privacy/`, `/cookies/` and `/terms/`.
+`/uganda/`, `/burundi/`, `/rwanda/`, `/privacy/`, `/cookies/`, `/terms/` and `/support/`.
 Each has a title and description; a configured public origin also supplies canonical
 and Open Graph URLs. The official Mlezi logo is retained. These are real linked
 pages, rather than distinct content hidden behind hash fragments.
@@ -28,7 +28,7 @@ Development and preview builds default to noindex and a robots file that disallo
 crawling. Netlify non-production contexts and Vercel previews force indexing off.
 Before building the reviewed production release:
 
-1. Choose the real domain, support email and legal operator; finish the existing
+1. Choose the real domain and legal operator; configure guest support; finish the existing
    production readiness requirements. No domain has been chosen yet.
 2. Set `VITE_APP_ORIGIN=https://<actual-domain>` and `VITE_SITE_INDEXABLE=true` in
    the production build environment only. The origin must have no path or credentials.

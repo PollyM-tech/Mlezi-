@@ -655,3 +655,17 @@ footer .official-brand img { width:245px; height:245px; left:-49px; top:-92px; }
 .checkbox-label input { width: auto; margin-top: 4px; }
 
 .auth-layout > * { min-width: 0; }
+
+/* Private help conversations use wrapping layouts on narrow screens. */
+.public-support { max-width: 880px; margin: 32px auto; }
+.public-support .eyebrow { display: block; margin-top: 24px; }
+.public-support section { margin-top: 28px; }
+.support-ticket-list, .support-messages { list-style: none; padding: 0; }
+.support-ticket-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid #e3e7db; }
+.support-ticket-list button { text-align: left; overflow-wrap: anywhere; }
+.support-message { padding: 16px; margin: 12px 0; background: #f6f7f2; border: 1px solid #e3e7db; border-radius: 10px; overflow-wrap: anywhere; }
+.support-message.support { background: #edf5ef; border-color: #b9cdbd; }
+.support-message small { display: block; margin-top: 4px; }
+.support-thread code, .support-receipt code { overflow-wrap: anywhere; }
+.support-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.support-receipt { padding: 20px; border: 1px solid #b9cdbd; border-radius: 10px; background: #edf5ef; }

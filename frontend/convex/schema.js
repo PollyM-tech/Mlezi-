@@ -22,6 +22,8 @@ const privateAsset = v.union(
 // Public caregiver projections must exclude account contact and private evidence.
 export default defineSchema({
   ...authTables,
+  supportTickets: defineTable({ accountId: v.optional(v.id('accounts')), guestKeyHash: optionalText, guestEmail: optionalText, subject: v.string(), category: v.string(), status: v.union(v.literal('open'), v.literal('waiting'), v.literal('resolved')), messageCount: v.number(), createdAt: v.number(), updatedAt: v.number() }).index('by_account', ['accountId', 'updatedAt']).index('by_status', ['status', 'updatedAt']).index('by_updated', ['updatedAt']),
+  supportMessages: defineTable({ ticketId: v.id('supportTickets'), sender: v.union(v.literal('customer'), v.literal('support')), body: v.string(), createdAt: v.number() }).index('by_ticket', ['ticketId']),
   adminMfa: defineTable({ accountId: v.id('accounts'), encryptedSecret: v.string(), enabled: v.boolean(), setupExpiresAt: v.number(), attempts: v.number(), lastStep: optionalNumber }).index('by_account', ['accountId']),
   adminSessions: defineTable({ accountId: v.id('accounts'), sessionId: v.string(), expiresAt: v.number() }).index('by_session', ['sessionId']),
   rateLimits: defineTable({ key: v.string(), count: v.number(), resetAt: v.number() }).index('by_key', ['key']),

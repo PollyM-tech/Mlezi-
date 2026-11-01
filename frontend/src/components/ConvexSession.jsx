@@ -5,6 +5,7 @@ import { api } from '../../convex/_generated/api.js'
 import { configureConvexSession } from '../lib/api.js'
 import { getConvexClient } from '../lib/convexClient.js'
 import LegalPage from './LegalPage'
+import SupportInbox from './SupportInbox.jsx'
 import AdminSecurity from './AdminSecurity'
 import ProfileForm from './ProfileForm'
 import PrivacyAccount from './PrivacyAccount'
@@ -43,7 +44,7 @@ function CompleteAccount() {
 function RestrictedAccount({ session }) {
   const { signOut } = useAuthActions()
   const [privacy,setPrivacy] = useState(false)
-  return <main className="app-shell"><CookieConsent /><header className="site-header"><strong>Mlezi</strong><button className="text-button" onClick={()=>setPrivacy(value=>!value)}>Privacy and account requests</button><button className="text-button" onClick={()=>signOut()}>Sign out</button></header>{privacy?<PrivacyAccount />:session.status==='restricted'?<section className="card state-panel"><h1>Account access restricted</h1><p>Your account has a pending deletion request or has been suspended. Use privacy requests to contact an administrator.</p></section>:<><section className="card form-section"><h1>Your profile photo is required</h1><p>Complete your caregiver profile to access Mlezi. Submit your profile photo, national ID and selfie for identity review.</p></section><ProfileForm profile={session.setupProfile} user={session.account} onSaved={()=>{window.location.hash='#/workspace'}} /></>}</main>
+  return <main className="app-shell"><CookieConsent /><header className="site-header"><strong>Mlezi</strong><a href="#/support">Support</a><button className="text-button" onClick={()=>setPrivacy(value=>!value)}>Privacy and account requests</button><button className="text-button" onClick={()=>signOut()}>Sign out</button></header>{privacy?<PrivacyAccount />:session.status==='restricted'?<section className="card state-panel"><h1>Account access restricted</h1><p>Your account has a pending deletion request or has been suspended. Use privacy requests to contact an administrator.</p></section>:<><section className="card form-section"><h1>Your profile photo is required</h1><p>Complete your caregiver profile to access Mlezi. Submit your profile photo, national ID and selfie for identity review.</p></section><ProfileForm profile={session.setupProfile} user={session.account} onSaved={()=>{window.location.hash='#/workspace'}} /></>}</main>
 }
 
 function SessionContent() {
@@ -86,6 +87,7 @@ function SessionContent() {
   if (auth.isLoading || serverAuth.isLoading || handlingLink || auth.isAuthenticated && (!serverAuth.isAuthenticated || session === undefined)) return <main className="card state-panel" role="status">Checking your sign-in…</main>
   if (auth.isAuthenticated && session?.status === 'expired') return <main className="card state-panel"><h1>Please sign in again</h1><p>Your session has expired or is no longer valid.</p><button className="button primary" onClick={() => signOut()}>Back to sign in</button></main>
   if (auth.isAuthenticated && session?.status === 'admin_security') return <AdminSecurity />
+  if (auth.isAuthenticated && session?.account && route.split('?')[0] === '#/support') return <main className="app-shell"><CookieConsent /><header className="site-header"><a href="#/workspace">← My account</a><button className="text-button" onClick={() => signOut()}>Sign out</button></header><SupportInbox admin={session.account.role === 'admin'} /></main>
   if (auth.isAuthenticated && ['restricted', 'profile_required'].includes(session?.status)) return <RestrictedAccount session={session} />
   if (auth.isAuthenticated && session?.status === 'onboarding') return <CompleteAccount />
   return <App key={account?.id || 'signed-out'} />

@@ -2,6 +2,12 @@ import { internalMutation } from './_generated/server.js'
 import { internal } from './_generated/api.js'
 const DAY = 86400000
 export const sweep = internalMutation({ args: {}, handler: async ctx => {
+  for (const status of ['open', 'waiting', 'resolved']) {
+    for (const ticket of await ctx.db.query('supportTickets').withIndex('by_status', q => q.eq('status', status).lt('updatedAt', Date.now() - (status === 'resolved' ? 90 : 180) * DAY)).take(100)) {
+      for (const message of await ctx.db.query('supportMessages').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(100)) await ctx.db.delete(message._id)
+      await ctx.db.delete(ticket._id)
+    }
+  }
   for (const r of await ctx.db.query('rateLimits').collect()) if (r.resetAt < Date.now() - DAY) await ctx.db.delete(r._id)
   for (const r of await ctx.db.query('authEmailLimits').collect()) if (r.lastSentAt < Date.now() - 7 * DAY) await ctx.db.delete(r._id)
   for (const r of await ctx.db.query('securityAudit').withIndex('by_created', q => q.lt('createdAt', Date.now() - 90 * DAY)).take(500)) await ctx.db.delete(r._id)
