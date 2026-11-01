@@ -1,5 +1,11 @@
 # Flask retirement — 29 October 2026
 
+**1 November 2026 update:** At the owner’s explicit request, the private local
+`flask-retired-20261029-8a0c42e8.tar.gz` archive and the empty `.backups/` directory
+were permanently deleted. No local Flask recovery archive remains. Convex data and
+application files were not changed. The original retirement record below describes
+the archive that existed before this deletion.
+
 The owner confirmed that Convex is the only backend. The application already used Convex; this cleanup removes the remaining alternative runtime and source tree.
 
 - Removed `backend/` (Flask application, requirements, Python migrations/tests/export scripts, virtual environment and local instance files) from the active project.

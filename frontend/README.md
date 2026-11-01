@@ -73,7 +73,7 @@ Cookie consent remembers accept/decline for 180 days. Optional search preference
 
 Lintech Telecom is the confirmed operator name and version 1 is marketplace-only. The domain is mlezicare.com. Its business structure/service address, hosting/DNS, email and guest-support configuration remain pending. Notices remain launch drafts. `npm run build:production` intentionally blocks publication until production configuration, legal review, backup restore, alerts and real Auth tests are complete. Normal `npm run build` remains available for development checks.
 
-The retired `backend/` directory was removed on 29 October 2026 after checking the completed Convex migration. A restricted, Git-ignored `.backups/flask-retired-*.tar.gz` archive preserves the former source, original local database and local configuration for recovery. It is sensitive: do not publish it or extract it into the running app. Generated virtual environments/caches were excluded; archived source files were verified before deletion. Existing Convex records and cloud assets were not deleted.
+The retired `backend/` directory was removed on 29 October 2026 after checking the completed Convex migration. At the owner’s request, the private local Flask recovery archive and its now-empty `.backups/` directory were permanently deleted on 1 November 2026. No local Flask recovery archive remains. Existing Convex records and cloud assets were not deleted.
 
 Older documents describe the historical migration and may contain retired Flask commands. This README and [Flask retirement notes](../Documentation/flask-retirement.md) define the current setup.
 
