@@ -123,3 +123,40 @@ References:
 - [Resend sending API](https://resend.com/docs/api-reference/emails/send-email)
 - [Resend idempotency keys](https://resend.com/docs/dashboard/emails/idempotency-keys)
 - [Cloudflare token validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
+
+## Support and authentication verification — 1 November 2026
+
+Read-only checks against the connected Convex deployment report email authentication,
+production sender configuration, support email configuration and guest spam protection
+as configured. The public `https://mlezicare.com/support/` page returns HTTP 200 and its
+frontend bundle contains a Turnstile Site Key. These checks do not establish actual
+provider delivery or completion of a human Turnstile challenge.
+
+Local reliability improvements let visitors retry failed Turnstile loading without
+refreshing or losing their message. Expired/timed-out checks clear the submission
+token, and removed widgets cannot supply stale tokens. The compact widget fits small
+phones. Sign-in/create-account pages now link directly to guest support.
+
+Automated tests cover signup verification, returning password sign-in, OTP and magic
+links, password recovery, continuation after temporary signup-email failure, private
+ticket permissions, guest challenge validation, acknowledgements, email retries and
+administrator replies. Email delivery and Cloudflare responses are simulated.
+
+After deploying the frontend changes, perform these live checks with an inbox you
+control (never share passwords, codes or keys):
+
+1. Create an employer account using password, enter the received verification code,
+   accept the terms and confirm the employer workspace opens. Sign out, then sign in.
+2. Create a caregiver with a different test email, verify it, complete account details
+   and confirm the profile-photo gate appears. Repeat signup with OTP and magic link
+   using separate test accounts; confirm the chosen role/name/phone persist.
+3. For an existing account, test OTP, a magic link and Forgot password. Check a used or
+   expired code/link is rejected and a fresh one succeeds.
+4. While signed out, submit a support request after passing Turnstile. Check the ticket
+   reference, acknowledgement promising a response within 48 hours, private team inbox
+   notification and administrator queue. Reply as an MFA-verified administrator and
+   confirm the reply reaches the visitor's inbox.
+5. Submit a signed-in ticket and confirm another ordinary account cannot see it.
+
+No live account, email, ticket, deployment or cloud environment was changed during
+this verification. Frontend deployment and the above live checks remain outstanding.

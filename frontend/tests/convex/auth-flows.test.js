@@ -147,3 +147,18 @@ it('explains the email-provider test-sender restriction without exposing provide
   vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({message:'You can only send testing emails to your own email address private-operator@example.test'}),{status:403})))
   await expect(sign(t,'password',{flow:'signUp',email:'newperson@example.test',password:'Testing123!'})).rejects.toThrow('Enter that exact address')
 })
+
+it('resumes password signup after temporary email failure without creating a duplicate account', async () => {
+  const t = convexTest(schema, modules), email = 'retry@example.test'
+  fetch.mockResolvedValueOnce(new Response('{}', { status: 503 }))
+  await expect(sign(t, 'password', { flow: 'signUp', email, password: 'Testing123!' })).rejects.toThrow('Unable to send')
+  expect(await t.run(ctx => ctx.db.query('authSessions').collect())).toHaveLength(0)
+  // Sign in with the original password to request verification again.
+  await t.run(async ctx => { for (const row of await ctx.db.query('authEmailLimits').collect()) await ctx.db.delete(row._id) })
+  expect((await sign(t, 'password', { flow: 'signIn', email, password: 'Testing123!' })).tokens).toBeNull()
+  const verified = await sign(t, 'password', { flow: 'email-verification', email, code: code() })
+  const account = await clientFor(t, verified).mutation(api.accounts.register, { termsAccepted: true, termsVersion: LEGAL_VERSION, role: 'employer', name: 'Test Parent', phone: '0712345678' })
+  const returning = await sign(t, 'password', { flow: 'signIn', email, password: 'Testing123!' })
+  expect((await clientFor(t, returning).query(api.accounts.me)).id).toBe(account.id)
+  expect(await t.run(ctx => ctx.db.query('accounts').collect())).toHaveLength(1)
+})

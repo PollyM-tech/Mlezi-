@@ -91,6 +91,7 @@ export default function ConvexAuthForm({ initialRegistering = false, initialRole
     {codeStep && <button className="text-button" disabled={busy || !settings?.emailReady} onClick={resend}>Resend code</button>}
     {step === 'start' && !registering && method === 'password' && <button className="text-button" disabled={busy} onClick={() => { setStep('reset-start'); setError(''); setNotice('') }}>Forgot password?</button>}
     {step !== 'start' && step !== 'magic-sent' && <button className="text-button" disabled={busy} onClick={reset}>Back to sign in</button>}
+    <p className="form-footnote">Having trouble? <a href="/support/">Contact Mlezi Support</a> without signing in.</p>
     <p className="form-footnote">Read the <a href="/terms/">Terms of use</a> and <a href="/privacy/">Privacy notice</a> before creating an account. You will accept the terms when completing your account.</p><p className="form-footnote">Magic links and email codes also let you sign in without remembering a password. When creating an account, choose your role and enter your name and phone with any sign-up method. Returning members only need their email and chosen sign-in method.</p>
   </section></div>
 }
