@@ -68,3 +68,13 @@ The landing page now shares the application-wide Accept/Decline banner and
 Cookie settings control. External Google Fonts and remembered searches are off
 until accepted; sign-in remains available after declining. See
 [cookie preferences](cookie-preferences.md).
+
+
+## Sponsors and partners — 29 October 2026
+
+The landing page includes a compact, responsive Sponsors & Partners section above
+its footer, with a footer anchor link. Lintech is listed using the name supplied
+by the owner. No website URL, sponsorship tier or additional endorsement is inferred.
+The supplied Lintech Telecom logo is saved at
+`frontend/src/assets/lintech-logo.png` and imported directly by the section. The artwork keeps its proportions and is included in pre-rendered HTML
+through Vite's asset manifest on build.
