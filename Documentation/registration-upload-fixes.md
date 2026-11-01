@@ -42,3 +42,15 @@ All website sign-out buttons now use one flow, including onboarding, missing-pho
 Server revocation runs in the background with a ten-second connection cleanup bound; an offline client cannot guarantee remote revocation. The local session is cleared regardless. A retired storage adapter ignores delayed writes/deletes from the old provider, preventing an earlier refresh or sign-out response from overwriting a new login. A new app visit gets a fresh Convex client rather than the previous account’s query cache. Browser Back returns to a signed-out application view.
 
 Tests cover slow and failed revocation, immediate home navigation, credential removal, preserved preferences, Back navigation and stale-provider storage operations. Changes remain local until frontend deployment.
+
+## Support mailbox supplied
+
+The operator has created `support@mlezicare.com`. No cloud environment was changed by this task. Once `mlezicare.com` is verified for sending in Resend, configure these on the intended Convex deployment:
+
+```text
+AUTH_EMAIL_FROM=Mlezi <support@mlezicare.com>
+SUPPORT_EMAIL_FROM=Mlezi Support <support@mlezicare.com>
+SUPPORT_INBOX_EMAIL=support@mlezicare.com
+```
+
+Retain the valid `AUTH_RESEND_KEY`. The mailbox's existing incoming-mail DNS records must remain intact when adding Resend's sending-verification records. Until the sending domain is verified, the current Resend test sender can still be used for the Resend-account recipient only. Do not put API keys into Vite/public variables. No email or support notification was sent during implementation.

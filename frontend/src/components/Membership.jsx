@@ -1,66 +1,266 @@
-import { useEffect, useState } from 'react'
-import { api } from '../lib/api'
+import { useEffect, useState } from "react";
+import { useMutation } from "convex/react";
+import { api as functions } from "../../convex/_generated/api.js";
+import { api } from "../lib/api";
 
 export default function Membership({ user }) {
-  const [membership, setMembership] = useState(null)
-  const [payments, setPayments] = useState([])
-  const [pending, setPending] = useState(null)
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [version, setVersion] = useState(0)
+  const [membership, setMembership] = useState(null),
+    [payments, setPayments] = useState([]),
+    [selected, setSelected] = useState("");
+  const [error, setError] = useState(""),
+    [message, setMessage] = useState(""),
+    [busy, setBusy] = useState(false),
+    [version, setVersion] = useState(0);
+  const submit = useMutation(functions.manualPayments.submit);
   useEffect(() => {
-    let cancelled = false
-    Promise.all([api('/memberships'), api('/payments')]).then(([status, history]) => {
-      if (!cancelled) { setMembership(status); setPayments(history.payments); setPending(history.payments.find(p => p.status === 'pending') || null) }
-    }).catch(err => { if (!cancelled) setError(err.message) })
-    return () => { cancelled = true }
-  }, [version])
-  useEffect(() => {
-    if (!pending) return
-    let cancelled = false
-    let ticks = 0
-    const timer = setInterval(async () => {
-      if (++ticks > 24) { clearInterval(timer); return }
-      try {
-        const data = await api(`/payments/${pending.id}`)
-        if (cancelled) return
-        setMessage(data.payment.result_description || data.message || '')
-        if (data.payment.status !== 'pending') { setPending(null); setVersion(v => v + 1); clearInterval(timer) }
-      } catch (err) { if (!cancelled) setError(err.message) }
-    }, 10000)
-    return () => { cancelled = true; clearInterval(timer) }
-  }, [pending])
-  async function buy(event) {
-    event.preventDefault(); setBusy(true); setError(''); setMessage('')
-    const form = new FormData(event.currentTarget)
-    try {
-      const data = await api(user.role === 'employer' ? '/payments/unlock-pass' : '/payments/caregiver-premium', {
-        method: 'POST', body: { plan_code: form.get('plan_code'), phone: form.get('phone') },
+    let active = true;
+    Promise.all([api("/memberships"), api("/payments")])
+      .then(([status, history]) => {
+        if (active) {
+          setMembership(status);
+          setPayments(history.payments);
+        }
       })
-      setPending(data.payment); setMessage(data.payment.result_description || data.message || 'Check your phone for the M-Pesa prompt.')
-      setVersion(v => v + 1)
-    } catch (err) { setError(err.message) }
-    finally { setBusy(false) }
-  }
-  async function check() {
-    setBusy(true); setError('')
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [version]);
+  const pending = payments.find(
+    (p) => p.provider === "manual_mpesa" && p.status === "pending",
+  );
+  const plan =
+    membership?.plans.find(
+      (p) => p.code === (selected || pending?.plan_code),
+    ) || membership?.plans[0];
+  async function report(event) {
+    event.preventDefault();
+    const fields = new FormData(event.currentTarget);
+    setBusy(true);
+    setError("");
+    setMessage("");
     try {
-      const data = await api(`/payments/${pending.id}`)
-      setMessage(data.payment.result_description || data.message || '')
-      setVersion(v => v + 1)
-    } catch (err) { setError(err.message) }
-    finally { setBusy(false) }
+      await submit({
+        planCode: plan.code,
+        receipt: String(fields.get("receipt") || ""),
+        phone: String(fields.get("phone") || ""),
+      });
+      setMessage(
+        "Payment report received. Access activates after an administrator checks the business statement.",
+      );
+      setVersion((v) => v + 1);
+    } catch (e) {
+      setError(
+        typeof e.data === "string"
+          ? e.data
+          : e.data?.message ||
+              e.message ||
+              "Unable to submit your payment report.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
-  return <>
-    <div className="page-heading"><div><span className="eyebrow">MEMBERSHIP</span><h1>{user.role === 'employer' ? 'Make your next connection.' : 'Let your care be seen.'}</h1><p>{user.role === 'employer' ? 'Unlock new caregiver contacts with a contact-access pass.' : 'Premium visibility for KES 500 a year. Your free profile stays yours.'}</p></div></div>
-    {error && <div className="alert error" role="alert">{error}</div>}
-    {message && <div className="alert" role="status">{message}</div>}
-    {!membership ? <p>Loading membership…</p> : <div className="dashboard-grid"><section className="card form-section"><span className="badge">{membership.active ? 'Active' : 'Inactive'}</span><h2>{user.role === 'employer' ? 'Your contact-access pass' : 'Your Premium membership'}</h2>
-      {membership.expires_at && <p>Expiry: {new Date(membership.expires_at).toLocaleString()}</p>}
-      {membership.payments_enabled === false && <p>M-Pesa payments are coming soon.</p>}<form onSubmit={buy}><label>Choose your plan<select name="plan_code" disabled={busy || Boolean(pending) || membership.payments_enabled === false}>{membership.plans.map(p => <option value={p.code} key={p.code}>KES {p.amount} · {p.days} days</option>)}</select></label><label>M-Pesa phone number<input name="phone" type="tel" defaultValue={user.phone || ''} placeholder="0712 345 678" required disabled={busy || Boolean(pending) || membership.payments_enabled === false} /></label><button className="button primary" disabled={busy || Boolean(pending) || membership.payments_enabled === false}>{busy ? 'Please wait…' : membership.active ? 'Renew with M-Pesa' : 'Pay with M-Pesa'}</button></form>
-      {pending && <div className="privacy-note"><p>Payment #{pending.id} is awaiting confirmation. Don’t pay again while it is pending.</p><button className="button secondary" onClick={check} disabled={busy}>Check payment status</button></div>}
-    </section><aside className="card side-card"><h3>How it works</h3><p>Renew manually when you choose. Early renewal adds time to your existing expiry. There are no automatic debits.</p><p>{user.role === 'employer' ? 'Previously unlocked contacts remain accessible after expiry. Renew only when you want to unlock new contacts.' : 'Premium profiles appear first within matching categories and filters, with rotating placement. Premium does not mean identity checked or guarantee employment.'}</p></aside></div>}
-    <section className="card form-section"><h2>Recent payments</h2>{payments.length ? payments.map(p => <div className="payment-row" key={p.id}><span>#{p.id} · KES {p.amount} · {p.plan_code?.replaceAll('_', ' ') || p.type}</span><strong>{p.status}</strong></div>) : <p>No payments yet.</p>}</section>
-  </>
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">MEMBERSHIP</span>
+          <h1>
+            {user.role === "employer"
+              ? "Make your next connection."
+              : "Let your care be seen."}
+          </h1>
+          <p>
+            {user.role === "employer"
+              ? "Unlock new caregiver contacts with a contact-access pass."
+              : "Optional Premium visibility. Identity review remains separate."}
+          </p>
+        </div>
+      </div>
+      {error && (
+        <div className="alert error" role="alert">
+          {error}
+        </div>
+      )}
+      {message && (
+        <p className="alert" role="status">
+          {message}
+        </p>
+      )}
+      {!membership ? (
+        <p>Loading membership…</p>
+      ) : (
+        <div className="dashboard-grid membership-layout">
+          <section className="card form-section">
+            <span className="badge">
+              {membership.active ? "Active" : "Inactive"}
+            </span>
+            <h2>
+              {user.role === "employer"
+                ? "Your contact-access pass"
+                : "Your Premium membership"}
+            </h2>
+            {membership.expires_at && (
+              <p>Expiry: {new Date(membership.expires_at).toLocaleString()}</p>
+            )}
+            {membership.manual_payment?.enabled && plan ? (
+              <>
+                <label>
+                  Choose your plan
+                  <select
+                    value={plan.code}
+                    disabled={busy || !!pending}
+                    onChange={(e) => setSelected(e.target.value)}
+                  >
+                    {membership.plans.map((p) => (
+                      <option key={p.code} value={p.code}>
+                        KES {p.amount} · {p.days} days
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <section
+                  className="privacy-note"
+                  aria-label="Manual M-Pesa instructions"
+                >
+                  <h3>Pay manually with M-Pesa</h3>
+                  <ol>
+                    <li>Open M-Pesa → Lipa na M-Pesa → Pay Bill.</li>
+                    <li>
+                      Business number:{" "}
+                      <strong>{membership.manual_payment.paybill}</strong>
+                    </li>
+                    <li>
+                      Account number:{" "}
+                      <strong>{membership.manual_payment.account}</strong>
+                    </li>
+                    <li>
+                      Amount: <strong>KES {plan.amount}</strong> for {plan.days}{" "}
+                      days.
+                    </li>
+                    <li>
+                      Check the business details shown by M-Pesa, then confirm
+                      in M-Pesa.
+                    </li>
+                  </ol>
+                  <p>
+                    Return here and submit the receipt code. Never share your
+                    M-Pesa PIN or an OTP. If the business details look wrong,
+                    cancel and use Support.
+                  </p>
+                </section>
+                {pending ? (
+                  <div className="privacy-note">
+                    <p role="status">
+                      Receipt {pending.receipt} is awaiting administrator
+                      review. Do not pay again while it is pending.
+                    </p>
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={() => setVersion((v) => v + 1)}
+                    >
+                      Refresh payment status
+                    </button>
+                    <p>
+                      <a href="/tickets">Contact support about this payment</a>
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={report}>
+                    <label>
+                      M-Pesa receipt code
+                      <input
+                        name="receipt"
+                        autoComplete="off"
+                        maxLength={10}
+                        minLength={10}
+                        pattern="[A-Za-z0-9]{10}"
+                        placeholder="10-character receipt code"
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <label>
+                      Phone number used to pay
+                      <input
+                        name="phone"
+                        type="tel"
+                        autoComplete="tel"
+                        defaultValue={user.phone || ""}
+                        maxLength={32}
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <label className="checkbox-label">
+                      <input type="checkbox" required disabled={busy} />I have
+                      paid KES {plan.amount} to this Paybill and account.
+                    </label>
+                    <button className="button primary" disabled={busy}>
+                      {busy ? "Submitting…" : "Submit payment for confirmation"}
+                    </button>
+                  </form>
+                )}
+              </>
+            ) : (
+              <p>Manual payment reporting is currently unavailable.</p>
+            )}
+          </section>
+          <aside className="card side-card">
+            <h3>How it works</h3>
+            <p>
+              An administrator matches your receipt, amount, phone and payment
+              destination against the business statement. Submitting a code
+              alone does not activate access.
+            </p>
+            <p>
+              Early renewal extends your existing expiry. There are no automatic
+              debits. Paystack checkout will be added later.
+            </p>
+            <p>
+              {user.role === "employer"
+                ? "Previously unlocked contacts remain accessible after ordinary pass expiry. Renew to unlock new contacts."
+                : "Premium gives rotating priority among matching profiles. It does not grant identity approval, ratings or guaranteed work."}
+            </p>
+            <p>
+              For a mistaken, duplicate or unrecognized payment, contact{" "}
+              <a href="/tickets">Support</a>. Do not send another payment until
+              the issue is checked.
+            </p>
+          </aside>
+        </div>
+      )}
+      <section className="card form-section">
+        <h2>Recent payments</h2>
+        {payments.length ? (
+          payments.map((p) => (
+            <article className="payment-row" key={p.id}>
+              <div>
+                <p>
+                  KES {p.amount} · {p.plan_code?.replaceAll("_", " ") || p.type}
+                </p>
+                {p.receipt && <p>Receipt: {p.receipt}</p>}
+                <small>{p.result_description}</small>
+              </div>
+              <strong>
+                {p.status === "completed"
+                  ? "Confirmed"
+                  : p.status === "failed"
+                    ? "Not confirmed"
+                    : p.status === "pending"
+                      ? "Awaiting review"
+                      : p.status}
+              </strong>
+            </article>
+          ))
+        ) : (
+          <p>No payments yet.</p>
+        )}
+      </section>
+    </>
+  );
 }

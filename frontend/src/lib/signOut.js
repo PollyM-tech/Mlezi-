@@ -1,3 +1,4 @@
+import { clearRegistrationDraft } from './registrationDraft.js'
 import { createContext, useContext } from 'react'
 
 export const AUTH_STORAGE_NAMESPACE = 'mlezi-convex-auth'
@@ -15,6 +16,7 @@ export function createAuthStorage(storage = window.sessionStorage) {
     removeItem(key) { if (!retired) storage.removeItem(key) },
     retire() {
       retired = true
+      clearRegistrationDraft()
       for (const key of Object.keys(storage)) {
         if (key.startsWith('__convexAuth') && key.endsWith(suffix) || key === 'mlezi-registration-draft') storage.removeItem(key)
       }

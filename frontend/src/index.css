@@ -683,3 +683,13 @@ footer .official-brand img { width:245px; height:245px; left:-49px; top:-92px; }
 .legal-contents { display: flex; flex-direction: column; gap: 8px; margin: 24px 0; }
 .legal-links { display: block; margin-top: 32px; padding-top: 20px; border-top: 1px solid #e3e7db; }
 @media(max-width:600px) { .legal-page { margin: 16px auto; } .legal-operator dl { grid-template-columns: 1fr; gap: 4px; } .legal-operator dd { margin-bottom: 12px; } }
+
+/* Avoid focus zoom on iOS while preserving readable controls on touch screens. */
+@media(max-width:900px){
+  input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px}
+  .text-button{min-height:44px}
+}
+
+.payment-row{overflow-wrap:anywhere}.payment-row>div{min-width:0;max-width:100%}
+
+.membership-layout>*{min-width:0}.membership-layout .button{max-width:100%;white-space:normal}

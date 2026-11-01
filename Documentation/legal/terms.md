@@ -8,7 +8,7 @@ Operator name supplied: Lintech Telecom
 Business structure: To be confirmed before launch
 Registration: Confirm if applicable
 Service address: Service address to be confirmed before launch
-Support route: /support/ and /app/#/privacy-account
+Support route: /support/ and /privacy-account
 
 ## 1. The marketplace and eligibility
 
@@ -33,13 +33,13 @@ Reviews must honestly describe an employer’s own experience. Contact unlocking
 Premium is optional paid priority among matching profiles, with rotating exposure. It does not buy an identity badge, better ratings, employment or guaranteed contacts. Search is not a hiring decision by Mlezi.
 
 
-## 4. Platform plans and future payments
+## 4. Platform plans and manual payments
 
-Browsing, shortlisting and a basic caregiver profile are free. Planned employer contact access is KES 300 for 30 days or KES 500 for 90 days; optional caregiver Premium is KES 500 for 365 days. These are platform access/visibility charges, separate from caregiver wages.
+Browsing, shortlisting and a basic caregiver profile are free. Employer contact access is KES 300 for 30 days or KES 500 for 90 days; optional caregiver Premium is KES 500 for 365 days. These are platform access/visibility charges, separate from caregiver wages.
 
 Renewal is manual. No automatic recurring charge is authorized here. Early renewal extends the existing unexpired term; otherwise a term starts on confirmed activation. Previously unlocked contacts remain after ordinary expiry, while new unlocks require active access. Deletion and identity/safety restrictions can still affect access.
 
-Checkout is not enabled yet. Before charging, we will disclose the actual provider, total charges/taxes where applicable, activation conditions, receipts, failed/duplicate-payment handling, cancellation/refund rules and disputes. Users must be able to review the applicable plan before paying. This draft imposes no blanket no-refunds rule or waiver of statutory rights. Mlezi does not currently collect caregiver wages.
+Manual M-Pesa payment uses Paybill 4125123, account mlezicare. Review the selected plan and amount before paying, then submit the receipt code and paying phone in Membership. An administrator confirms receipt, amount, sender and destination against the business statement before activating access; a submitted code alone grants no membership or identity approval. Automated Paystack checkout is not enabled. For incorrect, duplicate, failed or unrecognized payments, contact Support for investigation and any applicable correction or refund; do not pay again while a report is pending. Rejection of a report does not reverse or refund an M-Pesa transfer automatically. This draft imposes no blanket no-refunds rule or waiver of statutory rights. Mlezi does not collect caregiver wages.
 
 
 ## 5. Content and conduct
@@ -53,7 +53,7 @@ Do not harass, discriminate unlawfully, impersonate, scam, publish children’s 
 
 We may remove content, pause publication, restrict contacts or suspend an account for suspected breaches, identity problems, safety or legal obligations. We explain the basis and offer a review route through Support where appropriate, without compromising privacy or investigations. Platform action does not change legal employment obligations.
 
-You can stop using the service and request deletion through Privacy and account. The Privacy notice explains the seven-day cancellation period, file removal and justified retention. Previously shared information cannot always be recalled. Plan-specific cancellation/refund rights will be disclosed before checkout.
+You can stop using the service and request deletion through Privacy and account. The Privacy notice explains the seven-day cancellation period, file removal and justified retention. Previously shared information cannot always be recalled. Use Support to request review of cancellation/refund concerns. Any refund must be investigated and processed separately; withdrawing access or rejecting a report does not itself reverse a payment.
 
 
 ## 7. Support and responsibility

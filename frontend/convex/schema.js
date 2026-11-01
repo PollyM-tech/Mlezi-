@@ -86,11 +86,12 @@ export default defineSchema({
     type: v.union(v.literal('unlock_pass'), v.literal('caregiver_premium'), v.literal('featured_boost')),
     environment: v.optional(v.union(v.literal('sandbox'), v.literal('production'))),
     initiationState: v.optional(v.union(v.literal('prepared'), v.literal('sent'), v.literal('unknown'), v.literal('rejected'))),
+    provider: v.optional(v.literal('manual_mpesa')), reviewedBy: v.optional(v.id('accounts')), reviewedAt: optionalNumber,
     planCode: optionalText, durationDays: optionalNumber, amount: v.number(),
     status: v.union(v.literal('pending'), v.literal('completed'), v.literal('failed')),
     mpesaRef: optionalText, checkoutRequestId: optionalText, merchantRequestId: optionalText,
     phone: optionalText, resultCode: optionalNumber, resultDescription: optionalText,
     lastCheckedAt: optionalNumber, createdAt: v.number(), updatedAt: v.number(),
   }).index('by_account', ['accountId']).index('by_checkout', ['checkoutRequestId']).index('by_status', ['status'])
-    .index('by_receipt', ['mpesaRef']).index('by_legacy_id', ['legacyId']),
+    .index('by_receipt', ['mpesaRef']).index('by_manual_status', ['provider', 'status']).index('by_legacy_id', ['legacyId']),
 })

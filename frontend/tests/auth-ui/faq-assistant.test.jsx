@@ -32,7 +32,7 @@ it('searches and filters locally without network calls or browser storage', asyn
   await user.selectOptions(screen.getByRole('combobox', { name: 'Topic' }), 'plans')
   expect(screen.queryByRole('button', { name: /I forgot my password/ })).toBeNull()
   await user.click(screen.getByRole('button', { name: 'How much are the employer and Premium plans?' }))
-  expect(screen.getByText(/Checkout is not enabled yet/)).toBeTruthy()
+  expect(screen.getByText(/Pay manually to Paybill 4125123/)).toBeTruthy()
   expect(fetch).not.toHaveBeenCalled()
   expect(sessionStorage.length).toBe(sessionBefore); expect(localStorage.length).toBe(localBefore)
 })

@@ -1,3 +1,4 @@
+import { readRegistrationDraft, clearRegistrationDraft } from '../lib/registrationDraft.js'
 import SignOutProvider from './SignOutProvider.jsx'
 import { AUTH_STORAGE_NAMESPACE, createAuthStorage, useSignOut } from '../lib/signOut.js'
 import { currentAppRoute, navigateApp } from '../lib/routes.js'
@@ -16,20 +17,20 @@ import CookieConsent from './CookieConsent'
 import App from '../App.jsx'
 import { LEGAL_VERSION } from '../../convex/lib/legalPolicy.js'
 
-function initialDetails() {
+function initialDetails(email) {
   try {
     const routeRole = new URLSearchParams(currentAppRoute().split('?')[1] || '').get('role')
-    const draft = JSON.parse(sessionStorage.getItem('mlezi-registration-draft') || '{}')
-    return { role: routeRole === 'employer' || !routeRole && draft.role === 'employer' ? 'employer' : 'caregiver', phone: typeof draft.phone === 'string' ? draft.phone : '', name: typeof draft.name === 'string' ? draft.name : '' }
+    const draft = readRegistrationDraft(email)
+    return { role: ['caregiver', 'employer'].includes(draft.role) ? draft.role : routeRole === 'employer' ? 'employer' : 'caregiver', phone: typeof draft.phone === 'string' ? draft.phone : '', name: typeof draft.name === 'string' ? draft.name : '' }
   } catch { return { role: 'caregiver', phone: '', name: '' } }
 }
 
-function CompleteAccount() {
+function CompleteAccount({ email }) {
   const ensureExisting = useMutation(api.accounts.ensureExisting)
   const register = useMutation(api.accounts.register)
   const signOut = useSignOut()
   const [checked, setChecked] = useState(false)
-  const [details, setDetails] = useState(initialDetails)
+  const [details, setDetails] = useState(() => initialDetails(email))
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   useEffect(() => {
@@ -39,7 +40,7 @@ function CompleteAccount() {
   }, [ensureExisting])
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('')
-    try { await register({ ...details, termsAccepted: new FormData(event.currentTarget).get('termsAccepted') === 'on', termsVersion: LEGAL_VERSION }); try { sessionStorage.removeItem('mlezi-registration-draft') } catch { /* Account creation succeeded even if browser storage is unavailable. */ } }
+    try { await register({ ...details, termsAccepted: new FormData(event.currentTarget).get('termsAccepted') === 'on', termsVersion: LEGAL_VERSION }); clearRegistrationDraft(email) }
     catch (err) { setError(typeof err.data === 'string' ? err.data : 'Unable to save your account. Please try again.') } finally { setBusy(false) }
   }
   return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">EMAIL VERIFIED</span><h1>Complete your account</h1><p>Tell us how you’ll use Mlezi.</p>{error && <p role="alert">{error}</p>}{!checked ? <p role="status">Checking your account…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Caregiver / nanny</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><label className="checkbox-label"><input name="termsAccepted" type="checkbox" required disabled={busy} />I am at least 18, agree to the <a href="/terms/" target="_blank" rel="noopener">Terms of use</a> and acknowledge the <a href="/privacy/" target="_blank" rel="noopener">Privacy notice</a>. Optional cookies are a separate choice.</label><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
@@ -61,6 +62,7 @@ function SessionContent() {
   useEffect(() => { const refreshNow = () => setRefresh(Date.now()); const timer = setInterval(() => setRefresh(Math.floor(Date.now() / 60000)), 30000); window.addEventListener('mlezi-security-required', refreshNow); return () => { clearInterval(timer); window.removeEventListener('mlezi-security-required', refreshNow) } }, [])
   const session = useQuery(api.accounts.current, serverAuth.isAuthenticated ? { refresh } : 'skip')
   const account = session?.account
+  useEffect(() => { if (account?.email) clearRegistrationDraft(account.email) }, [account?.email])
   const [route, setRoute] = useState(currentAppRoute)
   useEffect(() => { const changed = () => setRoute(currentAppRoute()); window.addEventListener('hashchange', changed); window.addEventListener('popstate', changed); return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('popstate', changed) } }, [])
   const [linkError, setLinkError] = useState('')
@@ -95,7 +97,7 @@ function SessionContent() {
   if (auth.isAuthenticated && session?.status === 'admin_security') return <AdminSecurity />
   if (auth.isAuthenticated && session?.account && route.split('?')[0] === '#/support') return <main className="app-shell"><CookieConsent /><header className="site-header"><a href="/workspace">← My account</a><button className="text-button" onClick={() => signOut()}>Sign out</button></header><SupportInbox admin={session.account.role === 'admin'} /></main>
   if (auth.isAuthenticated && ['restricted', 'profile_required'].includes(session?.status)) return <RestrictedAccount session={session} />
-  if (auth.isAuthenticated && session?.status === 'onboarding') return <CompleteAccount />
+  if (auth.isAuthenticated && session?.status === 'onboarding') return <CompleteAccount email={session.email} />
   return <App key={account?.id || 'signed-out'} />
 }
 

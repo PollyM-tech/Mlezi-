@@ -13,7 +13,7 @@ it('keeps Lintech Telecom notices visibly draft until particulars AND review are
   expect(screen.getByText('Pre-launch draft')).toBeTruthy()
   expect(screen.getByText('Lintech Telecom')).toBeTruthy()
   expect(screen.getByText(/Mlezi does not currently recruit or place workers/)).toBeTruthy()
-  expect(screen.getByText(/Checkout is not enabled yet/)).toBeTruthy()
+  expect(screen.getByText(/Automated Paystack checkout is not enabled/)).toBeTruthy()
   expect(screen.queryByRole('link', { name: /@/ })).toBeNull()
 })
 it('describes ID contents truthfully and links independent privacy complaints', () => {

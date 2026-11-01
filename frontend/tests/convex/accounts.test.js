@@ -103,3 +103,9 @@ describe('Convex account permissions', () => {
     expect(() => safeRedirect('http://localhost:5173/app/#/signin', 'https://mlezicare.com')).toThrow()
   })
 })
+
+it('exposes only the authenticated verified email for registration-draft matching',async()=>{
+ const t=make(),who=await identity(t,'parent@example.test')
+ expect(await who.client.query(api.accounts.current,{})).toMatchObject({status:'onboarding',email:'parent@example.test'})
+ expect(await t.query(api.accounts.current,{})).not.toHaveProperty('email')
+})

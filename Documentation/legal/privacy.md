@@ -8,7 +8,7 @@ Operator name supplied: Lintech Telecom
 Business structure: To be confirmed before launch
 Registration: Confirm if applicable
 Service address: Service address to be confirmed before launch
-Support route: /support/ and /app/#/privacy-account
+Support route: /support/ and /privacy-account
 
 ## 1. Who this notice covers
 
@@ -24,6 +24,7 @@ Information comes directly from users, their marketplace interactions, administr
 - Account details: email, phone, account role and name where provided, with verification, credentials and session records needed for authentication.
 - Caregiver profiles: photo, general location, experience, services, languages, skills, age groups cared for, availability, expected pay and bio supplied by the caregiver.
 - Identity evidence: private national ID image and recent selfie, plus the profile photo, for manual identity and adult-age review. The ID image can contain more information than the fields used in a review.
+- Manual payment reports: plan, expected amount, M-Pesa receipt reference, paying phone, status and administrator confirmation/rejection records. These are private account records, not public profile content.
 - Marketplace records: shortlists, contact unlocks, membership dates, employer reviews, caregiver replies and reports. Reviews and reports can contain information supplied by another user.
 - Support/privacy cases: issue details, messages, guest contact email and administrator decisions or restriction reasons.
 - Technical information: authentication/session information, security events, provider connection/usage records and cookie choices. Optional search preferences stay in your browser tab.

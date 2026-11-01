@@ -1,3 +1,4 @@
+import { MANUAL_MPESA } from './lib/manualPaymentPolicy.js'
 import { query, mutation } from './_generated/server.js'
 import { consume, audit } from './lib/security.js'
 import { v } from 'convex/values'
@@ -101,7 +102,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
     const a = await requireAccount(ctx, 'employer', 'caregiver'), table = a.role === 'employer' ? 'employers' : 'caregivers'
     const p = await ctx.db.query(table).withIndex('by_account', q => q.eq('accountId', a._id)).unique()
     const expiry = a.role === 'employer' ? p?.accessExpiresAt : p?.premiumExpiresAt
-    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: false, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan })) }
+    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: false, manual_payment: MANUAL_MPESA, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan })) }
   }
   if (path === '/payments' || path.startsWith('/payments/')) {
     const a = await requireAccount(ctx, 'employer', 'caregiver')
@@ -242,7 +243,7 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   }
   if (path.startsWith('/payments/') && method === 'POST') {
     await requireAccount(ctx, 'employer', 'caregiver')
-    fail('M-Pesa payments will be enabled after the migration is complete.', 503)
+    fail('Automated M-Pesa payments remain disabled. Use the manual payment instructions in Membership.', 503)
   }
   if (path.startsWith('/admin/')) {
     const a = await requireAccount(ctx, 'admin')

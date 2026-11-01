@@ -48,3 +48,7 @@
 .landing-care-type{padding-right:42px}
 .regional-links a{color:#23533c;text-decoration:underline;text-underline-offset:4px;font-weight:600}
 .regional-links a:hover{color:#163b28}
+
+/* Regional calls to action must wrap on narrow phones instead of widening the page. */
+.regional-page .landing-hero-actions{flex-wrap:wrap}
+@media(max-width:900px){.landing-search select{font-size:16px}}

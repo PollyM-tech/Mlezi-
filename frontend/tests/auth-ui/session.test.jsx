@@ -17,7 +17,7 @@ vi.mock('convex/react', () => ({ useConvexAuth: () => state.serverAuth || state.
 vi.mock('../../src/lib/convexClient.js', () => ({ getConvexClient: () => ({}), detachConvexClient: vi.fn() }))
 vi.mock('../../src/App.jsx', () => ({ default: () => <p>Regular Mlezi app</p> }))
 beforeEach(() => {
-  sessionStorage.clear()
+  sessionStorage.clear(); localStorage.clear()
   state.mutation.mockReset().mockResolvedValue(null)
   state.serverAuth = null
   state.auth.isAuthenticated = false; state.auth.isLoading = false; state.query = undefined
@@ -103,4 +103,15 @@ it('requires an unchecked terms acknowledgement when completing a new verified a
   await userEvent.click(checkbox)
   await userEvent.click(screen.getByRole('button', { name: 'Continue to my workspace' }))
   await waitFor(() => expect(state.mutation).toHaveBeenCalledWith(expect.objectContaining({ termsAccepted: true, termsVersion: LEGAL_VERSION })))
+})
+
+it('prefills new-tab magic-link account setup from the matching verified-email draft',async()=>{
+ const draft={role:'employer',name:'Example Parent',phone:'0712345678',email:'parent@example.test',expiresAt:Date.now()+60000}
+ localStorage.setItem('mlezi-registration-draft',JSON.stringify(draft))
+ state.auth.isAuthenticated=true;state.query={status:'onboarding',account:null,email:'parent@example.test'}
+ window.history.replaceState({},'', '/caregiver')
+ render(<ConvexSession/> )
+ expect((await screen.findByLabelText('Your name')).value).toBe('Example Parent')
+ expect(screen.getByLabelText('Contact phone').value).toBe('0712345678')
+ expect(screen.getByLabelText('I am joining as').value).toBe('employer')
 })

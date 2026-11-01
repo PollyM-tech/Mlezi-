@@ -52,7 +52,7 @@ export function employerProfile(p, account) {
 }
 export function reviewData(r) { return { id: externalId(r), rating: r.rating, comment: r.comment || '', author_name: r.authorName || 'Employer', reply: r.reply || null, created_at: iso(r.createdAt) } }
 export function verificationData(s) { return s ? { id: externalId(s), status: s.status, submitted_at: iso(s.submittedAt), reviewed_at: iso(s.reviewedAt), rejection_reason: s.rejectionReason || null } : null }
-export function paymentData(p) { return { id: externalId(p), type: p.type, plan_code: p.planCode || null, amount: p.amount, status: p.status, result_description: p.resultDescription || null, created_at: iso(p.createdAt) } }
+export function paymentData(p) { return { id: externalId(p), type: p.type, plan_code: p.planCode || null, amount: p.amount, status: p.status, provider: p.provider || null, receipt: p.provider === 'manual_mpesa' ? p.mpesaRef || null : null, phone: p.provider === 'manual_mpesa' ? p.phone || null : null, reviewed_at: iso(p.reviewedAt), result_description: p.resultDescription || null, created_at: iso(p.createdAt) } }
 export async function aggregate(ctx, caregiverId) {
   const reviews = await ctx.db.query('reviews').withIndex('by_caregiver_public', q => q.eq('caregiverId', caregiverId).eq('isPublic', true)).collect()
   await ctx.db.patch(caregiverId, { ratingAverage: reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0, reviewCount: reviews.length })

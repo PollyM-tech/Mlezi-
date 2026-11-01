@@ -22,7 +22,7 @@ export const current = query({ args: { refresh: v.optional(v.number()) }, handle
     else if (account?.role === 'admin' && !await adminSessionReady(ctx, account)) status = 'admin_security'
     else if (account && !await hasProfilePhoto(ctx, account)) status = 'profile_required'
     const setup = status === 'profile_required' ? await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', account._id)).unique() : null
-    return { status, setupProfile: setup ? await publicProfile(ctx, setup, account) : null, account: account ? ownAccount(account) : null }
+    return { status, ...(status === 'onboarding' ? { email: identity.email } : {}), setupProfile: setup ? await publicProfile(ctx, setup, account) : null, account: account ? ownAccount(account) : null }
   } catch (error) {
     if (error instanceof ConvexError) return { status: 'expired', account: null }
     throw error

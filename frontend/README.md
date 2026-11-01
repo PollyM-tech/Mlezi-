@@ -123,3 +123,7 @@ Existing security headers remain in that file. A mistakenly created, malformed r
 a successful build does not complete the separate production readiness checks.
 
 See [registration, upload and one-time identity fixes](../Documentation/registration-upload-fixes.md) for local testing, trusted frontend origins and email-provider requirements.
+
+For the device-size and browser layout suite, run `npm run test:responsive` after installing Playwright browsers. See the [responsive audit](../Documentation/responsive-audit.md) for covered screens, viewport sizes, results and physical-device checks still required. The suite uses isolated sample data and sends no real emails or uploads.
+
+Manual M-Pesa reporting and administrator-confirmed activation are implemented locally for Paybill **4125123**, account **mlezicare**. Automated checkout stays disabled until Paystack integration. See [manual payment workflow and tests](../Documentation/manual-payments.md).
