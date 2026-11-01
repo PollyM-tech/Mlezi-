@@ -98,5 +98,9 @@ describe('Convex account permissions', () => {
     expect(() => safeRedirect('https://evil.test', 'http://localhost:5173')).toThrow()
     expect(() => safeRedirect('//evil.test', 'http://localhost:5173')).toThrow()
     expect(safeRedirect('/#/signin', 'http://localhost:5173')).toBe('http://localhost:5173/#/signin')
+    expect(safeRedirect('mlezicare://auth', 'http://localhost:5173')).toBe('mlezicare://auth')
+    for (const destination of ['mlezicare://evil', 'mlezicare://auth/other', 'mlezicare://auth?next=evil', 'mlezicare://auth#other', 'otherapp://auth', 'mlezicare://user@auth']) {
+      expect(() => safeRedirect(destination, 'http://localhost:5173')).toThrow()
+    }
   })
 })

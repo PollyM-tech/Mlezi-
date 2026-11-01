@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Mlezi Care",
+    "slug": "mlezi-care",
+    "version": "1.0.0",
+    "scheme": "mlezicare",
+    "orientation": "portrait",
+    "icon": "./assets/mlezi-logo.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mlezicare.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.mlezicare.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/mlezi-logo.png",
+        "backgroundColor": "#fbfaf5"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose photos for your Mlezi profile and private identity review.",
+          "cameraPermission": "Take a profile photo or private selfie for Mlezi identity review.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "web": {
+      "favicon": "./assets/mlezi-logo.png"
+    }
+  }
+}

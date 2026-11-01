@@ -21,6 +21,9 @@ export function registrationDetails({ role, phone, name }) {
 }
 
 export function safeRedirect(redirectTo, siteUrl) {
+  // Installed Mlezi apps register this single authentication destination.
+  // Do not accept arbitrary schemes, paths, query strings or fragments.
+  if (redirectTo === 'mlezicare://auth') return redirectTo
   const site = new URL(siteUrl)
   const target = new URL(redirectTo, site)
   if (target.origin !== site.origin || target.username || target.password) throw new ConvexError('Invalid sign-in destination.')

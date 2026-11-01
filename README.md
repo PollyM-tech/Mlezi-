@@ -12,6 +12,10 @@ See [current setup and checks](frontend/README.md), [security/identity implement
 
 Lintech Telecom is the operator name supplied for the marketplace-only first version. See the [legal review handoff](Documentation/legal-review-handoff.md) and matching policy drafts; final legal particulars and qualified review remain pending.
 
+## Phone application
+
+The React Native + Expo app is in [`mobile`](mobile/README.md), connected to the same Convex backend. Start it with `cd mobile && npm start`; see its README for Expo Go setup and the [device testing checklist](Documentation/mobile-implementation.md). Mobile payments remain disabled.
+
 ## Earlier project notes
 
 # Mlezi-

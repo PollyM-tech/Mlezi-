@@ -102,3 +102,7 @@ image is prefetched after initial paint, rather than downloading every slide at
 once. These are the original PNGs, so image bandwidth still reflects their sizes.
 The first background is included in pre-rendered HTML and uses Vite's asset map.
 Timing, wraparound, automatic playback, visibility and cleanup have UI tests.
+
+Partner presentation updated: Lintech Telecom, Mylescorp Technologies and Mlezi Care
+now appear as logos directly on the page background, without white cards, borders
+or oversized padding. The row wraps compactly on small screens.

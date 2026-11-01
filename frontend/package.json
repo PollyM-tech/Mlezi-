@@ -27,7 +27,7 @@
     "legal:export": "node scripts/export-legal.mjs"
   },
   "dependencies": {
-    "@auth/core": "^0.41.1",
+    "@auth/core": "^0.41.3",
     "@convex-dev/auth": "^0.0.96",
     "convex": "^1.48.0",
     "react": "^19.2.8",
