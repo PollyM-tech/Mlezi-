@@ -67,7 +67,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
   if (path === '/auth/me') {
     const a = await requireAccount(ctx)
     const p = a.role === 'admin' ? null : await ctx.db.query(a.role === 'caregiver' ? 'caregivers' : 'employers').withIndex('by_account', q => q.eq('accountId', a._id)).unique()
-    return { user: { id: a._id, email: a.email, phone: a.phone || null, role: a.role, profile: p ? a.role === 'caregiver' ? await publicProfile(ctx, p, a) : employerProfile(p, a) : null } }
+    return { user: { id: a._id, name: p?.name || a.name || null, email: a.email, phone: a.phone || null, role: a.role, profile: p ? a.role === 'caregiver' ? await publicProfile(ctx, p, a) : employerProfile(p, a) : null } }
   }
   if (path === '/caregivers/profile') { const { account, profile } = await owned(ctx, 'caregivers', 'caregiver'); return { profile: await publicProfile(ctx, profile, account) } }
   if ((match = path.match(/^\/caregivers\/([^/]+)$/))) { const p = await find(ctx, 'caregivers', match[1]); const a = await ctx.db.get(p.accountId); if (a.suspendedAt || a.deletionRequestedAt || !await hasProfilePhoto(ctx,a)) fail('Caregiver not found',404); if (!approvedAdult(p)) { if (!await ctx.auth.getUserIdentity()) fail('Caregiver not found',404); const viewer = await requireAccount(ctx); if (viewer._id !== p.accountId && viewer.role !== 'admin') fail('Caregiver not found',404) }; return { profile: await publicProfile(ctx,p) } }
@@ -162,7 +162,7 @@ async function saveProfile(ctx, data, creating, requestedId) {
     await audit(ctx, a._id, 'identity_submitted', id)
   }
   if (!await hasProfilePhoto(ctx, a)) fail('A profile photo is required')
-  await ctx.db.patch(a._id, { phone: contactPhone })
+  await ctx.db.patch(a._id, { name: fields.name, phone: contactPhone })
   return { profile: await publicProfile(ctx, await ctx.db.get(id), { ...a, phone: contactPhone }) }
 }
 

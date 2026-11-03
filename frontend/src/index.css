@@ -82,7 +82,7 @@ small {
   display:flex;
   align-items:center;
   gap:24px}
-.account-email {
+.account-name {
   font-size:.8rem;
   max-width:220px;
   overflow:hidden;
@@ -537,7 +537,7 @@ footer>span {
   padding:0 22px}
 .brand {
   font-size:1.7rem}
-.account-email {
+.account-name {
   display:none}
 .workspace-nav {
   padding:0 22px;

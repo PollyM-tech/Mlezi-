@@ -263,3 +263,13 @@ it('invalidates a pending photo snapshot while preserving pending display-name c
   expect((await c.read('/verification/status')).verification_status).toBe('unverified')
   await expect(admin.write(`/admin/verification/${submission.id}/approve`,{identity_compared:true,id_legible:true,adult_confirmed:true,birth_date:'1990-01-01'},'POST')).rejects.toThrow('no longer pending')
 })
+
+it('returns a profile name separately from login email and keeps caregiver name changes in sync', async () => {
+  const t = make(), c = await caregiver(t, 'name-display')
+  await c.write('/caregivers/profile', { name: 'Caregiver Display Name' })
+  expect((await c.read('/auth/me')).user).toMatchObject({ name: 'Caregiver Display Name', role: 'caregiver' })
+  expect((await t.run(ctx => ctx.db.get(c.accountId))).name).toBe('Caregiver Display Name')
+  const parent = await person(t, 'employer', 'parent-name')
+  await parent.write('/employers/profile', { name: 'Parent Display Name', phone: '0712345678' })
+  expect((await parent.read('/auth/me')).user).toMatchObject({ name: 'Parent Display Name', role: 'employer' })
+})

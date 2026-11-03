@@ -92,11 +92,11 @@ export default function App() {
 
   function logout() { void clearSession() }
   function saved(result) {
-    setProfile(result); setEditing(false); setNotice(profile ? 'Your changes have been saved.' : 'Your caregiver profile is ready. Welcome to Mlezi!'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    setProfile(result); setUser(current => current ? { ...current, name: result.name, profile: result } : current); setEditing(false); setNotice(profile ? 'Your changes have been saved.' : 'Your caregiver profile is ready. Welcome to Mlezi!'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   return <div className="app-shell">
     <CookieConsent />
-    {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions"><a className="text-button" href="/caregivers">Find care</a>{user ? <><span className="account-email">{user.email}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="/signin">Sign in / join</a>}</div></header>}
+    {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions"><a className="text-button" href="/caregivers">Find care</a>{user ? <><span className="account-name">{user.profile?.name || user.name || 'My account'}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="/signin">Sign in / join</a>}</div></header>}
     {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href={user.role === 'admin' ? '/admin-mlezicareaccess' : '/workspace'}>{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`/caregivers/${profile.id}`}>Public preview ↗</a>}{user.role === 'employer' && <><a href="/caregivers">Find caregivers</a><a href="/shortlist">My shortlist</a><a href="/contacts">My contacts</a><a href="/account">My account</a></>}{user.role !== 'admin' && <a href="/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Contact-access pass'}</a>}<a href="/tickets">Support</a><a href="/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
     <main id="main-content" className={landing ? 'landing-main' : undefined}>
       {notice && <div className="alert success" role="status">{notice}<button className="dismiss" aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></div>}
@@ -108,7 +108,7 @@ export default function App() {
         : supportPage ? <SupportInbox admin={user.role === 'admin'} />
         : privacyAccount ? <PrivacyAccount />
         : membership ? <Membership key={user.id} user={user} />
-        : user.role === 'employer' && accountPage ? <EmployerAccount onSaved={updated => setUser(current => ({ ...current, phone: updated.phone, profile: { ...current.profile, name: updated.name } }))} />
+        : user.role === 'employer' && accountPage ? <EmployerAccount onSaved={updated => setUser(current => ({ ...current, name: updated.name, phone: updated.phone, profile: { ...current.profile, name: updated.name } }))} />
         : user.role === 'employer' && contactsPage ? <EmployerContacts />
         : user.role === 'employer' && shortlist ? <Discovery key="saved" user={user} saved />
         : user.role === 'employer' ? <EmployerDashboard />

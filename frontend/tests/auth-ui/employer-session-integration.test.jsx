@@ -62,3 +62,12 @@ it('keeps unsaved employer account details through the same timing and history e
   expect(name.value).toBe('Unsaved Parent Name')
   expect(state.signOut).not.toHaveBeenCalled()
 })
+
+it.each(['employer', 'caregiver'])('shows the %s profile name in the header instead of the login email', async role => {
+  state.session.account = { id: 'parent1', role, name: 'Registration Name', email: 'private@example.test', profile: { name: 'Profile Name' } }
+  window.history.replaceState({}, '', '/caregivers')
+  let view
+  await act(async () => { view = render(<ConvexSession />); await vi.dynamicImportSettled() })
+  expect(view.container.querySelector('.account-name').textContent).toBe('Profile Name')
+  expect(view.container.querySelector('.header-actions').textContent).not.toContain('private@example.test')
+})
