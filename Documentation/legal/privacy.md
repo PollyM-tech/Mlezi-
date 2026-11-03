@@ -1,6 +1,6 @@
 # Mlezi Privacy notice
 
-Prepared 1 November 2026 · Version 2026-11-01
+Prepared 1 November 2026 · Version 2026-11-03
 
 **Pre-launch review copy. Not a legal approval or publication authorization.**
 
@@ -25,13 +25,13 @@ Information comes directly from users, their marketplace interactions, administr
 - Caregiver profiles: photo, general location, experience, services, languages, skills, age groups cared for, availability, expected pay and bio supplied by the caregiver.
 - Identity evidence: private national ID image and recent selfie, plus the profile photo, for manual identity and adult-age review. The ID image can contain more information than the fields used in a review.
 - Manual payment reports: plan, expected amount, M-Pesa receipt reference, paying phone, status and administrator confirmation/rejection records. These are private account records, not public profile content.
-- Marketplace records: shortlists, contact unlocks, membership dates, employer reviews, caregiver replies and reports. Reviews and reports can contain information supplied by another user.
+- Marketplace records: job listings, pay proposals and messages, offers and acceptance records, shortlists, contact unlocks, membership dates, employer reviews, caregiver replies and reports. Reviews and reports can contain information supplied by another user.
 - Support/privacy cases: issue details, messages, guest contact email and administrator decisions or restriction reasons.
 - Technical information: authentication/session information, security events, provider connection/usage records and cookie choices. Optional search preferences stay in your browser tab.
 
 ## 3. Purposes and intended processing grounds
 
-We use information to provide and secure accounts, publish profiles, run search and contact access, review identity evidence, calculate ratings, moderate misuse, answer support and handle access/correction/deletion requests. Required fields are labelled. Without required account information, registration cannot be completed; without required caregiver evidence and approval, a caregiver cannot be published.
+We use information to provide and secure accounts, publish profiles, run search and contact access, review identity evidence, calculate ratings, moderate misuse, answer support and handle access/correction/deletion requests. Required fields are labelled. Without required account information, registration cannot be completed; without required caregiver evidence, a caregiver cannot be published. Complete available profiles may appear to signed-in employers while identity review is pending, clearly labelled as not yet checked. Contact unlocking requires administrator confirmation of identity and adult age.
 
 The intended grounds are providing the service requested under the user agreement, proportionate legitimate interests in security and preventing misuse, consent where required for optional processing, and applicable legal obligations. The operator must confirm the appropriate grounds and necessity of mandatory ID/selfie processing before launch. Accepting terms or an upload permission does not waive privacy rights or authorize unrelated uses.
 
@@ -44,14 +44,16 @@ An authorized administrator compares the ID, selfie and profile photo and checks
 
 Identity checked records this manual review. It is not an issuer-backed identity validation, criminal/background check, or guarantee of authenticity, suitability or conduct. Uploads, reviews and Premium do not grant this badge automatically. Identity/profile-photo changes can require a fresh review.
 
-Use Privacy and account or Support to withdraw a review request, question a decision or request evidence deletion. We will assess the request and explain effects on publication and any justified retention. A publicly listed caregiver must still have the required evidence and approval.
+Use Privacy and account or Support to withdraw a review request, question a decision or request evidence deletion. We will assess the request and explain effects on publication and any justified retention. A publicly listed caregiver must still have the required evidence. Pending listings are clearly labelled; identity approval is required for contact unlocking.
 
 
 ## 5. Who sees what
 
+You choose whether your caregiver profile appears in marketplace searches, separately from availability. Accepting a job does not change visibility. Applying explicitly shares your profile and proposal with that job’s employer even when hidden; previously unlocked contacts remain accessible subject to account and safety restrictions.
+
 Shortlists and private identity/support records are not public profiles. Necessary disclosures for valid legal processes or serious safety/security concerns are assessed for lawful basis and scope. Deleting information here cannot always recall copies another person has already downloaded or shared.
 
-- Visitors can see approved public caregiver profiles, profile photos, stated services/experience, availability, expected pay and public reviews/replies. Do not include private information in these fields.
+- Signed-in employers can see eligible caregiver profiles, including complete profiles clearly labelled as awaiting identity review, profile photos, stated services/experience, availability, expected pay and public reviews/replies. Do not include private information in these fields.
 - Employers with contact access can unlock a caregiver’s phone/email. Previously unlocked contacts remain accessible after ordinary pass expiry, subject to account deletion and identity/safety restrictions.
 - Authorized administrators access private evidence and case information needed for review, moderation and support. Privileged access requires additional administrator verification.
 - Service providers process information needed for hosting, database/storage, authentication, email and requested anti-spam or optional font features.

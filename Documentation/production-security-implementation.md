@@ -6,11 +6,11 @@ The owner requested caregiver-only mandatory profile photos, all three identity 
 
 ### Caregiver onboarding and adult identity checks
 
-Authentication establishes a limited session so a caregiver can upload safely. `accounts.current` returns `profile_required` while no stored profile photo exists. The frontend shows only setup, legal notices, privacy requests and sign-out; protected application functions enforce the same requirement server-side. Missing-photo repairs update an existing profile rather than attempting duplicate creation. Public browsing cannot prove age or identity; signing out does not make an unapproved profile publishable.
+Authentication establishes a limited session so a caregiver can upload safely. `accounts.current` returns `profile_required` while no stored profile photo exists. The frontend shows only setup, legal notices, privacy requests and sign-out; protected application functions enforce the same requirement server-side. Missing-photo repairs update an existing profile rather than attempting duplicate creation. Public browsing cannot prove age or identity. Complete pending profiles may be published under the policy below, without an identity-checked or verified-age claim.
 
 New caregiver profiles require a profile photo, private national ID, private recent selfie and consent. Creation atomically submits an identity review as pending. Existing caregivers with an ID/photo can submit a new selfie from Identity check. An admin must confirm the ID is legible, compare all three images, enter the complete ID date of birth and affirm age 18+. The server calculates the exact birthday using Kenya's calendar date and rejects under-18, invalid or implausible dates. The full DOB is not stored in the profile/review database record; the outcome, reviewer and time are recorded. Names/photos changing invalidate the approval and adult attestation.
 
-Pending/unapproved caregivers are excluded from employer search, saved-profile listings and contact unlocking. Their draft profile is available only to its owner and an MFA-verified admin. Existing contacts can be temporarily restricted by identity/safety checks; ordinary subscription expiry still retains previously unlocked contact access. Existing legacy caregivers need this explicit adult review before publication; previously uploaded images alone do not confer adult status.
+Available pending caregivers may appear in employer search and shortlists only with recorded adult-account terms acceptance, a stored profile photo, stored ID and selfie, and a current pending submission matching the profile photo. They are explicitly labelled Identity review pending and make no administrator-confirmed age claim. Rejected, unsubmitted, incomplete, suspended and deletion-pending accounts remain excluded. Contact unlocking still requires administrator-approved adult identity. Existing contacts can be temporarily restricted by identity/safety checks; ordinary subscription expiry still retains previously unlocked contact access. Legacy records without recorded adult-account terms acceptance do not gain pending publication automatically. Previously uploaded images alone do not confer adult status.
 
 This is a documented **manual identity/age comparison**, not an ID-issuer check, liveness test, criminal/background check, or guarantee against forged/borrowed documents. For higher assurance consider an authorized issuer-backed Kenyan ID/DOB check with live-selfie/liveness verification, appropriate consent and vendor privacy review. Do not infer age from appearance. Ambiguous ID dates or mismatched images must be rejected/requested again rather than approximated.
 
@@ -68,3 +68,14 @@ A public `/health` HTTP endpoint is available for an uptime monitor and returns 
 2. Choose the domain, public support inbox and legal business name. Finalize notices/retention/legal review and production service configuration.
 3. Complete actual HTTPS role/identity/auth tests, restore drill, monitoring and header checks, then run the guarded production build. Do not call the app publicly production-ready before these pass.
 4. Integrate/test M-Pesa last, as previously agreed.
+
+### Employer-only profile audience (3 November 2026)
+
+All list, profile-detail and review reads require authentication. Listing feeds require
+an employer role (or MFA-verified administrator). Detail/review access additionally
+allows the caregiver owner; other caregiver accounts cannot browse each other's
+profiles. Employer reads still enforce listing eligibility, account restrictions,
+required evidence and pending/approved status. Anonymous requests fail before profile
+lookup, and public page shells contain no profile data. Owner/admin preview is retained.
+The homepage stays public marketing; Find care asks visitors to sign in/create an
+employer account. This supersedes earlier descriptions of public profile publication.

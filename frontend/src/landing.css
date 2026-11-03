@@ -52,3 +52,28 @@
 /* Regional calls to action must wrap on narrow phones instead of widening the page. */
 .regional-page .landing-hero-actions{flex-wrap:wrap}
 @media(max-width:900px){.landing-search select{font-size:16px}}
+
+/* Homepage care stories use the supplied artwork beside the relevant services. */
+.landing-care-stories article{min-width:0}
+.landing-care-stories .landing-story-image{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin-bottom:22px}
+.landing-play-feature{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:center;gap:48px;padding-top:12px}
+.landing-play-feature>img{display:block;width:100%;height:auto;border-radius:18px}
+.landing-play-feature>div{min-width:0}
+.landing-play-feature p{font-size:.9rem;color:#708072;line-height:1.9;margin:20px 0}
+@media(max-width:760px){.landing-play-feature{grid-template-columns:minmax(0,1fr);gap:26px}.landing-care-stories .landing-story-image{margin-bottom:18px}.landing-play-feature .landing-link{white-space:normal}}
+
+/* Keep the brand and navigation aligned, with clear groups on every screen. */
+.landing-footer{grid-template-columns:minmax(220px,1fr) minmax(0,2fr);align-items:start;gap:32px 56px;padding-top:44px;padding-bottom:24px;border-top:1px solid #e6e9de}
+.landing-footer-brand{min-width:0}
+.landing-footer-brand>p{line-height:1.7}
+.landing-footer-brand small{display:block;margin-top:6px;line-height:1.7;max-width:260px}
+.landing-footer nav.landing-footer-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin:0;align-self:start;font-size:.8rem}
+.landing-footer-links>div{display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-width:0}
+.landing-footer-links h3{font-size:.74rem;font-weight:700;margin:0 0 5px;color:#254b3d;line-height:1.6}
+.landing-footer-links a,.landing-footer nav.landing-footer-links button{display:block;padding:0;line-height:1.7;white-space:normal;text-align:left;color:#4d6356;font-size:inherit}
+.landing-footer-links a:hover,.landing-footer nav.landing-footer-links button:hover{color:#235b45;text-decoration:underline;text-underline-offset:4px}
+.landing-footer-bottom{grid-column:1/-1;display:flex;justify-content:space-between;gap:16px 32px;border-top:1px solid #e6e9de;padding-top:20px;color:#77816f}
+.landing-footer .landing-footer-bottom p{font-size:.67rem;line-height:1.8;margin:0}
+.landing-footer-bottom p:last-child{flex-shrink:0}
+@media(max-width:900px){.landing-footer{grid-template-columns:minmax(0,1fr);gap:28px}.landing-footer-brand small{max-width:none}.landing-footer-bottom{flex-wrap:wrap}}
+@media(max-width:480px){.landing-footer nav.landing-footer-links{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 20px}.landing-footer-bottom{flex-direction:column;gap:8px}}

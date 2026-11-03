@@ -16,7 +16,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npx vite --config vite.responsive.config.mjs",
+    command: "node node_modules/vite/bin/vite.js --config vite.responsive.config.mjs",
     url: "http://127.0.0.1:4191/tests/responsive/index.html",
     reuseExistingServer: true,
     timeout: 30000,

@@ -1,0 +1,3 @@
+export default function CaregiverAccess({ user }) {
+  return <section className="card state-panel"><h1>{user ? 'Caregiver browsing is for employers' : 'Sign in to meet the caregivers'}</h1><p>Caregiver listings and profile details are available to signed-in employers. Browsing is free after you create an employer account.</p>{user ? <a className="button primary" href="/workspace">Return to my workspace</a> : <div className="action-row"><a className="button primary" href="/signin">Sign in as an employer</a><a className="button secondary" href="/employer">Create an employer account</a></div>}</section>
+}

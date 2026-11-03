@@ -1,1 +1,1 @@
-export const ADMIN_SECTIONS = { overview: 'Overview', identity: 'Identity checks', tickets: 'Support tickets', payments: 'Manual payments', reports: 'Safety reports & reviews', operations: 'Accounts & privacy', emails: 'Email delivery' }
+export const ADMIN_SECTIONS = { overview: 'Overview', jobs: 'Jobs & applications', identity: 'Identity checks', tickets: 'Support tickets', payments: 'Manual payments', reports: 'Safety reports & reviews', operations: 'Accounts & privacy', emails: 'Email delivery' }

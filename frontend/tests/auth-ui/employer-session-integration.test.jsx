@@ -10,6 +10,7 @@ vi.mock('convex/react', () => ({
   useMutation: () => vi.fn(),
   useQuery: (ref,args) => {
     if (args === 'skip') return undefined
+    if (getFunctionName(ref) === 'jobs:alerts') return {applications:0,offers:0,more:false}
     if (getFunctionName(ref) !== 'accounts:current') throw new Error('Unexpected query in employer journey')
     state.queryArgs.push(args.refresh)
     return args.refresh === state.queryArgs[0] ? state.session : undefined
@@ -35,6 +36,7 @@ it('keeps actual employer care requirements through three minutes, reactive upda
   window.history.replaceState({}, '', '/caregivers')
   let view
   await act(async () => { view = render(<ConvexSession />); await vi.dynamicImportSettled() })
+  fireEvent.click(screen.getByRole('button', { name: 'Filter caregivers' }))
   const keyword = screen.getByLabelText(/Name or keyword/)
   fireEvent.change(keyword, {target: {value: 'Newborn travel nanny'}})
   fireEvent.change(screen.getByLabelText('Caregiver category'), {target: {value: 'travel_nanny'}})

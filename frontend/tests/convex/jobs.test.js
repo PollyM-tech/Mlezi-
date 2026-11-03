@@ -1,0 +1,120 @@
+import {afterEach,beforeEach,expect,it,vi} from 'vitest'
+import {convexTest} from 'convex-test'
+import schema from '../../convex/schema.js'
+import {api,internal} from '../../convex/_generated/api.js'
+import {LEGAL_VERSION} from '../../convex/lib/legalPolicy.js'
+const modules=import.meta.glob('../../convex/**/*.js')
+const make=()=>convexTest(schema,modules)
+const DAY=86400000
+beforeEach(()=>vi.useFakeTimers())
+afterEach(()=>vi.useRealTimers())
+async function person(t,role,suffix=role){
+ const ids=await t.run(async ctx=>{const userId=await ctx.db.insert('users',{email:`${suffix}@example.test`,emailVerificationTime:Date.now()});const sessionId=await ctx.db.insert('authSessions',{userId,expirationTime:Date.now()+DAY});const accountId=await ctx.db.insert('accounts',{authSubject:userId,role,email:`${suffix}@example.test`,name:`Example ${role}`,phone:'0712345678',termsAcceptedAt:Date.now(),termsVersion:LEGAL_VERSION,createdAt:Date.now()});if(role==='employer')await ctx.db.insert('employers',{accountId,name:'Example Parent',accessExpiresAt:Date.now()+DAY});return{userId,sessionId,accountId}})
+ return{...ids,client:t.withIdentity({subject:`${ids.userId}|${ids.sessionId}`})}
+}
+async function nanny(t,suffix='caregiver'){
+ const who=await person(t,'caregiver',suffix),images={}
+ for(const purpose of ['photo','national_id','selfie'])images[purpose]=await t.run(async ctx=>{const storageId=await ctx.storage.store(new Blob(['fixture'],{type:'image/jpeg'}));await ctx.db.insert('uploadedAssets',{accountId:who.accountId,storageId,purpose,claimed:false,createdAt:Date.now()});return storageId})
+ const result=await who.client.mutation(api.marketplace.write,{path:'/caregivers/profile',method:'POST',body:{name:'Example Nanny',service_category:'nanny',service_types:['live_in'],photo:images.photo,national_id:images.national_id,selfie:images.selfie,consent:'true'}})
+ return{...who,profileId:result.profile.id}
+}
+const jobFields={title:'Nanny for weekday care',description:'Infant care and meal preparation during agreed hours.',category:'nanny',serviceTypes:['live_out'],location:'Nairobi',payMin:15000,payMax:20000,payPeriod:'monthly'}
+const proposal={message:'I have newborn care experience and can work weekdays.',proposedPay:18000,payPeriod:'monthly'}
+const post=(e)=>e.client.mutation(api.jobs.create,jobFields)
+const apply=(c,id)=>c.client.mutation(api.jobs.apply,{id,...proposal})
+it('requires signed-in roles and isolates employer jobs and proposals',async()=>{
+ const t=make(),e=await person(t,'employer'),other=await person(t,'employer','other'),c=await nanny(t),{id}=await post(e)
+ await expect(t.query(api.jobs.list,{})).rejects.toThrow('sign in')
+ await expect(c.client.mutation(api.jobs.create,jobFields)).rejects.toThrow('permission')
+ await expect(e.client.mutation(api.jobs.apply,{id,...proposal})).rejects.toThrow('permission')
+ expect(await other.client.query(api.jobs.detail,{id})).toBeNull()
+ await expect(other.client.query(api.jobs.applications,{id})).rejects.toThrow('not found')
+ const a=await apply(c,id)
+ await expect(other.client.mutation(api.jobs.decide,{id:a.id,decision:'offer'})).rejects.toThrow('not found')
+ const outsider=await nanny(t,'outsider')
+ await expect(outsider.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})).rejects.toThrow('not found')
+ expect((await outsider.client.query(api.jobs.mine,{})).applications).toHaveLength(0)
+})
+it('allows pending and hidden caregivers to apply, exposes only profile projections and requires verified adulthood before hiring',async()=>{
+ const t=make(),e=await person(t,'employer'),c=await nanny(t),{id}=await post(e)
+ await c.client.mutation(api.marketplace.write,{path:'/caregivers/profile',method:'PUT',body:{is_visible:'false'}})
+ const a=await apply(c,id)
+ expect(await apply(c,id)).toEqual(a)
+ expect((await t.run(ctx=>ctx.db.query('jobApplications').collect()))).toHaveLength(1)
+ const rows=await e.client.query(api.jobs.applications,{id})
+ expect(rows.applications[0].profile).toMatchObject({verification_status:'pending',adult_confirmed:false,is_visible:false})
+ for(const key of ['email','phone','national_id','selfie','accountId'])expect(rows.applications[0].profile).not.toHaveProperty(key)
+ await e.client.mutation(api.jobs.decide,{id:a.id,decision:'offer'})
+ await expect(c.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})).rejects.toThrow('identity and adult age')
+ await t.run(ctx=>ctx.db.patch(c.profileId,{identityStatus:'verified',adultConfirmedAt:Date.now()}))
+ await c.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})
+ await c.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})
+ expect((await e.client.query(api.jobs.detail,{id})).status).toBe('filled')
+ const p=await t.run(ctx=>ctx.db.get(c.profileId))
+ expect(p.isVisible).toBe(false);expect(p.isAvailable).toBe(true)
+ expect((await t.run(ctx=>ctx.db.query('contactUnlocks').collect()))).toHaveLength(1)
+ expect((await c.client.query(api.jobs.detail,{id})).employerContact.email).toBe('employer@example.test')
+})
+it('permits one offer/winner, supports withdrawal and blocks late acceptance after a job closes',async()=>{
+ const t=make(),e=await person(t,'employer'),c=await nanny(t),other=await nanny(t,'second'),{id}=await post(e),a=await apply(c,id),b=await apply(other,id)
+ await e.client.mutation(api.jobs.decide,{id:a.id,decision:'offer'})
+ await expect(e.client.mutation(api.jobs.decide,{id:b.id,decision:'offer'})).rejects.toThrow('current offer')
+ await c.client.mutation(api.jobs.decide,{id:a.id,decision:'withdraw'})
+ await e.client.mutation(api.jobs.decide,{id:b.id,decision:'offer'})
+ await e.client.mutation(api.jobs.setStatus,{id,status:'closed'})
+ await expect(other.client.mutation(api.jobs.decide,{id:b.id,decision:'accept'})).rejects.toThrow('no longer available')
+ await expect(apply(c,id)).rejects.toThrow('not accepting')
+ await e.client.mutation(api.jobs.setStatus,{id,status:'open'})
+ expect((await c.client.query(api.jobs.list,{})).jobs[0].id).toBe(id)
+})
+it('checks current employer contact access without granting membership or changing candidate visibility',async()=>{
+ const t=make(),e=await person(t,'employer'),c=await nanny(t),{id}=await post(e),a=await apply(c,id)
+ await t.run(async ctx=>{await ctx.db.patch(c.profileId,{identityStatus:'verified',adultConfirmedAt:Date.now()});const p=await ctx.db.query('employers').first();await ctx.db.patch(p._id,{accessExpiresAt:Date.now()-1})})
+ await e.client.mutation(api.jobs.decide,{id:a.id,decision:'offer'})
+ await expect(c.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})).rejects.toThrow('active contact access')
+ expect((await e.client.query(api.jobs.detail,{id})).status).toBe('open')
+ expect(await t.run(ctx=>ctx.db.query('contactUnlocks').collect())).toHaveLength(0)
+ await t.run(async ctx=>{const p=await ctx.db.query('employers').first();await ctx.db.patch(p._id,{accessExpiresAt:Date.now()+DAY})})
+ await c.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})
+ expect((await t.run(ctx=>ctx.db.get(c.profileId))).isVisible).toBe(true)
+})
+it('validates budgets and proposal content, and removes jobs/proposals during privacy purge',async()=>{
+ const t=make(),e=await person(t,'employer'),c=await nanny(t)
+ await expect(e.client.mutation(api.jobs.create,{...jobFields,payMax:100})).rejects.toThrow('Minimum pay')
+ await expect(e.client.mutation(api.jobs.create,{...jobFields,description:' '})).rejects.toThrow('job details')
+ const{id}=await post(e)
+ await expect(c.client.mutation(api.jobs.apply,{id,...proposal,proposedPay:0})).rejects.toThrow('positive')
+ const a=await apply(c,id)
+ const exported=await c.client.mutation(api.privacy.exportOwn,{})
+ expect(exported.jobProposals[0].message).toBe(proposal.message)
+ expect((await e.client.mutation(api.privacy.exportOwn,{})).jobsPosted[0].title).toBe(jobFields.title)
+ await e.client.mutation(api.jobs.decide,{id:a.id,decision:'offer'})
+ await t.run(ctx=>ctx.db.patch(c.accountId,{deletionRequestedAt:Date.now()-8*DAY}))
+ await t.mutation(internal.privacy.purge,{accountId:c.accountId})
+ expect(await t.run(ctx=>ctx.db.get(a.id))).toBeNull()
+ expect((await t.run(ctx=>ctx.db.get(id))).offeredApplicationId).toBeUndefined()
+ await t.run(ctx=>ctx.db.patch(e.accountId,{deletionRequestedAt:Date.now()-8*DAY}))
+ await t.mutation(internal.privacy.purge,{accountId:e.accountId})
+ expect(await t.run(ctx=>ctx.db.get(id))).toBeNull()
+})
+
+it('sends actionable in-app application/offer alerts only to the right account',async()=>{
+ const t=make(),e=await person(t,'employer'),c=await nanny(t),other=await person(t,'employer','alerts-other'),{id}=await post(e),a=await apply(c,id)
+ expect((await e.client.query(api.jobs.alerts,{})).applications).toBe(1)
+ expect((await other.client.query(api.jobs.alerts,{})).applications).toBe(0)
+ await e.client.mutation(api.jobs.decide,{id:a.id,decision:'offer'})
+ expect((await e.client.query(api.jobs.alerts,{})).applications).toBe(0)
+ expect((await c.client.query(api.jobs.alerts,{})).offers).toBe(1)
+ await c.client.mutation(api.jobs.decide,{id:a.id,decision:'withdraw'})
+ expect((await c.client.query(api.jobs.alerts,{})).offers).toBe(0)
+ await expect(t.query(api.jobs.alerts,{})).rejects.toThrow('sign in')
+})
+
+it('retains previously unlocked contact access for hire acceptance after pass expiry',async()=>{
+ const t=make(),e=await person(t,'employer'),c=await nanny(t),{id}=await post(e),a=await apply(c,id)
+ await t.run(async ctx=>{await ctx.db.patch(c.profileId,{identityStatus:'verified',adultConfirmedAt:Date.now()});const p=await ctx.db.query('employers').first();await ctx.db.patch(p._id,{accessExpiresAt:Date.now()-1});await ctx.db.insert('contactUnlocks',{employerId:p._id,caregiverId:c.profileId,unlockedAt:Date.now()-DAY})})
+ await e.client.mutation(api.jobs.decide,{id:a.id,decision:'offer'})
+ await c.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})
+ expect((await e.client.query(api.jobs.detail,{id})).status).toBe('filled')
+ expect(await t.run(ctx=>ctx.db.query('contactUnlocks').collect())).toHaveLength(1)
+})

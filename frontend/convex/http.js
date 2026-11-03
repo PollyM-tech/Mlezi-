@@ -4,7 +4,10 @@ import { httpAction } from './_generated/server.js'
 import { api } from './_generated/api.js'
 import { auth } from './auth.js'
 
+import { callback } from './mpesa.js'
+
 const http = httpRouter()
+http.route({ path: '/payments/mpesa/callback', method: 'POST', handler: callback })
 auth.addHttpRoutes(http)
 http.route({ path: '/health', method: 'GET', handler: httpAction(async ctx => Response.json(await ctx.runQuery(api.health.status, {}), { headers: { 'Cache-Control': 'no-store' } })) })
 http.route({ path: '/files/upload', method: 'POST', handler: upload })

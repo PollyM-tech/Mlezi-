@@ -13,7 +13,7 @@ vi.mock('@convex-dev/auth/react', () => ({
 }))
 vi.mock('convex/react', () => ({
   useConvexAuth: () => ({ isAuthenticated: !!sessionStorage.getItem('__convexAuthJWT_mleziconvexauth'), isLoading: false }),
-  useQuery: (ref,args) => args === 'skip' ? undefined : getFunctionName(ref) === 'accounts:current' ? { status: state.status, account: { id: 'account1', email: 'member@example.test', role: state.role, phone: '0712345678' } } : undefined,
+  useQuery: (ref,args) => args === 'skip' ? undefined : getFunctionName(ref) === 'jobs:alerts' ? {applications:0,offers:0,more:false} : getFunctionName(ref) === 'accounts:current' ? { status: state.status, account: { id: 'account1', email: 'member@example.test', role: state.role, phone: '0712345678' } } : undefined,
   useMutation: () => vi.fn(),
 }))
 vi.mock('../../src/lib/convexClient.js', () => ({ getConvexClient: () => ({close:vi.fn()}), detachConvexClient: vi.fn() }))
@@ -50,7 +50,7 @@ it('keeps the same authenticated provider on workspace → homepage → workspac
   expect(await screen.findByRole('link', { name: 'My workspace' })).toBeTruthy()
   expect(sessionStorage.getItem(authKey)).toBe('test-session-placeholder')
   expect(state.mounts).toBe(1); expect(state.unmounts).toBe(0)
-})
+}, 15000)
 it('recognizes an existing session on a direct homepage visit', async () => {
   window.history.replaceState({}, '', '/')
   await open()

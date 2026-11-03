@@ -108,3 +108,45 @@ caregiver → reload shortlist → view profile → back to restored results →
 from shortlist. Confirm that a second employer cannot see those saved profiles.
 Contacts should be empty until actually unlocked through the protected flow;
 there is no automatic trial pass or free contact-access grant.
+
+## Browse-first update — 3 November 2026
+
+The employer workspace includes available caregivers immediately after sign-in, with
+filters initially collapsed. `/caregivers` starts with no filters and page one. An
+explicit homepage/shared-link query is still honored. Optional remembered searches
+are applied only through **Use last search**, never silently on a new browse visit.
+Clear filters / Show all available caregivers restores the unfiltered list.
+
+Following the operator's decision, complete available pending-review profiles may
+also appear and be shortlisted. They need recorded adult-account terms acceptance,
+a stored profile photo, ID and selfie, and a current pending submission matching the
+photo. Their status is explicitly pending and age/identity are not confirmed. They
+receive no Identity checked badge and cannot have contacts unlocked until adult
+identity approval. Rejected, incomplete, suspended and deletion-pending profiles stay
+hidden. Identity checked only excludes pending profiles. Private ID, selfie and
+contact data are never included in listing/detail projections.
+
+This supersedes earlier notes about automatic saved-filter restoration and
+approved-only publication. Filters still apply before Premium ranking. Empty-market
+and no-filter-match messages are now distinct. Deploy both Convex and frontend changes
+before retesting the browse/search journey live.
+
+## Employer-only browsing — 3 November 2026
+
+Caregiver listings, individual profile details and reviews now require a verified,
+active employer account. Anonymous homepage visitors see marketing information and
+employer sign-in/create-account links, never real caregiver cards. Direct visits to
+`/caregivers` or a profile URL show an access gate without fetching profile data.
+The backend independently rejects anonymous requests and non-owner caregiver access;
+this is not just client-side hiding. A caregiver may preview their own profile and
+reviews. Authorized administrator access still requires MFA.
+
+The browse-first and pending-review rules above apply **after employer sign-in**.
+They do not make listings public to the internet. Contact payment and identity checks
+are unchanged. Public caregiver URLs remain noindex application shells. This policy
+supersedes earlier references to anonymous/public discovery in implementation notes.
+Deploy Convex authorization changes as well as the frontend to enforce it live.
+
+## Job proposals and offers (3 November 2026)
+
+The `/jobs` workspace now supports employer job posting, caregiver pay/message proposals, identity badges, employer offers and caregiver acceptance. Pending-review caregivers may apply; adult identity approval is required before confirming a hire. Confirming a new contact requires the existing contact-access pass. Visibility remains the caregiver’s independent choice. See [Jobs marketplace implementation and testing](jobs-marketplace.md). These additions are local until the frontend and Convex functions/schema are deployed together.

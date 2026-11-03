@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import Discovery from './Discovery.jsx'
 import { CATEGORIES } from '../lib/profile'
 
 function useEmployer(path) {
@@ -18,12 +19,14 @@ function LoadState({ error, retry }) {
   return error ? <div className="alert error" role="alert"><span>{error}</span><button className="button secondary" onClick={retry}>Try again</button></div> : <p role="status">Loading your workspace…</p>
 }
 
-export function EmployerDashboard() {
+export function EmployerDashboard({ user }) {
   const { data, error, retry } = useEmployer('/employers/dashboard')
   if (!data) return <LoadState error={error} retry={retry} />
   const name = data.profile.name.split(' ')[0]
   return <>
     <div className="page-heading"><div><span className="eyebrow">YOUR PRIVATE FAMILY WORKSPACE</span><h1>{name ? `Welcome, ${name}.` : 'Find care that fits your family.'}</h1><p>Explore caregivers, keep a shortlist, and return to the connections you’ve made.</p></div><a className="button primary" href="/caregivers">Find a caregiver →</a></div>
+    <section className="card form-section"><h2>Let caregivers apply to your job</h2><p>Post your care requirements, compare pay proposals and make an offer. A caregiver must accept before hiring is confirmed.</p><a className="button primary" href="/jobs">Post a job & review applications</a></section>
+    <Discovery user={user} embedded />
     <div className="workspace-stats"><a className="card stat-card" href="/shortlist"><span className="eyebrow">SAVED CAREGIVERS</span><strong>{data.counts.shortlist}</strong><span>Open your shortlist →</span></a><a className="card stat-card" href="/contacts"><span className="eyebrow">UNLOCKED CONTACTS</span><strong>{data.counts.contacts}</strong><span>Your connections stay accessible →</span></a><div className="card stat-card"><span className="eyebrow">REVIEWS YOU’VE WRITTEN</span><strong>{data.counts.reviews}</strong><span>Help other families choose care</span></div></div>
     <div className="dashboard-grid"><section className="card form-section"><h2>Your next steps</h2><ol className="next-steps"><li><strong>Find the right experience</strong><p>Choose a care category and work arrangement. Add location for live-out care and compare pay by month, day, or hour.</p></li><li><strong>Save your favourites</strong><p>Your shortlist is free and private. Visit a profile to read public reviews and learn about the caregiver.</p></li><li><strong>Make a connection</strong><p>A contact-access pass unlocks new contacts. Previously unlocked contacts stay available after expiry.</p></li></ol><div className="action-row"><a className="button secondary" href="/caregivers">Browse caregivers</a><a className="button secondary" href="/shortlist">My shortlist</a></div></section><aside><section className="card side-card"><span className="eyebrow">YOUR ACCOUNT</span><h3>{data.profile.name || 'Add your name'}</h3><p className="contact">{data.profile.email}</p><p>{data.profile.phone || 'Add your phone number'}</p><a className="button secondary" href="/account">Manage account</a></section><section className="card side-card"><span className="eyebrow">CONTACT ACCESS</span><h3>{data.profile.pass_active ? 'Your pass is active' : 'No active pass'}</h3>{data.profile.pass_expires_at && <p>Expiry: {new Date(data.profile.pass_expires_at).toLocaleString()}</p>}<p>Browsing and shortlisting are free. KES 300 gives 30 days of new unlocks; KES 500 gives 90 days.</p><small>M-Pesa setup and testing are scheduled for the final stage.</small></section></aside></div>
     <div className="privacy-note">Your employer account is private and never listed publicly. When you choose to write a public review, only your first name is shown.</div>

@@ -90,6 +90,7 @@ test("public and account layouts fit the viewport", async ({
         .click();
     if (screen === "support")
       await page.getByRole("button", { name: /Example support issue/ }).click();
+    if (screen === "discovery") await page.getByRole("button", {name: "Filter caregivers"}).click();
     if (screen === "discovery")
       await page
         .locator(".search-form details")

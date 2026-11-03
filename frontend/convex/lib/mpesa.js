@@ -39,6 +39,7 @@ export async function initiateProvider(settings, payment) {
   const body = { ...auth.body, TransactionType:'CustomerPayBillOnline', Amount:payment.amount, PartyA:payment.phone, PartyB:settings.shortcode,
     PhoneNumber:payment.phone, CallBackURL:settings.callbackUrl, AccountReference:`MZ${payment._id.slice(-10)}`, TransactionDesc:'Mlezi membership' }
   const result = await json(`${settings.host}/mpesa/stkpush/v1/processrequest`, { method:'POST', headers:auth.headers, body:JSON.stringify(body) }, true)
+  if (result.ResponseCode === undefined || result.ResponseCode === null) throw new ProviderError(true)
   if (String(result.ResponseCode) !== '0') throw new ProviderError(false)
   if (typeof result.CheckoutRequestID !== 'string' || !result.CheckoutRequestID || result.CheckoutRequestID.length > 128) throw new ProviderError(true)
   return { checkoutRequestId:result.CheckoutRequestID, ...(typeof result.MerchantRequestID === 'string' ? {merchantRequestId:result.MerchantRequestID} : {}) }

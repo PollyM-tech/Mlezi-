@@ -22,6 +22,8 @@ const privateAsset = v.union(
 // Public caregiver projections must exclude account contact and private evidence.
 export default defineSchema({
   ...authTables,
+  jobs: defineTable({ employerAccountId: v.id('accounts'), title: v.string(), description: v.string(), category, serviceTypes: v.array(service), location: v.string(), payMin: v.number(), payMax: v.number(), payPeriod: v.union(v.literal('monthly'),v.literal('daily'),v.literal('hourly')), status: v.union(v.literal('open'),v.literal('paused'),v.literal('closed'),v.literal('filled')), applicationsCount: v.number(), offeredApplicationId: v.optional(v.id('jobApplications')), hiredApplicationId: v.optional(v.id('jobApplications')), createdAt: v.number(), updatedAt: v.number() }).index('by_employer',['employerAccountId']).index('by_status_category',['status','category']),
+  jobApplications: defineTable({ jobId: v.id('jobs'), employerAccountId: v.optional(v.id('accounts')), caregiverAccountId: v.id('accounts'), caregiverId: v.id('caregivers'), message: v.string(), proposedPay: v.number(), payPeriod: v.union(v.literal('monthly'),v.literal('daily'),v.literal('hourly')), status: v.union(v.literal('submitted'),v.literal('offered'),v.literal('withdrawn'),v.literal('declined'),v.literal('hired')), createdAt: v.number(), updatedAt: v.number() }).index('by_job',['jobId']).index('by_pair',['jobId','caregiverAccountId']).index('by_caregiver',['caregiverAccountId']).index('by_employer_status',['employerAccountId','status']).index('by_caregiver_status',['caregiverAccountId','status']),
   supportEmails: defineTable({ ticketId: v.id('supportTickets'), messageId: v.optional(v.id('supportMessages')), kind: v.union(v.literal('acknowledgement'), v.literal('reply'), v.literal('team')), status: v.union(v.literal('pending'), v.literal('sending'), v.literal('sent'), v.literal('failed')), attempts: v.number(), createdAt: v.number(), lastAttemptAt: optionalNumber, sentAt: optionalNumber }).index('by_ticket', ['ticketId']).index('by_status', ['status']),
   supportTickets: defineTable({ accountId: v.optional(v.id('accounts')), guestKeyHash: optionalText, guestEmail: optionalText, subject: v.string(), category: v.string(), status: v.union(v.literal('open'), v.literal('waiting'), v.literal('resolved')), messageCount: v.number(), createdAt: v.number(), updatedAt: v.number() }).index('by_account', ['accountId', 'updatedAt']).index('by_status', ['status', 'updatedAt']).index('by_updated', ['updatedAt']),
   supportMessages: defineTable({ ticketId: v.id('supportTickets'), sender: v.union(v.literal('customer'), v.literal('support')), body: v.string(), createdAt: v.number() }).index('by_ticket', ['ticketId']),
@@ -43,7 +45,7 @@ export default defineSchema({
     payMin: optionalNumber, payMax: optionalNumber,
     payPeriod: v.union(v.literal('monthly'), v.literal('daily'), v.literal('hourly')),
     availableDays: v.array(v.string()), skills: v.array(v.string()), ageGroups: v.array(v.string()),
-    languages: v.array(v.string()), isAvailable: v.boolean(),
+    languages: v.array(v.string()), isAvailable: v.boolean(), isVisible: v.optional(v.boolean()),
     travelScope: v.optional(v.union(v.literal('local'), v.literal('international'), v.literal('both'))),
     travelNotes: optionalText, identityStatus, adultConfirmedAt: optionalNumber, premiumExpiresAt: optionalNumber,
     ratingAverage: v.number(), reviewCount: v.number(), createdAt: v.number(), updatedAt: v.number(),
@@ -86,7 +88,7 @@ export default defineSchema({
     type: v.union(v.literal('unlock_pass'), v.literal('caregiver_premium'), v.literal('featured_boost')),
     environment: v.optional(v.union(v.literal('sandbox'), v.literal('production'))),
     initiationState: v.optional(v.union(v.literal('prepared'), v.literal('sent'), v.literal('unknown'), v.literal('rejected'))),
-    provider: v.optional(v.literal('manual_mpesa')), reviewedBy: v.optional(v.id('accounts')), reviewedAt: optionalNumber,
+    provider: v.optional(v.union(v.literal('manual_mpesa'), v.literal('daraja_stk'))), reviewedBy: v.optional(v.id('accounts')), reviewedAt: optionalNumber,
     planCode: optionalText, durationDays: optionalNumber, amount: v.number(),
     status: v.union(v.literal('pending'), v.literal('completed'), v.literal('failed')),
     mpesaRef: optionalText, checkoutRequestId: optionalText, merchantRequestId: optionalText,

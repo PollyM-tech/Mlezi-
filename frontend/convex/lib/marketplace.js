@@ -38,7 +38,7 @@ export async function publicProfile(ctx, p, account) {
     bio: p.bio || null, service_category: p.category, service_types: p.services, other_service_description: p.otherServiceDescription || null,
     location: p.location || null, years_experience: p.yearsExperience, expected_pay_min: p.payMin ?? null, expected_pay_max: p.payMax ?? null,
     pay_period: p.payPeriod, availability: p.availableDays, skills: p.skills, age_groups: p.ageGroups, languages: p.languages,
-    is_available: p.isAvailable, travel_scope: p.travelScope || null, travel_notes: p.travelNotes || null,
+    is_available: p.isAvailable, is_visible: p.isVisible !== false, travel_scope: p.travelScope || null, travel_notes: p.travelNotes || null,
     verification_status: p.identityStatus, adult_confirmed: p.identityStatus === 'verified' && typeof p.adultConfirmedAt === 'number', premium_active: active(p.premiumExpiresAt), rating_avg: p.ratingAverage, review_count: p.reviewCount }
   if (account) {
     result.phone = account.phone || null; result.premium_expires_at = iso(p.premiumExpiresAt)
@@ -52,7 +52,7 @@ export function employerProfile(p, account) {
 }
 export function reviewData(r) { return { id: externalId(r), rating: r.rating, comment: r.comment || '', author_name: r.authorName || 'Employer', reply: r.reply || null, created_at: iso(r.createdAt) } }
 export function verificationData(s) { return s ? { id: externalId(s), status: s.status, submitted_at: iso(s.submittedAt), reviewed_at: iso(s.reviewedAt), rejection_reason: s.rejectionReason || null } : null }
-export function paymentData(p) { return { id: externalId(p), type: p.type, plan_code: p.planCode || null, amount: p.amount, status: p.status, provider: p.provider || null, receipt: p.provider === 'manual_mpesa' ? p.mpesaRef || null : null, phone: p.provider === 'manual_mpesa' ? p.phone || null : null, reviewed_at: iso(p.reviewedAt), result_description: p.resultDescription || null, created_at: iso(p.createdAt) } }
+export function paymentData(p) { return { id: externalId(p), type: p.type, plan_code: p.planCode || null, amount: p.amount, status: p.status, provider: p.provider || null, environment: p.environment || null, initiation_state: p.initiationState || null, receipt: p.provider === 'manual_mpesa' ? p.mpesaRef || null : null, phone: p.provider === 'manual_mpesa' ? p.phone || null : null, reviewed_at: iso(p.reviewedAt), result_description: p.resultDescription || null, created_at: iso(p.createdAt) } }
 export async function aggregate(ctx, caregiverId) {
   const reviews = await ctx.db.query('reviews').withIndex('by_caregiver_public', q => q.eq('caregiverId', caregiverId).eq('isPublic', true)).collect()
   await ctx.db.patch(caregiverId, { ratingAverage: reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0, reviewCount: reviews.length })
@@ -90,6 +90,11 @@ export function profileFields(data, old) {
   if (available === 'false') available = false
   if (typeof available !== 'boolean') fail('Availability status must be true or false')
   fields.isAvailable = available
+  let visible = read('is_visible', 'isVisible', true)
+  if (visible === 'true') visible = true
+  if (visible === 'false') visible = false
+  if (typeof visible !== 'boolean') fail('Profile visibility must be true or false')
+  fields.isVisible = visible
   const scope = read('travel_scope', 'travelScope', '')
   if (scope && !SCOPES.includes(scope)) fail('Select a valid travel scope')
   fields.travelScope = scope || undefined

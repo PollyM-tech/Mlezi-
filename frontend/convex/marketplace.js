@@ -1,3 +1,5 @@
+import { mpesaSettings } from './lib/mpesa.js'
+import { canPublish } from './lib/listingPolicy.js'
 import { MANUAL_MPESA } from './lib/manualPaymentPolicy.js'
 import { query, mutation } from './_generated/server.js'
 import { consume, audit } from './lib/security.js'
@@ -16,7 +18,21 @@ function number(value, fallback, min, max, integer = true) {
   if (!Number.isFinite(n) || integer && !Number.isInteger(n) || n < min || n > max) fail('Select valid numeric filters and pagination')
   return n
 }
+async function profileForViewer(ctx, id) {
+  const viewer = await requireAccount(ctx)
+  const profile = await find(ctx, 'caregivers', id)
+  if (viewer.role !== 'employer' && viewer.role !== 'admin' && viewer._id !== profile.accountId) fail('Caregiver browsing is available to employer accounts', 403)
+  const account = await ctx.db.get(profile.accountId)
+  if (!account || account.suspendedAt || account.deletionRequestedAt || !await hasProfilePhoto(ctx, account)) fail('Caregiver not found', 404)
+  if (viewer.role !== 'admin' && viewer._id !== profile.accountId && !await canPublish(ctx, profile, account)) {
+    const employer = viewer.role === 'employer' ? await ctx.db.query('employers').withIndex('by_account', q => q.eq('accountId', viewer._id)).unique() : null
+    const priorContact = employer && profile.isVisible === false && approvedAdult(profile) ? await pair(ctx, 'contactUnlocks', employer._id, profile._id) : null
+    if (!priorContact) fail('Caregiver not found', 404)
+  }
+  return profile
+}
 async function search(ctx, params) {
+  await requireAccount(ctx, 'employer', 'admin')
   const p = params || {}
   const q = text(p.q || '', 'a search', 120).toLowerCase(), location = text(p.location || '', 'a location', 120).toLowerCase()
   const skill = text(p.skill || '', 'a skill', 80), language = text(p.language || '', 'a language', 80).toLowerCase()
@@ -30,9 +46,10 @@ async function search(ctx, params) {
   // Rotation is chosen by the server, stable for pagination for up to one hour.
   const bucket = Math.floor(Date.now() / 3600000)
   const rotation = p.rotation ? number(p.rotation, bucket, bucket - 1, bucket) : bucket
-  let profiles = await ctx.db.query('caregivers').withIndex('by_published_category', q => p.category && p.category !== 'travel_nanny' ? q.eq('identityStatus', 'verified').eq('isAvailable', true).eq('category', p.category) : q.eq('identityStatus', 'verified').eq('isAvailable', true)).filter(q => q.neq(q.field('adultConfirmedAt'), undefined)).take(501)
+  const statuses = p.identity_checked === 'true' ? ['verified'] : ['verified', 'pending']
+  let profiles = (await Promise.all(statuses.map(status => ctx.db.query('caregivers').withIndex('by_published_category', q => p.category && p.category !== 'travel_nanny' ? q.eq('identityStatus', status).eq('isAvailable', true).eq('category', p.category) : q.eq('identityStatus', status).eq('isAvailable', true)).take(501)))).flat()
   if (profiles.length > 500) fail('Too many profiles for this search. Choose a care category to narrow the results.')
-  const visible = await Promise.all(profiles.map(async c => { const account = await ctx.db.get(c.accountId); return approvedAdult(c) && !account.suspendedAt && !account.deletionRequestedAt && await hasProfilePhoto(ctx, account) }))
+  const visible = await Promise.all(profiles.map(async c => { const account = await ctx.db.get(c.accountId); return canPublish(ctx, c, account) }))
   profiles = profiles.filter((_, i) => visible[i])
   profiles = profiles.filter(c => {
     const travel = c.category === 'travel_nanny' || c.services.includes('travel')
@@ -59,7 +76,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
   let match
   if (path === '/caregivers') return search(ctx, params)
   if ((match = path.match(/^\/caregivers\/([^/]+)\/reviews$/))) {
-    const p = await find(ctx, 'caregivers', match[1]), page = number(params.page, 1, 1, 1000000)
+    const p = await profileForViewer(ctx, match[1]), page = number(params.page, 1, 1, 1000000)
     const rows = await ctx.db.query('reviews').withIndex('by_caregiver_public', q => q.eq('caregiverId', p._id).eq('isPublic', true)).collect()
     rows.sort((a, b) => b.createdAt - a.createdAt)
     return { reviews: rows.slice((page - 1) * 20, page * 20).map(reviewData), total: rows.length, page, rating_avg: p.ratingAverage, review_count: p.reviewCount }
@@ -70,13 +87,18 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
     return { user: { id: a._id, name: p?.name || a.name || null, email: a.email, phone: a.phone || null, role: a.role, profile: p ? a.role === 'caregiver' ? await publicProfile(ctx, p, a) : employerProfile(p, a) : null } }
   }
   if (path === '/caregivers/profile') { const { account, profile } = await owned(ctx, 'caregivers', 'caregiver'); return { profile: await publicProfile(ctx, profile, account) } }
-  if ((match = path.match(/^\/caregivers\/([^/]+)$/))) { const p = await find(ctx, 'caregivers', match[1]); const a = await ctx.db.get(p.accountId); if (a.suspendedAt || a.deletionRequestedAt || !await hasProfilePhoto(ctx,a)) fail('Caregiver not found',404); if (!approvedAdult(p)) { if (!await ctx.auth.getUserIdentity()) fail('Caregiver not found',404); const viewer = await requireAccount(ctx); if (viewer._id !== p.accountId && viewer.role !== 'admin') fail('Caregiver not found',404) }; return { profile: await publicProfile(ctx,p) } }
+  if ((match = path.match(/^\/caregivers\/([^/]+)$/))) return { profile: await publicProfile(ctx, await profileForViewer(ctx, match[1])) }
   if (['/employers/profile', '/employers/dashboard', '/employers/contacts', '/shortlist'].includes(path)) {
     const { account, profile: e } = await owned(ctx, 'employers', 'employer')
     if (path === '/employers/profile') return { profile: employerProfile(e, account) }
     if (path === '/employers/dashboard') return { profile: employerProfile(e, account), counts: { shortlist: (await byEmployer(ctx, 'shortlists', e._id).collect()).length, contacts: (await byEmployer(ctx, 'contactUnlocks', e._id).collect()).length, reviews: (await ctx.db.query('reviews').withIndex('by_pair', q => q.eq('employerAccountId', account._id)).collect()).length } }
     let rows = await byEmployer(ctx, path === '/shortlist' ? 'shortlists' : 'contactUnlocks', e._id).collect()
-    const checked = await Promise.all(rows.map(async row => approvedAdult(await ctx.db.get(row.caregiverId))))
+    const checked = await Promise.all(rows.map(async row => {
+      const profile = await ctx.db.get(row.caregiverId)
+      if (!profile) return false
+      const account = await ctx.db.get(profile.accountId)
+      return path === '/shortlist' ? canPublish(ctx, profile, account) : approvedAdult(profile) && !!account && !account.suspendedAt && !account.deletionRequestedAt && await hasProfilePhoto(ctx, account)
+    }))
     rows = rows.filter((_, i) => checked[i])
     rows.sort((a, b) => (b.unlockedAt || b.createdAt) - (a.unlockedAt || a.createdAt))
     if (path === '/shortlist') return { profiles: await Promise.all(rows.map(async row => publicProfile(ctx, await ctx.db.get(row.caregiverId)))) }
@@ -85,8 +107,11 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
   }
   if ((match = path.match(/^\/contact\/unlock\/([^/]+)$/))) {
     const { profile: e } = await owned(ctx, 'employers', 'employer'), p = await find(ctx, 'caregivers', match[1])
-    if (!approvedAdult(p)) return { unlocked: false, can_unlock: false, available: false }
+    const target = await ctx.db.get(p.accountId)
+    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target)) return {unlocked:false,can_unlock:false,available:false}
+    if (!approvedAdult(p)) return { unlocked: false, can_unlock: false, available: false, identity_pending: p.identityStatus === 'pending' }
     if (await pair(ctx, 'contactUnlocks', e._id, p._id)) return { unlocked: true, contact: await contact(ctx, p) }
+    if (p.isVisible === false) return {unlocked:false,can_unlock:false,available:false,visibility_hidden:true}
     return { unlocked: false, can_unlock: p.isAvailable && active(e.accessExpiresAt), available: p.isAvailable }
   }
   if ((match = path.match(/^\/caregivers\/([^/]+)\/review\/mine$/))) {
@@ -102,7 +127,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
     const a = await requireAccount(ctx, 'employer', 'caregiver'), table = a.role === 'employer' ? 'employers' : 'caregivers'
     const p = await ctx.db.query(table).withIndex('by_account', q => q.eq('accountId', a._id)).unique()
     const expiry = a.role === 'employer' ? p?.accessExpiresAt : p?.premiumExpiresAt
-    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: false, manual_payment: MANUAL_MPESA, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan })) }
+    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: mpesaSettings().enabled, payment_environment: mpesaSettings().environment, manual_payment: MANUAL_MPESA, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan })) }
   }
   if (path === '/payments' || path.startsWith('/payments/')) {
     const a = await requireAccount(ctx, 'employer', 'caregiver')
@@ -182,7 +207,10 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   }
   if ((match = path.match(/^\/contact\/unlock\/([^/]+)$/)) && method === 'POST') {
     const { profile: e } = await owned(ctx, 'employers', 'employer'), p = await find(ctx, 'caregivers', match[1])
+    const target = await ctx.db.get(p.accountId)
+    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target)) fail('This caregiver is unavailable',403)
     if (!approvedAdult(p)) fail('This caregiver must complete the 18+ identity check before contact access is available', 403)
+    if (p.isVisible === false && !await pair(ctx, 'contactUnlocks', e._id, p._id)) fail('This caregiver is hidden from the marketplace', 403)
     if (!await pair(ctx, 'contactUnlocks', e._id, p._id)) {
       if (!p.isAvailable) fail('This caregiver is not accepting new requests right now', 409)
       if (!active(e.accessExpiresAt)) fail('Renew your contact-access pass to unlock new contacts', 402)

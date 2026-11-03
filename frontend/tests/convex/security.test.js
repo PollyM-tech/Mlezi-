@@ -78,7 +78,7 @@ it('allows export and deletion cancellation, then purges personal files and auth
  expect(exported.account.email).toBe('caregiver@example.test');expect(JSON.stringify(exported)).not.toContain('secret');expect(exported.profile).not.toHaveProperty('photo')
  await who.client.mutation(api.privacy.request,{type:'deletion',details:'Delete',confirmEmail:'caregiver@example.test'})
  expect((await who.client.query(api.accounts.current)).status).toBe('restricted')
- await expect(who.client.query(api.marketplace.read,{path:`/caregivers/${result.profile.id}`})).rejects.toThrow('not found')
+ await expect(who.client.query(api.marketplace.read,{path:`/caregivers/${result.profile.id}`})).rejects.toThrow('restricted')
  await who.client.mutation(api.privacy.cancelDeletion)
  expect((await who.client.query(api.accounts.current)).status).toBe('ready')
  await who.client.mutation(api.privacy.request,{type:'deletion',details:'Delete',confirmEmail:'caregiver@example.test'})
@@ -103,7 +103,7 @@ it('checks the exact 18th birthday in Kenya, rejects invalid dates, and does not
 it('keeps pending and underage caregivers out of employer search and contact access',async()=>{
  const t=make(),who=await person(t),result=await profile(t,who),e=await person(t,'employer')
  await t.run(ctx=>ctx.db.insert('employers',{accountId:e.accountId,name:'Parent',accessExpiresAt:Date.now()+86400000}))
- expect((await t.query(api.marketplace.read,{path:'/caregivers'})).profiles).toHaveLength(0)
+ expect((await e.client.query(api.marketplace.read,{path:'/caregivers'})).profiles).toHaveLength(0)
  await expect(e.client.mutation(api.marketplace.write,{path:`/contact/unlock/${result.profile.id}`,method:'POST'})).rejects.toThrow('18+')
  const a=await person(t,'admin')
  await t.run(ctx=>ctx.db.insert('adminSessions',{accountId:a.accountId,sessionId:a.sessionId,expiresAt:Date.now()+3600000}))
@@ -112,7 +112,7 @@ it('keeps pending and underage caregivers out of employer search and contact acc
  await expect(a.client.mutation(api.marketplace.write,{path:`/admin/verification/${submission._id}/approve`,method:'POST',body})).rejects.toThrow('18 or older')
  expect((await t.run(ctx=>ctx.db.get(result.profile.id))).identityStatus).toBe('pending')
  await a.client.mutation(api.marketplace.write,{path:`/admin/verification/${submission._id}/approve`,method:'POST',body:{...body,birth_date:'1990-01-01'}})
- expect((await t.query(api.marketplace.read,{path:'/caregivers'})).profiles).toHaveLength(1)
+ expect((await e.client.query(api.marketplace.read,{path:'/caregivers'})).profiles).toHaveLength(1)
  expect(await t.run(async ctx=>JSON.stringify(await ctx.db.get(submission._id)))).not.toContain('1990-01-01')
 })
 

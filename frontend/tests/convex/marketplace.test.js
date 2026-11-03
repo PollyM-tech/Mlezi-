@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../../convex/schema.js'
 import { api, internal } from '../../convex/_generated/api.js'
+import { LEGAL_VERSION } from '../../convex/lib/legalPolicy.js'
 import { DAY } from '../../convex/lib/marketplace.js'
 const modules = import.meta.glob('../../convex/**/*.js')
 const make = () => convexTest(schema, modules)
@@ -18,6 +19,11 @@ async function person(t, role, suffix = role) {
   const userId = await t.run(async ctx => (await ctx.db.get(ids.sessionId)).userId)
   const client = t.withIdentity({ subject: `${userId}|${ids.sessionId}` })
   return { ...ids, client, read: (path, params) => client.query(api.marketplace.read, { path, ...(params ? { params } : {}) }), write: (path, body = {}, method = 'PUT') => client.mutation(api.marketplace.write, { path, method, body }) }
+}
+const employerReaders = new WeakMap()
+async function employerRead(t, path, params) {
+  if (!employerReaders.has(t)) employerReaders.set(t, await person(t, 'employer', 'search-viewer'))
+  return employerReaders.get(t).read(path, params)
 }
 async function uploaded(t, owner, purpose) {
   const storageId = await t.run(ctx => ctx.storage.store(new Blob([new Uint8Array([137,80,78,71,13,10,26,10])], { type: 'image/png' })))
@@ -43,16 +49,16 @@ describe('Convex marketplace migration', () => {
       await ctx.db.patch(unrelated.id, { premiumExpiresAt: Date.now() + DAY })
       await ctx.db.patch(hidden.id, { identityStatus: 'pending', adultConfirmedAt: undefined, premiumExpiresAt: Date.now() + DAY })
     })
-    const query = params => t.query(api.marketplace.read, { path: '/caregivers', params })
+    const query = params => employerRead(t, '/caregivers', params)
     for (const q of ['maid', 'house help', 'domestic worker']) expect((await query({ q })).profiles.map(p => p.id)).toEqual([relevant.id])
     expect((await query({ q: 'nannies Nairobi', language: 'Kirundi' })).profiles.map(p => p.id)).toEqual([relevant.id])
     expect((await query({ language: 'Swahili' })).profiles.map(p => p.id)).toEqual([relevant.id])
     expect((await query({ q: 'maid', category: 'babysitter' })).total).toBe(0)
     expect((await query({ q: 'maid', language: 'Kinyarwanda' })).total).toBe(0)
   })
-  it('allows public discovery without leaking contact details, IDs or evidence', async () => {
+  it('allows employer discovery without leaking contact details, IDs or evidence', async () => {
     const t = make(), c = await caregiver(t)
-    const result = await t.query(api.marketplace.read, { path: `/caregivers/${c.id}` })
+    const result = await employerRead(t, `/caregivers/${c.id}`)
     expect(result.profile.name).toBe('Nanny'); expect(result.profile.photo_url).toBeTruthy()
     for (const field of ['phone', 'email', 'national_id', 'national_id_uploaded', 'accountId', 'photo', 'authSubject']) expect(result.profile).not.toHaveProperty(field)
     expect((await c.read('/caregivers/profile')).profile.national_id_uploaded).toBe(true)
@@ -92,7 +98,7 @@ describe('Convex marketplace migration', () => {
     expect((await e.read(`/contact/unlock/${c.id}`)).contact.email).toBe('caregiver@example.test')
     expect((await e.read('/employers/contacts')).total).toBe(1)
     await expect(e.write(`/contact/unlock/${second.id}`, {}, 'POST')).rejects.toThrow('Renew')
-    expect((await t.query(api.marketplace.read, { path: '/caregivers' })).profiles.map(p => p.id)).not.toContain(c.id)
+    expect((await employerRead(t, '/caregivers')).profiles.map(p => p.id)).not.toContain(c.id)
   })
   it('isolates employer shortlists and account edits', async () => {
     const t = make(), c = await caregiver(t), e = await person(t, 'employer'), other = await person(t, 'employer', 'otherparent')
@@ -152,14 +158,14 @@ describe('Convex marketplace migration', () => {
   it('applies filters before Premium priority and keeps page order stable', async () => {
     const t = make(), c = await caregiver(t), other = await caregiver(t, 'other', { service_category: 'nanny', service_types: ['live_in'] })
     await t.run(ctx => ctx.db.patch(other.id, { premiumExpiresAt: Date.now() + DAY }))
-    const all = await t.query(api.marketplace.read, { path: '/caregivers' })
+    const all = await employerRead(t, '/caregivers')
     expect(all.profiles[0].id).toBe(other.id)
-    const matching = await t.query(api.marketplace.read, { path: '/caregivers', params: { category: 'travel_nanny' } })
+    const matching = await employerRead(t, '/caregivers', { category: 'travel_nanny' })
     expect(matching.profiles.map(p => p.id)).toEqual([c.id])
-    const first = await t.query(api.marketplace.read, { path: '/caregivers', params: { per_page: '1' } })
-    const second = await t.query(api.marketplace.read, { path: '/caregivers', params: { per_page: '1', page: '2', rotation: first.rotation } })
+    const first = await employerRead(t, '/caregivers', { per_page: '1' })
+    const second = await employerRead(t, '/caregivers', { per_page: '1', page: '2', rotation: first.rotation })
     expect(first.profiles[0].id).not.toBe(second.profiles[0].id)
-    await expect(t.query(api.marketplace.read, { path: '/caregivers', params: { pay_max: '500' } })).rejects.toThrow('pay period')
+    await expect(employerRead(t, '/caregivers', { pay_max: '500' })).rejects.toThrow('pay period')
   })
   it('revoked native sessions cannot read or modify private application data', async () => {
     const t = make(), c = await caregiver(t)
@@ -202,7 +208,7 @@ it('imports a complete snapshot once, preserving auth bindings and legacy links'
   expect((await t.mutation(internal.migration.importSnapshot, { tables, assets })).alreadyImported).toBe(true)
   expect((await admin.read('/auth/me')).user.role).toBe('admin')
   await t.run(async ctx => { const row = await ctx.db.query('caregivers').first(); await ctx.db.patch(row._id, { identityStatus: 'verified', adultConfirmedAt: Date.now() }) })
-  const p = await t.query(api.marketplace.read, { path: '/caregivers/12' })
+  const p = await employerRead(t, '/caregivers/12')
   expect(p.profile.id).toBe(12); expect(p.profile.rating_avg).toBe(4)
   expect((await t.query(internal.migration.status)).counts.shortlists).toBe(1)
   const unlock = await t.run(ctx => ctx.db.query('contactUnlocks').first())
@@ -272,4 +278,70 @@ it('returns a profile name separately from login email and keeps caregiver name 
   const parent = await person(t, 'employer', 'parent-name')
   await parent.write('/employers/profile', { name: 'Parent Display Name', phone: '0712345678' })
   expect((await parent.read('/auth/me')).user).toMatchObject({ name: 'Parent Display Name', role: 'employer' })
+})
+
+it('lists complete pending caregivers with a pending label, but keeps identity-only searches and contact access restricted', async () => {
+  const t = make(), c = await caregiver(t, 'pending-visible'), parent = await person(t, 'employer', 'pending-parent')
+  const selfie = await uploaded(t, c, 'selfie')
+  await t.run(async ctx => {
+    const p = await ctx.db.get(c.id)
+    await ctx.db.patch(c.accountId, { termsAcceptedAt: Date.now(), termsVersion: LEGAL_VERSION })
+    await ctx.db.patch(c.id, { identityStatus: 'pending', adultConfirmedAt: undefined })
+    await ctx.db.insert('verificationSubmissions', { caregiverId: c.id, status: 'pending', selfie: { provider: 'convex', storageId: selfie }, profilePhoto: p.photo, profileName: p.name, submittedAt: Date.now() })
+  })
+  const result = await parent.read('/caregivers')
+  expect(result.profiles.map(p => p.id)).toContain(c.id)
+  expect((await parent.read('/caregivers', {category:'travel_nanny',service_type:'live_out',location:'Nairobi',min_experience:'3'})).total).toBe(1)
+  await t.run(ctx => ctx.db.patch(c.accountId, {termsAcceptedAt: undefined}))
+  expect((await parent.read('/caregivers')).total).toBe(0)
+  await t.run(ctx => ctx.db.patch(c.accountId, {termsAcceptedAt: Date.now()}))
+  const profile = (await employerRead(t, `/caregivers/${c.id}`)).profile
+  expect(profile.verification_status).toBe('pending'); expect(profile.adult_confirmed).toBe(false)
+  for (const field of ['email', 'phone', 'national_id', 'selfie', 'national_id_uploaded']) expect(profile).not.toHaveProperty(field)
+  expect((await parent.read('/caregivers', {identity_checked: 'true'})).profiles).toHaveLength(0)
+  await parent.write(`/shortlist/${c.id}`, {}, 'POST')
+  expect((await parent.read('/shortlist')).profiles[0].id).toBe(c.id)
+  expect(await parent.read(`/contact/unlock/${c.id}`)).toMatchObject({unlocked: false, can_unlock: false, identity_pending: true})
+  await expect(parent.write(`/contact/unlock/${c.id}`, {}, 'POST')).rejects.toThrow('18+')
+  await t.run(ctx => ctx.db.patch(c.accountId, { suspendedAt: Date.now() }))
+  expect((await parent.read('/caregivers')).profiles).toHaveLength(0)
+  expect((await parent.read('/shortlist')).profiles).toHaveLength(0)
+  await t.run(async ctx => {
+    await ctx.db.patch(c.accountId, { suspendedAt: undefined })
+    const documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', c.id)).unique()
+    await ctx.storage.delete(documents.nationalId.storageId)
+  })
+  expect((await parent.read('/caregivers')).total).toBe(0)
+  await expect(employerRead(t, `/caregivers/${c.id}`)).rejects.toThrow('not found')
+})
+
+it('requires employer sign-in for listings, profile details and reviews, with only owner/admin exceptions', async () => {
+  const t = make(), c = await caregiver(t, 'private-listing'), other = await caregiver(t, 'other-private'), employer = await person(t, 'employer', 'private-reader'), admin = await person(t, 'admin')
+  for (const path of ['/caregivers', `/caregivers/${c.id}`, `/caregivers/${c.id}/reviews`]) {
+    await expect(t.query(api.marketplace.read, { path })).rejects.toThrow('sign in')
+    await expect(other.read(path)).rejects.toThrow(/permission|employer/)
+    await expect(employer.read(path)).resolves.toBeTruthy()
+    await expect(admin.read(path)).resolves.toBeTruthy()
+  }
+  expect((await c.read(`/caregivers/${c.id}`)).profile.name).toBe('Nanny')
+  expect((await c.read(`/caregivers/${c.id}/reviews`)).reviews).toBeDefined()
+  await t.run(async ctx => { const grant = await ctx.db.query('adminSessions').first(); await ctx.db.delete(grant._id) })
+  await expect(admin.read(`/caregivers/${c.id}`)).rejects.toThrow('authenticator')
+})
+
+it('lets caregivers hide/show their profile without losing verification or previous employer connections',async()=>{
+ const t=make(),c=await caregiver(t,'visibility'),e=await person(t,'employer','connected'),other=await person(t,'employer','new-viewer')
+ await t.run(async ctx=>{for(const p of await ctx.db.query('employers').collect())await ctx.db.patch(p._id,{accessExpiresAt:Date.now()+DAY})})
+ await e.write(`/contact/unlock/${c.id}`,{},'POST')
+ await c.write('/caregivers/profile',{is_visible:'false'})
+ expect((await c.read('/caregivers/profile')).profile).toMatchObject({is_visible:false,is_available:true,verification_status:'verified'})
+ expect((await e.read('/caregivers')).total).toBe(0)
+ expect((await e.read(`/caregivers/${c.id}`)).profile.name).toBe('Nanny')
+ expect((await e.read(`/contact/unlock/${c.id}`)).unlocked).toBe(true)
+ await expect(other.read(`/caregivers/${c.id}`)).rejects.toThrow('not found')
+ expect(await other.read(`/contact/unlock/${c.id}`)).toMatchObject({unlocked:false,can_unlock:false,visibility_hidden:true})
+ await expect(other.write(`/contact/unlock/${c.id}`,{},'POST')).rejects.toThrow('hidden')
+ expect((await c.read(`/caregivers/${c.id}`)).profile.name).toBe('Nanny')
+ await c.write('/caregivers/profile',{is_visible:'true'})
+ expect((await other.read('/caregivers')).profiles[0].id).toBe(c.id)
 })

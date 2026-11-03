@@ -13,7 +13,7 @@ export default function Reviews({ profileId, user, owner = false, version = 0 })
   const [reporting, setReporting] = useState(null)
   useEffect(() => {
     let cancelled = false
-    api(`/caregivers/${profileId}/reviews?page=${page}`, { authenticated: false }).then(result => { if (!cancelled) setData(result) }).catch(err => { if (!cancelled) setError(err.message) })
+    api(`/caregivers/${profileId}/reviews?page=${page}`).then(result => { if (!cancelled) setData(result) }).catch(err => { if (!cancelled) setError(err.message) })
     if (user?.role === 'employer') Promise.all([api(`/contact/unlock/${profileId}`), api(`/caregivers/${profileId}/review/mine`)]).then(([access, review]) => { if (!cancelled) { setEligible(access.unlocked); setOwn(review.review) } }).catch(err => { if (!cancelled) setError(err.message) })
     return () => { cancelled = true }
   }, [profileId, user, revision, version, page])

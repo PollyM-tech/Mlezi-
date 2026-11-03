@@ -47,10 +47,7 @@ export const submit = mutation({
       .query("payments")
       .withIndex("by_account", (q) => q.eq("accountId", account._id))
       .filter((q) =>
-        q.and(
-          q.eq(q.field("provider"), "manual_mpesa"),
-          q.eq(q.field("status"), "pending"),
-        ),
+        q.eq(q.field("status"), "pending"),
       )
       .first();
     if (own)

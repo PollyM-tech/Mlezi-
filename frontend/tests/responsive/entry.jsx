@@ -12,7 +12,10 @@ const paths = {
   signin: "/signin",
   caregiver: "/caregiver",
   employer: "/employer",
+  "jobs-employer": "/jobs",
+  "jobs-caregiver": "/jobs",
   workspace: "/workspace",
+  "employer-home": "/workspace",
   "profile-edit": "/workspace",
   profile: "/caregivers/sample1",
   discovery: "/caregivers",
@@ -27,6 +30,7 @@ const paths = {
   admin: "/workspace",
 };
 window.__RESPONSIVE_ROLE__ = [
+  "jobs-caregiver",
   "workspace",
   "profile-edit",
   "identity",

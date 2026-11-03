@@ -9,6 +9,9 @@ import ProfileView from './components/ProfileView'
 import IdentityCheck from './components/IdentityCheck'
 import CaregiverOverview from './components/CaregiverOverview'
 import Membership from './components/Membership'
+import JobNotifications from './components/JobNotifications.jsx'
+import JobBoard, { JobsBoundary } from './components/JobBoard.jsx'
+import CaregiverAccess from './components/CaregiverAccess.jsx'
 import Discovery from './components/Discovery'
 import AdminPanel from './components/AdminPanel'
 import Landing from './components/Landing'
@@ -38,6 +41,7 @@ export default function App() {
   const privacyAccount = routePath === '#/privacy-account'
   const supportPage = routePath === '#/support'
   const identity = routePath === '#/identity'
+  const jobsPage = routePath === '#/jobs'
   const membership = routePath === '#/membership'
   const browsing = routePath === '#/browse'
   const shortlist = routePath === '#/shortlist'
@@ -71,10 +75,10 @@ export default function App() {
           navigateApp(account.role === 'admin' ? '#/admin' : '#/workspace')
           return
         }
-        if (publicId) {
-          const data = await api(`/caregivers/${publicId}`, { authenticated: false })
+        if (publicId && account) {
+          const data = await api(`/caregivers/${publicId}`)
           if (active) setProfile(data.profile)
-        } else if (account?.role === 'caregiver' && !membership && !browsing && !landing && !joining) {
+        } else if (account?.role === 'caregiver' && !membership && !browsing && !jobsPage && !landing && !joining) {
           try {
             const result = await api('/caregivers/profile')
             if (active) { setProfile(result.profile); setEditing(false) }
@@ -88,7 +92,7 @@ export default function App() {
     }
     load()
     return () => { active = false }
-  }, [route, publicId, membership, browsing, shortlist, signin, accountPage, contactsPage, landing, joining, reload])
+  }, [route, publicId, jobsPage, membership, browsing, shortlist, signin, accountPage, contactsPage, landing, joining, reload])
 
   function logout() { void clearSession() }
   function saved(result) {
@@ -96,22 +100,25 @@ export default function App() {
   }
   return <div className="app-shell">
     <CookieConsent />
-    {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions"><a className="text-button" href="/caregivers">Find care</a>{user ? <><span className="account-name">{user.profile?.name || user.name || 'My account'}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="/signin">Sign in / join</a>}</div></header>}
-    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href={user.role === 'admin' ? '/admin-mlezicareaccess' : '/workspace'}>{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`/caregivers/${profile.id}`}>Public preview ↗</a>}{user.role === 'employer' && <><a href="/caregivers">Find caregivers</a><a href="/shortlist">My shortlist</a><a href="/contacts">My contacts</a><a href="/account">My account</a></>}{user.role !== 'admin' && <a href="/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Contact-access pass'}</a>}<a href="/tickets">Support</a><a href="/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
+    {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions">{user?.role !== 'caregiver' && <a className="text-button" href="/caregivers">Find care</a>}{user ? <><span className="account-name">{user.profile?.name || user.name || 'My account'}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="/signin">Sign in / join</a>}</div></header>}
+    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href={user.role === 'admin' ? '/admin-mlezicareaccess' : '/workspace'}>{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`/caregivers/${profile.id}`}>Employer preview ↗</a>}{user.role === 'employer' && <><a href="/caregivers">Find caregivers</a><a href="/shortlist">My shortlist</a><a href="/contacts">My contacts</a><a href="/account">My account</a></>}{user.role !== 'admin' && <a href="/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Contact-access pass'}</a>}<a href="/jobs">{user.role === 'caregiver' ? 'Find jobs & my proposals' : 'Jobs & applications'}</a><a href="/tickets">Support</a><a href="/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
     <main id="main-content" className={landing ? 'landing-main' : undefined}>
+      {user && !landing && ['employer','caregiver'].includes(user.role) && <JobsBoundary compact><JobNotifications user={user} /></JobsBoundary>}
       {notice && <div className="alert success" role="status">{notice}<button className="dismiss" aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></div>}
       {legal ? <LegalPage type={legal} /> : landing ? <Landing user={user} /> : loading ? <section className="card state-panel" role="status"><div className="spinner" /><h2>Getting things ready…</h2><p>Loading your Mlezi workspace.</p></section>
         : error ? <section className="card state-panel"><h2>We couldn’t load this page</h2><p role="alert">{error}</p><button className="button primary" onClick={() => { setError(''); setLoading(true); setReload(v => v + 1) }}>Try again</button></section>
+        : !user && (browsing || publicId) ? <CaregiverAccess />
         : publicId && profile ? <ProfileView key={profile.id} profile={profile} user={user} />
-        : browsing ? <Discovery key={route} user={user} initialFilters={Object.fromEntries(routeParams)} />
+        : browsing ? ['employer', 'admin'].includes(user?.role) ? <Discovery key={route} user={user} initialFilters={Object.fromEntries(routeParams)} /> : <CaregiverAccess user={user} />
         : !user ? <ConvexAuthForm key={route} initialRegistering={joining} initialRole={routeParams.get('role') === 'employer' ? 'employer' : 'caregiver'} />
+        : jobsPage ? <JobBoard user={user} />
         : supportPage ? <SupportInbox admin={user.role === 'admin'} />
         : privacyAccount ? <PrivacyAccount />
         : membership ? <Membership key={user.id} user={user} />
         : user.role === 'employer' && accountPage ? <EmployerAccount onSaved={updated => setUser(current => ({ ...current, name: updated.name, phone: updated.phone, profile: { ...current.profile, name: updated.name } }))} />
         : user.role === 'employer' && contactsPage ? <EmployerContacts />
         : user.role === 'employer' && shortlist ? <Discovery key="saved" user={user} saved />
-        : user.role === 'employer' ? <EmployerDashboard />
+        : user.role === 'employer' ? <EmployerDashboard user={user} />
         : user.role === 'caregiver' && identity ? <IdentityCheck profile={profile} onChanged={status => setProfile(current => ({ ...current, verification_status: status }))} />
         : user.role === 'caregiver' && (editing || !profile) ? <ProfileForm key={profile?.id || 'new'} user={user} profile={profile} onSaved={saved} onCancel={() => setEditing(false)} />
         : user.role === 'caregiver' ? <><CaregiverOverview profile={profile} onUpdated={setProfile} onEdit={() => setEditing(true)} /><ProfileView key={profile.id} profile={profile} user={user} owner onEdit={() => { setEditing(true); setNotice('') }} /></>

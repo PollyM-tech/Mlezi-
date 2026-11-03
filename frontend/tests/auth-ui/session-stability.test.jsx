@@ -33,6 +33,7 @@ afterEach(() => { cleanup(); vi.useRealTimers() })
 it('preserves unfinished nanny requirements across the former 30-second session refreshes', async () => {
   let view
   await act(async () => { view = render(<ConvexSession />) })
+  fireEvent.click(screen.getByRole('button', { name: 'Filter caregivers' }))
   const keyword = screen.getByLabelText(/Name or keyword/)
   fireEvent.change(keyword, { target: { value: 'Travel nanny with newborn experience' } })
   fireEvent.change(screen.getByLabelText('Caregiver category'), { target: { value: 'travel_nanny' } })

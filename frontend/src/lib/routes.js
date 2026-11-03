@@ -1,7 +1,7 @@
 // Public URLs are independent of the application's internal view names.
 export const APP_PATHS = {
   '/caregiver': '#/join?role=caregiver', '/employer': '#/join?role=employer',
-  '/register': '#/join', '/signin': '#/signin', '/caregivers': '#/browse',
+  '/jobs': '#/jobs', '/register': '#/join', '/signin': '#/signin', '/caregivers': '#/browse',
   '/workspace': '#/workspace', '/identity': '#/identity', '/membership': '#/membership',
   '/shortlist': '#/shortlist', '/contacts': '#/contacts', '/account': '#/account',
   '/privacy-account': '#/privacy-account', '/tickets': '#/support',

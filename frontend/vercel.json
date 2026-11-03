@@ -60,6 +60,10 @@
     {
       "source": "/admin-mlezicareaccess/:path*",
       "destination": "/app/index.html"
+    },
+    {
+      "source": "/jobs/:path*",
+      "destination": "/app/index.html"
     }
   ],
   "headers": [
@@ -220,6 +224,15 @@
     },
     {
       "source": "/admin-mlezicareaccess/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/jobs/:path*",
       "headers": [
         {
           "key": "X-Robots-Tag",

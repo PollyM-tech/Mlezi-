@@ -8,7 +8,7 @@ import { mpesaSettings,mpesaPhone,initiateProvider,queryProvider } from './lib/m
 
 export const prepare = internalMutation({ args:{planCode:v.string(),phone:v.string()},handler:async(ctx,args)=>{
   const account=await requireAccount(ctx,'employer','caregiver'),settings=mpesaSettings()
-  if(!settings.enabled)fail('M-Pesa sandbox settings are not configured yet.',503)
+  if(!settings.enabled)fail('M-Pesa STK payments are not configured yet.',503)
   const plan=PLANS[args.planCode]
   if(!plan||plan.role!==account.role)fail('Select a valid membership plan')
   const profile=await ctx.db.query(account.role==='employer'?'employers':'caregivers').withIndex('by_account',q=>q.eq('accountId',account._id)).unique()
@@ -18,7 +18,7 @@ export const prepare = internalMutation({ args:{planCode:v.string(),phone:v.stri
   let phone;try{phone=mpesaPhone(args.phone)}catch{fail('Enter a valid Kenyan M-Pesa phone number')}
   await consume(ctx,`payment-starts:${account._id}`,3,600000)
   await consume(ctx,'payment-starts-global',50,3600000)
-  const id=await ctx.db.insert('payments',{accountId:account._id,type:plan.type,planCode:args.planCode,durationDays:plan.days,amount:plan.amount,status:'pending',phone,
+  const id=await ctx.db.insert('payments',{provider:'daraja_stk',accountId:account._id,type:plan.type,planCode:args.planCode,durationDays:plan.days,amount:plan.amount,status:'pending',phone,
     environment:settings.environment,initiationState:'prepared',resultDescription:settings.environment==='sandbox'?'Sandbox test request is starting. No real membership payment.':'Payment request is starting.',createdAt:Date.now(),updatedAt:Date.now()})
   await audit(ctx,account._id,'payment_prepared',id)
   return{payment:await ctx.db.get(id),fresh:true}
@@ -84,8 +84,10 @@ export const callback = httpAction(async(ctx,request)=>{
     return Response.json({ResultCode:0,ResultDesc:'Accepted'},{headers:{'Cache-Control':'no-store'}})
   }catch{return Response.json({error:'Unable to accept callback'},{status:400})}
 })
-export const pending = internalQuery({args:{},handler:ctx=>ctx.db.query('payments').withIndex('by_status',q=>q.eq('status','pending')).take(50)})
+export const pending = internalQuery({args:{},handler:ctx=>ctx.db.query('payments').withIndex('by_status',q=>q.eq('status','pending')).filter(q=>q.and(q.eq(q.field('provider'),'daraja_stk'),q.gt(q.field('createdAt'),Date.now()-86400000))).take(50)})
 export const sweep = internalAction({args:{},handler:async ctx=>{
   if(!mpesaSettings().enabled)return
-  for(const p of await ctx.runQuery(internal.mpesa.pending,{}))if(p.checkoutRequestId&&p.createdAt>Date.now()-86400000)await ctx.runAction(internal.mpesa.reconcile,{paymentId:p._id})
+  const rows=await ctx.runQuery(internal.mpesa.pending,{})
+  // Bound simultaneous provider calls and keep a slow provider within action limits.
+  for(let i=0;i<rows.length;i+=5)await Promise.allSettled(rows.slice(i,i+5).filter(p=>p.checkoutRequestId).map(p=>ctx.runAction(internal.mpesa.reconcile,{paymentId:p._id})))
 } })

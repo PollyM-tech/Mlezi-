@@ -24,6 +24,8 @@ export const exportOwn = mutation({ args: {}, handler: async ctx => {
   const reviews = await ctx.db.query('reviews').withIndex('by_pair', q => q.eq('employerAccountId', a._id)).collect()
   await audit(ctx, a._id, 'personal_data_export')
   return { exportedAt: Date.now(), account: { email: a.email, phone: a.phone || null, name: a.name || null, role: a.role, termsAcceptedAt: a.termsAcceptedAt || null, termsVersion: a.termsVersion || null, privacyNoticeVersion: a.privacyNoticeVersion || null }, profile: strip(caregiver || employer), payments: payments.map(strip), reviewsWritten: reviews.map(strip),
+    jobsPosted: (await ctx.db.query('jobs').withIndex('by_employer',q=>q.eq('employerAccountId',a._id)).collect()).map(j=>({title:j.title,description:j.description,category:j.category,location:j.location,serviceTypes:j.serviceTypes,payMin:j.payMin,payMax:j.payMax,payPeriod:j.payPeriod,status:j.status,createdAt:j.createdAt,updatedAt:j.updatedAt})),
+    jobProposals: (await ctx.db.query('jobApplications').withIndex('by_caregiver',q=>q.eq('caregiverAccountId',a._id)).collect()).map(r=>({jobId:r.jobId,message:r.message,proposedPay:r.proposedPay,payPeriod:r.payPeriod,status:r.status,createdAt:r.createdAt,updatedAt:r.updatedAt})),
     shortlist: employer ? (await ctx.db.query('shortlists').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, createdAt: r.createdAt })) : [],
     contactUnlocks: employer ? (await ctx.db.query('contactUnlocks').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, unlockedAt: r.unlockedAt })) : [],
     identityRequests: caregiver ? (await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', caregiver._id)).collect()).map(strip) : [],
@@ -58,6 +60,18 @@ export const resolve = mutation({ args: { id: v.id('dataRequests') }, handler: a
 export const purge = internalMutation({ args: { accountId: v.id('accounts') }, handler: async (ctx, { accountId }) => {
   const a = await ctx.db.get(accountId)
   if (!a?.deletionRequestedAt || a.deletionRequestedAt + 7 * DAY > Date.now()) return
+  const jobBatch = await ctx.db.query('jobs').withIndex('by_employer',q=>q.eq('employerAccountId',accountId)).take(5)
+  for (const job of jobBatch) {
+    for (const proposal of await ctx.db.query('jobApplications').withIndex('by_job',q=>q.eq('jobId',job._id)).take(100)) await ctx.db.delete(proposal._id)
+    await ctx.db.delete(job._id)
+  }
+  const proposalBatch = await ctx.db.query('jobApplications').withIndex('by_caregiver',q=>q.eq('caregiverAccountId',accountId)).take(20)
+  for (const proposal of proposalBatch) {
+    const job = await ctx.db.get(proposal.jobId)
+    if (job) await ctx.db.patch(job._id, { applicationsCount: Math.max(0,job.applicationsCount-1), ...(job.offeredApplicationId===proposal._id?{offeredApplicationId:undefined}:{}), ...(job.hiredApplicationId===proposal._id?{hiredApplicationId:undefined}:{}), updatedAt:Date.now() })
+    await ctx.db.delete(proposal._id)
+  }
+  if (jobBatch.length || proposalBatch.length) { await ctx.scheduler.runAfter(0,internal.privacy.purge,{accountId}); return }
   const supportBatch = await ctx.db.query('supportTickets').withIndex('by_account', q => q.eq('accountId', accountId)).take(10)
   for (const ticket of supportBatch) {
     for (const message of await ctx.db.query('supportMessages').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(100)) await ctx.db.delete(message._id)

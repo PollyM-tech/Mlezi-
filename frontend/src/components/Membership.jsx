@@ -3,6 +3,8 @@ import { useMutation } from "convex/react";
 import { api as functions } from "../../convex/_generated/api.js";
 import { api } from "../lib/api";
 
+import StkPayment from './StkPayment.jsx';
+
 export default function Membership({ user }) {
   const [membership, setMembership] = useState(null),
     [payments, setPayments] = useState([]),
@@ -29,7 +31,7 @@ export default function Membership({ user }) {
     };
   }, [version]);
   const pending = payments.find(
-    (p) => p.provider === "manual_mpesa" && p.status === "pending",
+    (p) => p.status === "pending",
   );
   const plan =
     membership?.plans.find(
@@ -106,7 +108,7 @@ export default function Membership({ user }) {
             {membership.expires_at && (
               <p>Expiry: {new Date(membership.expires_at).toLocaleString()}</p>
             )}
-            {membership.manual_payment?.enabled && plan ? (
+            {(membership.manual_payment?.enabled || membership.payments_enabled) && plan ? (
               <>
                 <label>
                   Choose your plan
@@ -122,7 +124,8 @@ export default function Membership({ user }) {
                     ))}
                   </select>
                 </label>
-                <section
+                {membership.payments_enabled && <StkPayment plan={plan} pending={pending} environment={membership.payment_environment} user={user} onRefresh={() => setVersion(v => v + 1)} />}
+                {membership.manual_payment?.enabled && <><section
                   className="privacy-note"
                   aria-label="Manual M-Pesa instructions"
                 >
@@ -155,8 +158,7 @@ export default function Membership({ user }) {
                 {pending ? (
                   <div className="privacy-note">
                     <p role="status">
-                      Receipt {pending.receipt} is awaiting administrator
-                      review. Do not pay again while it is pending.
+                      {pending.provider === 'manual_mpesa' ? `Receipt ${pending.receipt} is awaiting administrator review.` : 'An STK payment is awaiting confirmation.'} Do not pay again while it is pending.
                     </p>
                     <button
                       className="button secondary"
@@ -204,7 +206,7 @@ export default function Membership({ user }) {
                       {busy ? "Submitting…" : "Submit payment for confirmation"}
                     </button>
                   </form>
-                )}
+                )}</>}
               </>
             ) : (
               <p>Manual payment reporting is currently unavailable.</p>
@@ -213,13 +215,14 @@ export default function Membership({ user }) {
           <aside className="card side-card">
             <h3>How it works</h3>
             <p>
-              An administrator matches your receipt, amount, phone and payment
-              destination against the business statement. Submitting a code
-              alone does not activate access.
+              For manual payments, an administrator matches your receipt, amount,
+              phone and destination against the business statement. STK payments
+              are checked directly with Safaricom by the server. Requesting a
+              prompt or submitting a receipt alone does not activate access.
             </p>
             <p>
               Early renewal extends your existing expiry. There are no automatic
-              debits. Paystack checkout will be added later.
+              debits. STK access activates only after server confirmation; sandbox tests do not activate membership.
             </p>
             <p>
               {user.role === "employer"
@@ -244,6 +247,7 @@ export default function Membership({ user }) {
                   KES {p.amount} · {p.plan_code?.replaceAll("_", " ") || p.type}
                 </p>
                 {p.receipt && <p>Receipt: {p.receipt}</p>}
+                {p.environment === "sandbox" && <p>Sandbox test</p>}
                 <small>{p.result_description}</small>
               </div>
               <strong>
@@ -252,7 +256,7 @@ export default function Membership({ user }) {
                   : p.status === "failed"
                     ? "Not confirmed"
                     : p.status === "pending"
-                      ? "Awaiting review"
+                      ? p.provider === "daraja_stk" ? "Awaiting confirmation" : "Awaiting review"
                       : p.status}
               </strong>
             </article>

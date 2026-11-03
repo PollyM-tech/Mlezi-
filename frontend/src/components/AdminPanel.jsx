@@ -1,3 +1,4 @@
+import JobBoard from './JobBoard.jsx'
 import AdminManualPayments from './AdminManualPayments.jsx'
 import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
@@ -35,6 +36,7 @@ export default function AdminPanel() {
     {section === 'overview' && <section className="card form-section"><h2>Your administration desk</h2><p>Start with urgent safety reports and overdue support tickets, then review identity submissions and payment reports. Notifications clear as the underlying work is handled.</p><p>Identity checking means manually comparing a legible ID, a recent selfie and the profile photo, and confirming an age of at least 18. Premium payment never grants identity approval.</p><p>Use the sections above to reply to tickets, resolve issues, approve identity checks, compare manual receipts, suspend unsafe accounts and handle privacy requests. Security events are available under Accounts & privacy.</p></section>}
     {section === 'tickets' && <SupportInbox key={`${ticket || 'queue'}-${ticketStatus}`} admin initialTicket={ticket} initialStatus={ticketStatus} />}
     {section === 'emails' && <AdminEmailFailures onOpen={open} />}
+    {section === 'jobs' && <JobBoard user={{ role: 'admin' }} />}
     {section === 'payments' && <AdminManualPayments />}
     {section === 'operations' && <AdminOperations />}
     {section === 'identity' && <AdminIdentity />}
