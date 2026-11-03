@@ -58,3 +58,9 @@ npm run mpesa:check
 This reads public backend readiness and prints the callback URL. It does not read or print credentials, request a provider token, or initiate an STK payment. A successful readiness check does not prove credentials or callback delivery work; perform the separate sandbox journey above.
 
 While an STK request is pending, the open membership screen reads its own payment status every five seconds for up to three minutes of visible-page checks. It pauses reads while the tab is hidden, avoids overlapping reads, and stops at confirmation or unmount. This updates the payment display without reloading the page, restarting the request or clearing other forms. The manual Check STK payment status button remains available after the automatic checks stop. Background provider reconciliation remains independent of the browser.
+
+## Stalled sandbox simulation recovery
+
+An accepted initiation is not a completed payment or proof of a phone prompt. Pending attempts are persisted in Convex, so signing out does not remove them. Status queries that remain inconclusive now update the pending description; provider/network/reference-validation failures produce a clear unconfirmed-result message rather than preserving the original accepted message forever. No callback claim or query error grants membership.
+
+For an owned `daraja_stk` request recorded as `sandbox`, **Close sandbox test** becomes valid on the server after three minutes. It marks that test unconfirmed/failed, audits the action and allows another deliberate test. It does not cancel a provider transaction, clear a live request, delete history or activate membership. Live transactions and another account’s requests cannot use this path. Late test confirmation cannot revive a closed test. Deploy Convex and frontend changes together before using recovery.

@@ -47,6 +47,7 @@ export async function nativeConvexApi(path, { method = 'GET', body } = {}, sessi
       } catch (error) { urls.forEach(URL.revokeObjectURL); throw error }
     }
     if (method === 'POST' && url.pathname === '/payments/stk/start') return await client.action(functions.mpesa.start, body)
+    if (method === 'POST' && url.pathname === '/payments/stk/close-test') return await client.mutation(functions.mpesa.closeSandboxTest, body)
     if (method === 'POST' && url.pathname === '/payments/stk/check') return await client.action(functions.mpesa.check, body)
     if (method === 'GET') return await client.query(functions.marketplace.read, { path: url.pathname, params })
     if (body instanceof FormData) {

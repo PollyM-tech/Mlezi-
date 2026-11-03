@@ -38,3 +38,11 @@ it('pauses status reads in a hidden tab and cleans up when the screen closes',as
  hidden.mockReturnValue(false);await act(async()=>{await vi.advanceTimersByTimeAsync(5000)});expect(state.api).toHaveBeenCalledTimes(1)
  unmount();await act(async()=>{await vi.advanceTimersByTimeAsync(10000)});expect(state.api).toHaveBeenCalledTimes(1)
 })
+it('offers closing an unconfirmed sandbox test but never a live request',async()=>{
+ const user=userEvent.setup();state.api.mockResolvedValue({payment:{id:'test-id',status:'failed',result_description:'Sandbox test closed without confirmation. No membership activated.'}})
+ const view=render(<StkPayment {...props} pending={{id:'test-id',provider:'daraja_stk',environment:'sandbox',status:'pending'}}/>);
+ await user.click(screen.getByRole('button',{name:'Close sandbox test'}));expect(state.api).toHaveBeenCalledWith('/payments/stk/close-test',{method:'POST',body:{id:'test-id'}})
+ expect(screen.getByRole('status').textContent).toContain('Sandbox test closed')
+ view.unmount();render(<StkPayment {...props} environment="production" pending={{id:'live-id',provider:'daraja_stk',environment:'production',status:'pending'}}/>);
+ expect(screen.queryByRole('button',{name:'Close sandbox test'})).toBeNull()
+})

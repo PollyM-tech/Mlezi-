@@ -1,4 +1,4 @@
-import { action,internalAction,internalMutation,internalQuery,httpAction } from './_generated/server.js'
+import { action,mutation,internalAction,internalMutation,internalQuery,httpAction } from './_generated/server.js'
 import { internal } from './_generated/api.js'
 import { v } from 'convex/values'
 import { requireAccount } from './lib/permissions.js'
@@ -46,12 +46,28 @@ export const claimQuery = internalMutation({args:{paymentId:v.id('payments')},ha
   await ctx.db.patch(paymentId,{lastCheckedAt:Date.now()});return p
 } })
 export const get = internalQuery({args:{paymentId:v.id('payments')},handler:(ctx,{paymentId})=>ctx.db.get(paymentId)})
+export const waiting = internalMutation({args:{paymentId:v.id('payments'),reason:v.union(v.literal('pending'),v.literal('unavailable'))},handler:async(ctx,{paymentId,reason})=>{
+  const p=await ctx.db.get(paymentId);if(!p||p.status!=='pending')return
+  const resultDescription=reason==='unavailable'?'Unable to confirm the result with Safaricom yet. This request remains pending; no membership has been activated.':p.environment==='sandbox'?'Safaricom sandbox has not returned a final result yet. This is a simulated test, not proof of a phone prompt or payment.':'Safaricom is still processing this request. Check again before paying.'
+  await ctx.db.patch(paymentId,{resultDescription,updatedAt:Date.now()})
+}})
+export const closeSandboxTest = mutation({args:{id:v.string()},handler:async(ctx,{id})=>{
+  const a=await requireAccount(ctx,'employer','caregiver'),p=await find(ctx,'payments',id)
+  if(p.accountId!==a._id)fail('Payment not found',404)
+  if(p.provider!=='daraja_stk'||p.environment!=='sandbox')fail('Only sandbox test requests can be closed here')
+  if(p.status!=='pending')return {payment:paymentData(p)}
+  if(p.createdAt>Date.now()-180000)fail('Allow three minutes for the sandbox result before closing this test')
+  await ctx.db.patch(p._id,{status:'failed',resultDescription:'Sandbox test closed without confirmation. No membership activated.',updatedAt:Date.now()})
+  await audit(ctx,a._id,'sandbox_payment_closed',p._id)
+  return {payment:paymentData(await ctx.db.get(p._id))}
+}})
 export const reconcile = internalAction({args:{paymentId:v.id('payments')},handler:async(ctx,{paymentId})=>{
   const p=await ctx.runMutation(internal.mpesa.claimQuery,{paymentId});if(!p)return
   try{
     const code=await queryProvider(mpesaSettings(),p)
     if(code!==null)await ctx.runMutation(internal.memberships.settle,{paymentId,resultCode:code})
-  }catch{/* Keep pending on network, provider or validation failures. Never log provider payloads. */}
+    else await ctx.runMutation(internal.mpesa.waiting,{paymentId,reason:'pending'})
+  }catch{await ctx.runMutation(internal.mpesa.waiting,{paymentId,reason:'unavailable'})}
 } })
 export const start = action({args:{planCode:v.string(),phone:v.string()},handler:async(ctx,args)=>{
   const prepared=await ctx.runMutation(internal.mpesa.prepare,args),p=prepared.payment
