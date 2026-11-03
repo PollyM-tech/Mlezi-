@@ -5,7 +5,7 @@ import { query, mutation } from './_generated/server.js'
 import { consume, audit } from './lib/security.js'
 import { v } from 'convex/values'
 import { matchesKeywords, normalizeSearch } from './lib/discoverySearch.js'
-import { requireAccount, accountIdentity, hasProfilePhoto } from './lib/permissions.js'
+import { requireAccount, accountIdentity, hasProfilePhoto, hasNationalId } from './lib/permissions.js'
 import { active, iso, fail, text, CATEGORIES, SERVICES, DAYS, AGES, SCOPES, PLANS, externalId, find, owned, publicProfile, employerProfile, reviewData, verificationData, paymentData, aggregate, profileFields, phone, confirmAdult, approvedAdult } from './lib/marketplace.js'
 
 const args = { path: v.string(), params: v.optional(v.any()) }
@@ -26,7 +26,7 @@ async function profileForViewer(ctx, id) {
   if (!account || account.suspendedAt || account.deletionRequestedAt || !await hasProfilePhoto(ctx, account)) fail('Caregiver not found', 404)
   if (viewer.role !== 'admin' && viewer._id !== profile.accountId && !await canPublish(ctx, profile, account)) {
     const employer = viewer.role === 'employer' ? await ctx.db.query('employers').withIndex('by_account', q => q.eq('accountId', viewer._id)).unique() : null
-    const priorContact = employer && profile.isVisible === false && approvedAdult(profile) ? await pair(ctx, 'contactUnlocks', employer._id, profile._id) : null
+    const priorContact = employer && profile.isVisible === false && approvedAdult(profile) && await hasNationalId(ctx, account) ? await pair(ctx, 'contactUnlocks', employer._id, profile._id) : null
     if (!priorContact) fail('Caregiver not found', 404)
   }
   return profile
@@ -97,7 +97,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
       const profile = await ctx.db.get(row.caregiverId)
       if (!profile) return false
       const account = await ctx.db.get(profile.accountId)
-      return path === '/shortlist' ? canPublish(ctx, profile, account) : approvedAdult(profile) && !!account && !account.suspendedAt && !account.deletionRequestedAt && await hasProfilePhoto(ctx, account)
+      return path === '/shortlist' ? canPublish(ctx, profile, account) : approvedAdult(profile) && !!account && !account.suspendedAt && !account.deletionRequestedAt && await hasProfilePhoto(ctx, account) && await hasNationalId(ctx, account)
     }))
     rows = rows.filter((_, i) => checked[i])
     rows.sort((a, b) => (b.unlockedAt || b.createdAt) - (a.unlockedAt || a.createdAt))
@@ -108,7 +108,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
   if ((match = path.match(/^\/contact\/unlock\/([^/]+)$/))) {
     const { profile: e } = await owned(ctx, 'employers', 'employer'), p = await find(ctx, 'caregivers', match[1])
     const target = await ctx.db.get(p.accountId)
-    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target)) return {unlocked:false,can_unlock:false,available:false}
+    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target) || !await hasNationalId(ctx,target)) return {unlocked:false,can_unlock:false,available:false}
     if (!approvedAdult(p)) return { unlocked: false, can_unlock: false, available: false, identity_pending: p.identityStatus === 'pending' }
     if (await pair(ctx, 'contactUnlocks', e._id, p._id)) return { unlocked: true, contact: await contact(ctx, p) }
     if (p.isVisible === false) return {unlocked:false,can_unlock:false,available:false,visibility_hidden:true}
@@ -163,7 +163,11 @@ async function saveProfile(ctx, data, creating, requestedId) {
   const fields = profileFields(data, old), contactPhone = data.phone === undefined ? a.phone : phone(data.phone)
   if (creating && (!data.photo || !data.national_id || !data.selfie)) fail('Profile photo, National ID and selfie are required')
   if (creating && data.consent !== 'true') fail('Confirm permission to compare your ID, selfie and profile photo')
-  if (!creating && data.national_id) fail('National ID replacement requires administrator assistance')
+  const oldDocuments = old ? await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', old._id)).unique() : null
+  const storedId = oldDocuments?.nationalId && (oldDocuments.nationalId.provider !== 'convex' || await ctx.db.system.get(oldDocuments.nationalId.storageId))
+  const repairingId = !creating && !storedId && !!data.national_id
+  if (!creating && data.national_id && storedId) fail('National ID replacement requires administrator assistance')
+  if (repairingId && (!data.selfie || data.consent !== 'true')) fail('Upload a recent selfie and confirm permission to review your missing ID')
   if (data.photo) fields.photo = await claimAsset(ctx, data.photo, a._id, 'photo')
   if (fields.photo) fields.photoUrl = '' // URLs are resolved in public projections.
   let nationalId
@@ -178,12 +182,16 @@ async function saveProfile(ctx, data, creating, requestedId) {
     await ctx.db.patch(old._id, { ...fields, updatedAt: Date.now() })
   }
   const id = old?._id || await ctx.db.insert('caregivers', { ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)), identityStatus: 'unverified', ratingAverage: 0, reviewCount: 0, createdAt: Date.now(), updatedAt: Date.now(), accountId: a._id })
-  if (nationalId) await ctx.db.insert('caregiverDocuments', { caregiverId: id, nationalId })
-  if (creating) {
+  if (nationalId) {
+    if (oldDocuments) await ctx.db.patch(oldDocuments._id, { nationalId })
+    else await ctx.db.insert('caregiverDocuments', { caregiverId: id, nationalId })
+  }
+  if (creating || repairingId) {
+    if (repairingId) for (const prior of await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', id)).filter(q => q.eq(q.field('status'), 'pending')).collect()) await ctx.db.patch(prior._id, { status: 'rejected', rejectionReason: 'Missing identity evidence was restored; review the new submission.', reviewedAt: Date.now() })
     const selfie = await claimAsset(ctx, data.selfie, a._id, 'selfie')
     const profile = await ctx.db.get(id)
     await ctx.db.insert('verificationSubmissions', { caregiverId: id, selfie, profileName: profile.name, profilePhoto: profile.photo, status: 'pending', submittedAt: Date.now() })
-    await ctx.db.patch(id, { identityStatus: 'pending' })
+    await ctx.db.patch(id, { identityStatus: 'pending', adultConfirmedAt: undefined })
     await audit(ctx, a._id, 'identity_submitted', id)
   }
   if (!await hasProfilePhoto(ctx, a)) fail('A profile photo is required')
@@ -208,7 +216,7 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   if ((match = path.match(/^\/contact\/unlock\/([^/]+)$/)) && method === 'POST') {
     const { profile: e } = await owned(ctx, 'employers', 'employer'), p = await find(ctx, 'caregivers', match[1])
     const target = await ctx.db.get(p.accountId)
-    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target)) fail('This caregiver is unavailable',403)
+    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target) || !await hasNationalId(ctx,target)) fail('This caregiver is unavailable',403)
     if (!approvedAdult(p)) fail('This caregiver must complete the 18+ identity check before contact access is available', 403)
     if (p.isVisible === false && !await pair(ctx, 'contactUnlocks', e._id, p._id)) fail('This caregiver is hidden from the marketplace', 403)
     if (!await pair(ctx, 'contactUnlocks', e._id, p._id)) {
@@ -252,9 +260,9 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   }
   if (path === '/verification/submit' && method === 'POST') {
     const { profile: p, account } = await owned(ctx, 'caregivers', 'caregiver')
-    if (['verified', 'pending'].includes(p.identityStatus)) fail('An identity check is already approved or pending', 409)
     let documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).unique()
     const storedId = documents?.nationalId && (documents.nationalId.provider !== 'convex' || await ctx.db.system.get(documents.nationalId.storageId))
+    if (storedId && ['verified', 'pending'].includes(p.identityStatus)) fail('An identity check is already approved or pending', 409)
     if (data.national_id) {
       if (storedId) fail('National ID replacement requires administrator assistance')
       const nationalId = await claimAsset(ctx, data.national_id, account._id, 'national_id')
@@ -265,8 +273,9 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
     if (!documents || !await hasProfilePhoto(ctx, account) || documents.nationalId.provider === 'convex' && !await ctx.db.system.get(documents.nationalId.storageId)) fail('Upload your national ID and profile photo before identity review')
     if (data.consent !== 'true') fail('Confirm permission to compare your selfie and ID')
     const selfie = await claimAsset(ctx, data.selfie, account._id, 'selfie')
+    if (!storedId) for (const prior of await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).filter(q => q.eq(q.field('status'), 'pending')).collect()) await ctx.db.patch(prior._id, { status: 'rejected', rejectionReason: 'Missing identity evidence was restored; review the new submission.', reviewedAt: Date.now() })
     const id = await ctx.db.insert('verificationSubmissions', { caregiverId: p._id, selfie, profileName: p.name, profilePhoto: p.photo, status: 'pending', submittedAt: Date.now() })
-    await ctx.db.patch(p._id, { identityStatus: 'pending' })
+    await ctx.db.patch(p._id, { identityStatus: 'pending', adultConfirmedAt: undefined })
     return { verification_status: 'pending', submission: verificationData(await ctx.db.get(id)) }
   }
   if (path.startsWith('/payments/') && method === 'POST') {

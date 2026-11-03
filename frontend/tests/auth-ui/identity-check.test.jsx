@@ -34,3 +34,11 @@ it('shows the review timeframe while pending without offering duplicate submissi
  expect(screen.queryByRole('button',{name:'Submit identity check'})).toBeNull()
  expect(screen.getByRole('link',{name:'Contact support about your identity review'}).getAttribute('href')).toBe('/tickets')
 })
+it('offers missing-ID recovery even if an older account still carries an approved status',async()=>{
+ mocks.api.mockResolvedValue({verification_status:'verified'})
+ render(<IdentityCheck profile={{id:'legacy',photo_url:'/fixture-photo.png',national_id_uploaded:false}} onChanged={()=>{}}/> )
+ expect(await screen.findByLabelText('National ID image')).toBeTruthy()
+ expect(screen.getByLabelText('A clear, recent selfie')).toBeTruthy()
+ expect(screen.getByText(/Your profile is hidden from employer listings/)).toBeTruthy()
+ expect(screen.getByRole('link',{name:'Upload or change profile photo'}).getAttribute('href')).toBe('/workspace?edit=profile')
+})

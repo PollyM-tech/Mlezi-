@@ -81,7 +81,7 @@ export default function App() {
         } else if (account?.role === 'caregiver' && !membership && !browsing && !jobsPage && !landing && !joining) {
           try {
             const result = await api('/caregivers/profile')
-            if (active) { setProfile(result.profile); setEditing(false) }
+            if (active) { setProfile(result.profile); setEditing(new URLSearchParams(route.split('?')[1] || '').get('edit') === 'profile') }
           } catch (err) {
             if (err.status !== 404) throw err
             if (active) { setProfile(null); setEditing(true) }
@@ -119,7 +119,7 @@ export default function App() {
         : user.role === 'employer' && contactsPage ? <EmployerContacts />
         : user.role === 'employer' && shortlist ? <Discovery key="saved" user={user} saved />
         : user.role === 'employer' ? <EmployerDashboard user={user} />
-        : user.role === 'caregiver' && identity ? <IdentityCheck profile={profile} onChanged={status => setProfile(current => ({ ...current, verification_status: status }))} />
+        : user.role === 'caregiver' && identity ? <IdentityCheck profile={profile} onChanged={status => setProfile(current => ({ ...current, verification_status: status, national_id_uploaded: true }))} />
         : user.role === 'caregiver' && (editing || !profile) ? <ProfileForm key={profile?.id || 'new'} user={user} profile={profile} onSaved={saved} onCancel={() => setEditing(false)} />
         : user.role === 'caregiver' ? <><CaregiverOverview profile={profile} onUpdated={setProfile} onEdit={() => setEditing(true)} /><ProfileView key={profile.id} profile={profile} user={user} owner onEdit={() => { setEditing(true); setNotice('') }} /></>
         : <AdminPanel />}

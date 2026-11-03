@@ -78,10 +78,12 @@ it('restricts caregivers without a photo to setup instead of rendering the works
  expect(screen.getByLabelText(/Recent selfie/).required).toBe(true)
 })
 it('repairs a missing photo using the existing profile rather than creating a duplicate',()=>{
- state.auth.isAuthenticated=true;state.query={status:'profile_required',account:{id:'caregiver',role:'caregiver'},setupProfile:{id:'existing',name:'Caregiver',photo_url:null,service_category:'nanny',service_types:['live_in'],phone:'0712345678'}}
+ state.auth.isAuthenticated=true;state.query={status:'profile_required',account:{id:'caregiver',role:'caregiver'},setupProfile:{id:'existing',name:'Caregiver',national_id_uploaded:false,photo_url:null,service_category:'nanny',service_types:['live_in'],phone:'0712345678'}}
  render(<ConvexSession />)
  expect(screen.getByRole('heading',{name:'Edit your profile'})).toBeTruthy()
  expect(screen.getByLabelText(/Profile photo · required/).required).toBe(true)
+ expect(screen.getByLabelText(/National ID image · required/).required).toBe(true)
+ expect(screen.getByLabelText(/Recent selfie · required/).required).toBe(true)
 })
 it('shows legal pages to a caregiver even while profile access is restricted',()=>{
  window.history.replaceState({},'', '/#/privacy')

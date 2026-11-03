@@ -27,6 +27,15 @@ export async function hasProfilePhoto(ctx, account) {
   if (!profile?.photo) return false
   return profile.photo.provider === 'convex' ? !!await ctx.db.system.get(profile.photo.storageId) : !!profile.photoUrl?.startsWith('https://')
 }
+export async function hasNationalId(ctx, account) {
+  if (account.role !== 'caregiver') return true
+  const profile = await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', account._id)).unique()
+  if (!profile) return false
+  const documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', profile._id)).unique()
+  const asset = documents?.nationalId
+  return !!asset && (asset.provider === 'convex' ? !!await ctx.db.system.get(asset.storageId) : !!asset.publicId)
+}
+
 export async function adminSessionExpiry(ctx, account) {
   const sessionId = await getAuthSessionId(ctx)
   const grant = await ctx.db.query('adminSessions').withIndex('by_session', q => q.eq('sessionId', sessionId)).unique()
