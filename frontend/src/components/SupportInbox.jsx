@@ -4,8 +4,8 @@ import { api } from '../../convex/_generated/api.js'
 import SupportThread from './SupportThread.jsx'
 import { SUPPORT_CATEGORIES, SUPPORT_STATUSES, supportError } from '../lib/support.js'
 
-export default function SupportInbox({ admin = false }) {
-  const [selected, setSelected] = useState(null), [status, setStatus] = useState('open'), [cursor, setCursor] = useState(undefined)
+export default function SupportInbox({ admin = false, initialTicket = null, initialStatus = 'open' }) {
+  const [selected, setSelected] = useState(initialTicket), [status, setStatus] = useState(initialStatus), [cursor, setCursor] = useState(undefined)
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
   const list = useQuery(api.support.list, { admin, ...(admin ? { status } : {}), ...(cursor ? { cursor } : {}) })
   const ticket = useQuery(api.support.thread, selected ? { id: selected } : 'skip')

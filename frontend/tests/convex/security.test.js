@@ -58,9 +58,11 @@ it('requires genuine admin MFA, rejects replay and expires the grant',async()=>{
  const code=await totp(setup.secret,Math.floor(Date.now()/30000))
  expect(await who.client.mutation(api.adminSecurity.verify,{code})).toEqual({ok:true})
  expect(await who.client.query(api.moderation.users)).toHaveLength(1)
+ expect((await who.client.query(api.accounts.current,{})).adminExpiresAt).toBeGreaterThan(Date.now())
  expect((await who.client.mutation(api.adminSecurity.verify,{code})).ok).toBe(false)
  await t.run(async ctx=>{const grant=await ctx.db.query('adminSessions').first();await ctx.db.patch(grant._id,{expiresAt:Date.now()-1})})
  await expect(who.client.query(api.moderation.users)).rejects.toThrow('authenticator')
+ expect((await who.client.query(api.accounts.current,{})).status).toBe('admin_security')
  expect(await totp('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ',1)).toBe('287082')
 })
 it('locks MFA after five wrong attempts without rolling the counter back',async()=>{

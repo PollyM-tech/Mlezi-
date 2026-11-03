@@ -1,4 +1,6 @@
 import { readRegistrationDraft, clearRegistrationDraft } from '../lib/registrationDraft.js'
+import AdminBoundary from './AdminBoundary.jsx'
+import ConvexAuthForm from './ConvexAuthForm.jsx'
 import SignOutProvider from './SignOutProvider.jsx'
 import { AUTH_STORAGE_NAMESPACE, createAuthStorage, useSignOut } from '../lib/signOut.js'
 import { currentAppRoute, navigateApp } from '../lib/routes.js'
@@ -40,12 +42,26 @@ function CompleteAccount({ email }) {
   }, [ensureExisting])
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('')
-    try { await register({ ...details, termsAccepted: new FormData(event.currentTarget).get('termsAccepted') === 'on', termsVersion: LEGAL_VERSION }); clearRegistrationDraft(email) }
+    try { const account = await register({ ...details, termsAccepted: new FormData(event.currentTarget).get('termsAccepted') === 'on', termsVersion: LEGAL_VERSION }); clearRegistrationDraft(email); navigateApp(account?.role === 'admin' ? '#/admin' : '#/workspace', { replace: true }) }
     catch (err) { setError(typeof err.data === 'string' ? err.data : 'Unable to save your account. Please try again.') } finally { setBusy(false) }
   }
   return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">EMAIL VERIFIED</span><h1>Complete your account</h1><p>Tell us how you’ll use Mlezi.</p>{error && <p role="alert">{error}</p>}{!checked ? <p role="status">Checking your account…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Caregiver / nanny</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><label className="checkbox-label"><input name="termsAccepted" type="checkbox" required disabled={busy} />I am at least 18, agree to the <a href="/terms/" target="_blank" rel="noopener">Terms of use</a> and acknowledge the <a href="/privacy/" target="_blank" rel="noopener">Privacy notice</a>. Optional cookies are a separate choice.</label><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
 }
 
+
+
+function LinkReservedAdministrator() {
+  const ensureExisting = useMutation(api.accounts.ensureExisting)
+  const signOut = useSignOut()
+  const [denied, setDenied] = useState(false)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let active = true
+    ensureExisting().then(account => { if (active && account?.role !== 'admin') setDenied(true) }).catch(() => { if (active) setError('Unable to check administrator permissions. Reopen this page and try again.') })
+    return () => { active = false }
+  }, [ensureExisting])
+  return <main className="card state-panel"><h1>{denied ? 'Administrator access only' : 'Checking administrator permissions'}</h1>{error ? <p role="alert">{error}</p> : denied ? <p>This account does not have administrator permission.</p> : <p role="status">Linking your verified email to the operator-provisioned account…</p>}<a href="/workspace">Return to my workspace</a><button className="text-button" onClick={() => signOut()}>Sign out</button></main>
+}
 
 function RestrictedAccount({ session }) {
   const signOut = useSignOut()
@@ -58,10 +74,18 @@ function SessionContent() {
   const serverAuth = useServerAuth()
   const { signIn } = useAuthActions()
   const signOut = useSignOut()
-  const [refresh, setRefresh] = useState(() => Math.floor(Date.now() / 60000))
-  useEffect(() => { const refreshNow = () => setRefresh(Date.now()); const timer = setInterval(() => setRefresh(Math.floor(Date.now() / 60000)), 30000); window.addEventListener('mlezi-security-required', refreshNow); return () => { clearInterval(timer); window.removeEventListener('mlezi-security-required', refreshNow) } }, [])
+  const [refresh, setRefresh] = useState(0)
+  // Keep ordinary session subscriptions stable: changing query arguments makes
+  // useQuery return undefined and would unmount every unfinished form below it.
+  useEffect(() => { const refreshNow = () => setRefresh(value => value + 1); window.addEventListener('mlezi-security-required', refreshNow); return () => window.removeEventListener('mlezi-security-required', refreshNow) }, [])
   const session = useQuery(api.accounts.current, serverAuth.isAuthenticated ? { refresh } : 'skip')
   const account = session?.account
+  useEffect(() => {
+    if (account?.role !== 'admin' || !session?.adminExpiresAt) return
+    // A deliberate security transition at MFA expiry, not a repeating page reset.
+    const timer = setTimeout(() => setRefresh(value => value + 1), Math.max(0, session.adminExpiresAt - Date.now()) + 50)
+    return () => clearTimeout(timer)
+  }, [account?.role, session?.adminExpiresAt])
   useEffect(() => { if (account?.email) clearRegistrationDraft(account.email) }, [account?.email])
   const [route, setRoute] = useState(currentAppRoute)
   useEffect(() => { const changed = () => setRoute(currentAppRoute()); window.addEventListener('hashchange', changed); window.addEventListener('popstate', changed); return () => { window.removeEventListener('hashchange', changed); window.removeEventListener('popstate', changed) } }, [])
@@ -73,9 +97,9 @@ function SessionContent() {
     return () => configureConvexSession(null)
   }, [auth, signOut, account?.id])
   useLayoutEffect(() => {
-    if (!serverAuth.isAuthenticated || session?.status !== 'ready' || !account) return
+    if (!serverAuth.isAuthenticated || !['ready', 'profile_required', 'admin_security'].includes(session?.status) || !account) return
     const path = currentAppRoute().split('?')[0]
-    if (path === '#/signin' || path === '#/join') navigateApp('#/workspace')
+    if (path === '#/signin' || path === '#/join') navigateApp(account.role === 'admin' ? '#/admin' : '#/workspace', { replace: true })
   }, [serverAuth.isAuthenticated, session?.status, account])
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -93,12 +117,16 @@ function SessionContent() {
   if (['#/privacy', '#/cookies', '#/terms'].includes(route.split('?')[0])) return <><CookieConsent /><LegalPage type={route.slice(2)} /></>
   if (linkError) return <main className="card state-panel"><h1>We couldn’t sign you in</h1><p role="alert">{linkError}</p><button className="button primary" onClick={() => { setLinkError(''); navigateApp('#/signin') }}>Back to sign in</button></main>
   if (auth.isLoading || serverAuth.isLoading || handlingLink || auth.isAuthenticated && (!serverAuth.isAuthenticated || session === undefined)) return <main className="card state-panel" role="status">Checking your sign-in…</main>
+  const adminEntry = route.split('?')[0] === '#/admin'
+  if (adminEntry && !auth.isAuthenticated) return <main className="app-shell"><CookieConsent /><a href="/">← Mlezi home</a><ConvexAuthForm adminOnly /></main>
+  if (adminEntry && auth.isAuthenticated && session?.status === 'onboarding') return <LinkReservedAdministrator />
+  if (adminEntry && auth.isAuthenticated && session?.status !== 'expired' && account?.role !== 'admin') return <main className="card state-panel"><h1>Administrator access only</h1><p>This account does not have administrator permission.</p><a href="/workspace">Return to my workspace</a><button className="text-button" onClick={() => signOut()}>Sign out</button></main>
   if (auth.isAuthenticated && session?.status === 'expired') return <main className="card state-panel"><h1>Please sign in again</h1><p>Your session has expired or is no longer valid.</p><button className="button primary" onClick={() => signOut()}>Return to homepage</button></main>
   if (auth.isAuthenticated && session?.status === 'admin_security') return <AdminSecurity />
-  if (auth.isAuthenticated && session?.account && route.split('?')[0] === '#/support') return <main className="app-shell"><CookieConsent /><header className="site-header"><a href="/workspace">← My account</a><button className="text-button" onClick={() => signOut()}>Sign out</button></header><SupportInbox admin={session.account.role === 'admin'} /></main>
+  if (auth.isAuthenticated && session?.account && route.split('?')[0] === '#/support') return <main className="app-shell"><CookieConsent /><header className="site-header"><a href="/workspace">← My account</a><button className="text-button" onClick={() => signOut()}>Sign out</button></header>{session.account.role === 'admin' ? <AdminBoundary><SupportInbox admin /></AdminBoundary> : <SupportInbox />}</main>
   if (auth.isAuthenticated && ['restricted', 'profile_required'].includes(session?.status)) return <RestrictedAccount session={session} />
   if (auth.isAuthenticated && session?.status === 'onboarding') return <CompleteAccount email={session.email} />
-  return <App key={account?.id || 'signed-out'} />
+  return account?.role === 'admin' ? <AdminBoundary><App key={account.id} /></AdminBoundary> : <App key={account?.id || 'signed-out'} />
 }
 
 export default function ConvexSession() {

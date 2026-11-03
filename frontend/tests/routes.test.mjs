@@ -18,3 +18,9 @@ test('old URLs redirect to clean destinations without dropping auth codes or sea
  assert.equal(appHref('#/support'),'/tickets')
  assert.equal(appHref('#/unknown'),null)
 })
+
+test('administrator entry uses its dedicated private URL',()=>{
+ assert.equal(appRoute({pathname:'/admin-mlezicareaccess/'}),'#/admin')
+ assert.equal(appHref('#/admin'),'/admin-mlezicareaccess')
+ assert.deepEqual(entryRoute({pathname:'/admin-mlezicareaccess'}),{private:true})
+})

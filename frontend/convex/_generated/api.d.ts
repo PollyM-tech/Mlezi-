@@ -9,6 +9,7 @@
  */
 
 import type * as accounts from "../accounts.js";
+import type * as adminDashboard from "../adminDashboard.js";
 import type * as adminSecurity from "../adminSecurity.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
@@ -22,11 +23,14 @@ import type * as lib_authUsers from "../lib/authUsers.js";
 import type * as lib_discoverySearch from "../lib/discoverySearch.js";
 import type * as lib_email from "../lib/email.js";
 import type * as lib_legalPolicy from "../lib/legalPolicy.js";
+import type * as lib_manualPaymentPolicy from "../lib/manualPaymentPolicy.js";
 import type * as lib_marketplace from "../lib/marketplace.js";
 import type * as lib_mpesa from "../lib/mpesa.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_security from "../lib/security.js";
 import type * as lib_supportEmail from "../lib/supportEmail.js";
+import type * as lib_webOrigins from "../lib/webOrigins.js";
+import type * as manualPayments from "../manualPayments.js";
 import type * as marketplace from "../marketplace.js";
 import type * as memberships from "../memberships.js";
 import type * as migration from "../migration.js";
@@ -48,6 +52,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   accounts: typeof accounts;
+  adminDashboard: typeof adminDashboard;
   adminSecurity: typeof adminSecurity;
   auth: typeof auth;
   crons: typeof crons;
@@ -61,11 +66,14 @@ declare const fullApi: ApiFromModules<{
   "lib/discoverySearch": typeof lib_discoverySearch;
   "lib/email": typeof lib_email;
   "lib/legalPolicy": typeof lib_legalPolicy;
+  "lib/manualPaymentPolicy": typeof lib_manualPaymentPolicy;
   "lib/marketplace": typeof lib_marketplace;
   "lib/mpesa": typeof lib_mpesa;
   "lib/permissions": typeof lib_permissions;
   "lib/security": typeof lib_security;
   "lib/supportEmail": typeof lib_supportEmail;
+  "lib/webOrigins": typeof lib_webOrigins;
+  manualPayments: typeof manualPayments;
   marketplace: typeof marketplace;
   memberships: typeof memberships;
   migration: typeof migration;

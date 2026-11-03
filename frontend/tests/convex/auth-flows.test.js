@@ -162,3 +162,74 @@ it('resumes password signup after temporary email failure without creating a dup
   expect((await clientFor(t, returning).query(api.accounts.me)).id).toBe(account.id)
   expect(await t.run(ctx => ctx.db.query('accounts').collect())).toHaveLength(1)
 })
+
+it('turns a signup retry with a different password into safe recovery guidance without replacing credentials', async () => {
+  const t = convexTest(schema, modules), email = 'signup-retry@example.test'
+  fetch.mockResolvedValueOnce(new Response('{}', { status: 503 }))
+  await expect(sign(t, 'password', { flow: 'signUp', email, password: 'OriginalPassword123!' })).rejects.toThrow('Unable to send')
+  const before = await t.run(ctx => ctx.db.query('authAccounts').first())
+  await expect(sign(t, 'password', { flow: 'signUp', email, password: 'DifferentPassword123!' })).rejects.toThrow('reset your password')
+  expect((await t.run(ctx => ctx.db.query('authAccounts').first())).secret).toBe(before.secret)
+  expect(await t.run(ctx => ctx.db.query('authSessions').collect())).toHaveLength(0)
+  await t.run(async ctx => { for (const row of await ctx.db.query('authEmailLimits').collect()) await ctx.db.delete(row._id) })
+  // Repeating signup with the original password resumes verification safely.
+  expect((await sign(t, 'password', { flow: 'signUp', email, password: 'OriginalPassword123!' })).tokens).toBeNull()
+  expect(sent).toHaveLength(1)
+  const verified = await sign(t, 'password', { flow: 'email-verification', email, code: code() })
+  expect(verified.tokens.token).toBeTruthy()
+})
+
+it('explains an unverified sender domain even when the provider uses a non-403 validation status', async () => {
+  const t = convexTest(schema, modules)
+  fetch.mockResolvedValueOnce(new Response(JSON.stringify({ message: 'The domain example.test is not verified.' }), { status: 422 }))
+  await expect(sign(t, 'email-otp', { email: 'newperson@example.test' })).rejects.toThrow('sending domain is not verified')
+  expect(await t.run(ctx => ctx.db.query('authSessions').collect())).toHaveLength(0)
+})
+
+it('supports canonical magic links and OTPs with a production SITE_URL while rejecting arbitrary redirect origins', async () => {
+  vi.stubEnv('SITE_URL', 'https://mlezicare.com')
+  vi.stubEnv('APP_ALLOWED_ORIGINS', '')
+  const t = convexTest(schema, modules)
+  expect((await t.query(api.accounts.authSettings, {})).allowedSignInOrigins).toEqual(['https://mlezicare.com'])
+  await expect(sign(t, 'magic-link', { email: 'blocked@example.test', redirectTo: 'http://localhost:5173/signin' })).rejects.toThrow('Invalid sign-in destination')
+  expect(sent).toHaveLength(0)
+  await sign(t, 'magic-link', { email: 'canonical@example.test', redirectTo: '/signin' })
+  const url = new URL(sent.at(-1).text.match(/https?:\/\/[^\s]+/)[0])
+  expect(url.origin + url.pathname).toBe('https://mlezicare.com/signin')
+  expect((await sign(t, undefined, { code: url.searchParams.get('code') })).tokens.token).toBeTruthy()
+  await sign(t, 'email-otp', { email: 'code@example.test' })
+  expect((await sign(t, 'email-otp', { email: 'code@example.test', code: code() })).tokens.token).toBeTruthy()
+})
+
+it('permits an exact development origin only when the operator explicitly configures it', async () => {
+  vi.stubEnv('SITE_URL', 'https://mlezicare.com')
+  vi.stubEnv('APP_ALLOWED_ORIGINS', 'http://localhost:5173')
+  const t = convexTest(schema, modules)
+  expect((await t.query(api.accounts.authSettings, {})).allowedSignInOrigins).toEqual(['https://mlezicare.com', 'http://localhost:5173'])
+  await sign(t, 'magic-link', { email: 'local@example.test', redirectTo: 'http://localhost:5173/signin' })
+  expect(new URL(sent.at(-1).text.match(/https?:\/\/[^\s]+/)[0]).origin).toBe('http://localhost:5173')
+  await expect(sign(t, 'magic-link', { email: 'evil@example.test', redirectTo: 'https://mlezicare.com.evil.test/signin' })).rejects.toThrow('Invalid sign-in destination')
+})
+
+it.each(['password', 'email-otp', 'magic-link'].flatMap(method => ['caregiver', 'employer'].map(role => [method, role])))('keeps %s signup for a new %s authenticated through account completion', async (method, role) => {
+  const t = convexTest(schema, modules), email = `${method}-${role}@example.test`
+  let verified
+  if (method === 'password') {
+    await sign(t, method, { flow: 'signUp', email, password: 'Testing123!' })
+    verified = await sign(t, method, { flow: 'email-verification', email, code: code() })
+  } else if (method === 'email-otp') {
+    await sign(t, method, { email })
+    verified = await sign(t, method, { email, code: code() })
+  } else {
+    await sign(t, method, { email, redirectTo: '/signin' })
+    const token = new URL(sent.at(-1).text.match(/https?:\/\/[^\s]+/)[0]).searchParams.get('code')
+    verified = await sign(t, undefined, { code: token })
+  }
+  const signedIn = clientFor(t, verified)
+  expect((await signedIn.query(api.accounts.current, {})).status).toBe('onboarding')
+  await signedIn.mutation(api.accounts.register, { role, name: 'Test Member', phone: '0712345678', termsAccepted: true, termsVersion: LEGAL_VERSION })
+  const current = await signedIn.query(api.accounts.current, {})
+  expect(current.status).toBe(role === 'employer' ? 'ready' : 'profile_required')
+  expect(current.account.role).toBe(role)
+  expect((await signedIn.query(api.accounts.me, {})).emailVerified).toBe(true)
+})

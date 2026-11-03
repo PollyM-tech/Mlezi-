@@ -5,6 +5,9 @@ export function useQuery(ref, args) {
   const name = getFunctionName(ref);
   if (name === "accounts:authSettings")
     return { emailReady: true, testSender: true };
+  if (name === "adminDashboard:failedEmails") return {emails: [], more: false};
+  if (name === "adminDashboard:overview") return { queues: Object.fromEntries(['identity','tickets','waiting','reports','operations','payments','failedEmails'].map(key => [key, {count: 0, more: false}])), overdueTickets: 0, dueSoonTickets: 0, notifications: [] };
+  if (name === "marketplace:read") return args.path === '/admin/reports' ? {reports: []} : {submissions: []};
   if (name === "manualPayments:pending")
     return {
       payments: [

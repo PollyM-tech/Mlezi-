@@ -1,8 +1,9 @@
 import { query, mutation, internalMutation } from './_generated/server.js'
 import { v, ConvexError } from 'convex/values'
-import { verifiedIdentity, accountIdentity, hasProfilePhoto, adminSessionReady } from './lib/permissions.js'
+import { verifiedIdentity, accountIdentity, hasProfilePhoto, adminSessionExpiry } from './lib/permissions.js'
 import { normalizeEmail, registrationDetails } from './lib/authPolicy.js'
 import { publicProfile } from './lib/marketplace.js'
+import { trustedWebOrigins } from './lib/webOrigins.js'
 import { emailIsConfigured } from './lib/email.js'
 import { LEGAL_VERSION } from './lib/legalPolicy.js'
 
@@ -11,18 +12,23 @@ function ownAccount(account) {
     name: account.name || null, legacyId: account.legacyId ?? null, emailVerified: true }
 }
 
-export const authSettings = query({ args: {}, handler: () => ({ emailReady: emailIsConfigured(), testSender: /@resend\.dev>?$/i.test(process.env.AUTH_EMAIL_FROM || '') }) })
+export const authSettings = query({ args: {}, handler: () => {
+  let allowedSignInOrigins = []
+  try { allowedSignInOrigins = [...trustedWebOrigins(process.env.SITE_URL, process.env.APP_ALLOWED_ORIGINS)] } catch { /* Missing/invalid configuration grants no browser origin. */ }
+  return { emailReady: emailIsConfigured(), testSender: /@resend\.dev>?$/i.test(process.env.AUTH_EMAIL_FROM || ''), allowedSignInOrigins }
+} })
 export const me = query({ args: {}, handler: async ctx => ownAccount(await accountIdentity(ctx)) })
 export const current = query({ args: { refresh: v.optional(v.number()) }, handler: async ctx => {
   try {
     const identity = await verifiedIdentity(ctx)
     const account = await ctx.db.query('accounts').withIndex('by_auth_subject', q => q.eq('authSubject', identity.userId)).unique()
+    const adminExpiresAt = account?.role === 'admin' ? await adminSessionExpiry(ctx, account) : null
     let status = account ? 'ready' : 'onboarding'
     if (account?.suspendedAt || account?.deletionRequestedAt) status = 'restricted'
-    else if (account?.role === 'admin' && !await adminSessionReady(ctx, account)) status = 'admin_security'
+    else if (account?.role === 'admin' && !(typeof adminExpiresAt === 'number' && adminExpiresAt > Date.now())) status = 'admin_security'
     else if (account && !await hasProfilePhoto(ctx, account)) status = 'profile_required'
     const setup = status === 'profile_required' ? await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', account._id)).unique() : null
-    return { status, ...(status === 'onboarding' ? { email: identity.email } : {}), setupProfile: setup ? await publicProfile(ctx, setup, account) : null, account: account ? ownAccount(account) : null }
+    return { status, ...(status === 'ready' && account?.role === 'admin' ? { adminExpiresAt } : {}), ...(status === 'onboarding' ? { email: identity.email } : {}), setupProfile: setup ? await publicProfile(ctx, setup, account) : null, account: account ? ownAccount(account) : null }
   } catch (error) {
     if (error instanceof ConvexError) return { status: 'expired', account: null }
     throw error

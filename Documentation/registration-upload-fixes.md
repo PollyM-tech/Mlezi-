@@ -54,3 +54,107 @@ SUPPORT_INBOX_EMAIL=support@mlezicare.com
 ```
 
 Retain the valid `AUTH_RESEND_KEY`. The mailbox's existing incoming-mail DNS records must remain intact when adding Resend's sending-verification records. Until the sending domain is verified, the current Resend test sender can still be used for the Resend-account recipient only. Do not put API keys into Vite/public variables. No email or support notification was sent during implementation.
+
+## Production signup diagnosis — 1 November 2026
+
+Read-only checks of the connected deployment and Resend show that `AUTH_EMAIL_FROM`
+uses `mlezicare.com`, while Resend reports the domain as **pending**. The latest
+inspected `/emails` POSTs returned HTTP 403 for domain verification. The DKIM TXT
+record is verified; Resend's `rsend` and `send` CNAME records are pending. Completing
+these records at the authoritative DNS provider and verifying the domain in Resend
+is required before public signup emails can be delivered. Do not replace the
+support mailbox's existing incoming-mail MX records.
+
+The reported `Account … already exists` error is a separate credential conflict:
+the Password provider finds an existing email/password credential whose stored
+password differs from the submitted password. A previous request can create that
+credential before an email-send failure. Retrying signup with the original password
+resumes verification; a forgotten/different password must use verified recovery.
+Do not delete existing accounts or replace credentials based only on an email claim.
+
+A thin error adapter preserves the library's Password implementation and translates
+its duplicate-credential error into a client-visible `ACCOUNT_EXISTS` result without
+including the email. The form offers explicit existing-account sign-in and password
+recovery buttons, retaining the email and registration draft. Domain-verification
+provider responses are recognized across HTTP error statuses. Neither improvement
+bypasses email ownership or changes stored passwords automatically.
+
+Regression tests cover a failed email followed by signup with a different password,
+unchanged stored credentials, no premature session, retry with the original password,
+verification completion, and recovery from the form. Domain errors with a non-403
+validation status also receive an actionable message. Deploy both the Convex auth
+changes and the frontend changes before expecting the new guidance on the live site.
+No emails, credentials, account roles, DNS records or cloud configuration were changed
+during this diagnosis; tests simulate email delivery.
+
+## Magic-link and code redirect correction — 3 November 2026
+
+The connected backend reports `SITE_URL=https://mlezicare.com`. The reported
+`Invalid sign-in destination` is raised before sending an email when the form submits
+another browser origin that is not in `APP_ALLOWED_ORIGINS`. It is separate from
+wrong-password rejection and Resend's domain-verification state.
+
+Code-based signup/sign-in and resend now omit `redirectTo`: users enter those codes
+on the page where they requested them. Magic links use the current browser origin
+only if the backend explicitly lists it among trusted origins; otherwise `/signin`
+resolves against the canonical backend `SITE_URL`. The public auth settings expose
+only these public origins, never credentials. Older backend settings safely fall back
+to the canonical site too. The server's exact-origin redirect validation is unchanged;
+untrusted hosts, protocol-relative external URLs and lookalike domains remain blocked.
+
+For local magic links to return to a development browser rather than the main site,
+configure the **development Convex deployment** with exact origins such as
+`APP_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173`. Retain any other
+intentionally configured entries. Production should keep production origins only;
+no localhost or wildcard origin was added automatically. This setting also governs
+private-file CORS, so use a dedicated development deployment for local upload tests.
+Magic links opened on a different origin cannot use that origin's registration draft;
+verified new users can still complete their account details on the destination site.
+
+Regression tests cover canonical production magic-link completion, OTP completion,
+OTP resend without redirects, an explicitly allowed local origin, legacy settings
+and rejection of arbitrary/lookalike destinations. Tests simulate email delivery.
+Update Convex functions and redeploy the frontend before testing the change live;
+use a newly requested link/code after the update. No email or authentication attempt
+was made against a real user's account during diagnosis.
+
+## Stay signed in after account creation — 3 November 2026
+
+Successful password verification, OTP verification and magic-link redemption already
+create an authenticated Convex session. Creating the application's account record
+uses that same session; it does not require a second credential submission.
+
+The form now shows a signed-in handoff after successful authentication instead of
+leaving the credential/code form available while auth state propagates. Account
+completion explicitly replaces the signup URL with `/workspace`. Authenticated new
+caregivers go to their required profile-photo setup at that URL, while employers go
+to their workspace; neither is redirected to a fresh sign-in form. Administrators
+still require their configured MFA confirmation. Email verification and explicit
+terms acceptance remain required, and no terms are accepted automatically.
+
+Regression coverage exercises all three signup methods for both account roles,
+then registers the account and reads its session using the original verification
+tokens without another sign-in. UI tests cover password/code handoff, employer
+account completion, caregiver setup routing and successful magic-link onboarding.
+Changes require frontend deployment; no real account or email was created by tests.
+
+## Employer form reset correction — 3 November 2026
+
+The session component previously changed the `accounts.current` query's `refresh`
+argument on a 30-second interval. Each new query temporarily returned `undefined`;
+the session loading screen then unmounted the application and cleared unsaved form
+state. This affected caregiver-search filters and could also interrupt onboarding
+and other forms. It was a component remount rather than a browser-page reload.
+
+Ordinary accounts now use a stable reactive session subscription. Database changes,
+including account restrictions and profile-photo requirements, still update it.
+Explicit security-required events can request a recheck. Administrators receive their
+MFA expiry from the backend and get a single deliberate recheck when that grant
+expires; protected backend functions continue enforcing MFA independently.
+
+Regression tests fill the real caregiver-search form, advance time across three
+minutes of the former refresh windows, simulate an account-data update and assert
+that the same fields and their values remain mounted. New-employer onboarding is
+also checked. A separate test proves the timed administrator reauthentication still
+occurs. No authentication credentials or optional-storage rules were changed. Deploy
+the frontend and Convex account-query updates to apply the complete fix.

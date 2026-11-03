@@ -27,10 +27,14 @@ export async function hasProfilePhoto(ctx, account) {
   if (!profile?.photo) return false
   return profile.photo.provider === 'convex' ? !!await ctx.db.system.get(profile.photo.storageId) : !!profile.photoUrl?.startsWith('https://')
 }
-export async function adminSessionReady(ctx, account) {
+export async function adminSessionExpiry(ctx, account) {
   const sessionId = await getAuthSessionId(ctx)
   const grant = await ctx.db.query('adminSessions').withIndex('by_session', q => q.eq('sessionId', sessionId)).unique()
-  return !!grant && grant.accountId === account._id && grant.expiresAt > Date.now()
+  return grant?.accountId === account._id ? grant.expiresAt : null
+}
+export async function adminSessionReady(ctx, account) {
+  const expiresAt = await adminSessionExpiry(ctx, account)
+  return typeof expiresAt === 'number' && expiresAt > Date.now()
 }
 export async function requireAccount(ctx, ...roles) {
   const account = await accountIdentity(ctx, ...roles)

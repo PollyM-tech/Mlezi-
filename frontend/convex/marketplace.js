@@ -114,7 +114,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
     await requireAccount(ctx, 'admin')
     if (path === '/admin/verification') {
       const rows = await ctx.db.query('verificationSubmissions').withIndex('by_status', q => q.eq('status', 'pending')).take(100)
-      return { submissions: await Promise.all(rows.map(async s => { const p = await ctx.db.get(s.caregiverId); return { ...verificationData(s), caregiver_id: externalId(p), name: p.name, has_identity_selfie: !!s.selfie } })) }
+      return { submissions: await Promise.all(rows.map(async s => { const p = await ctx.db.get(s.caregiverId); return { ...verificationData(s), caregiver_id: externalId(p), name: p.name, photo_url: p.photo?.provider === 'convex' ? await ctx.storage.getUrl(p.photo.storageId) : p.photoUrl, has_identity_selfie: !!s.selfie } })) }
     }
     if (path === '/admin/reports') return { reports: (await ctx.db.query('reports').order('desc').take(100)).map(r => ({ id: externalId(r), reason: r.reason, details: r.details || '', status: r.status, created_at: iso(r.createdAt) })) }
   }

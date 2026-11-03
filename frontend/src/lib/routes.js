@@ -5,6 +5,7 @@ export const APP_PATHS = {
   '/workspace': '#/workspace', '/identity': '#/identity', '/membership': '#/membership',
   '/shortlist': '#/shortlist', '/contacts': '#/contacts', '/account': '#/account',
   '/privacy-account': '#/privacy-account', '/tickets': '#/support',
+  '/admin-mlezicareaccess': '#/admin',
 }
 export function appRoute({pathname = '/', search = '', hash = ''}) {
   if (hash.startsWith('#/')) return hash // Legacy bookmarks and email links.

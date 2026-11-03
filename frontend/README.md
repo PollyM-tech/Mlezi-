@@ -127,3 +127,17 @@ See [registration, upload and one-time identity fixes](../Documentation/registra
 For the device-size and browser layout suite, run `npm run test:responsive` after installing Playwright browsers. See the [responsive audit](../Documentation/responsive-audit.md) for covered screens, viewport sizes, results and physical-device checks still required. The suite uses isolated sample data and sends no real emails or uploads.
 
 Manual M-Pesa reporting and administrator-confirmed activation are implemented locally for Paybill **4125123**, account **mlezicare**. Automated checkout stays disabled until Paystack integration. See [manual payment workflow and tests](../Documentation/manual-payments.md).
+
+Administrator setup, restricted login, authenticator enrollment and live work queues are documented in [admin-workspace.md](../Documentation/admin-workspace.md).
+
+### Paystack test-key connectivity
+
+`npm run paystack:check -- --convex` reads `PAYSTACK_SECRET_KEY` privately from the
+CLI-selected Convex deployment and makes a read-only Kenyan/KES bank-list request
+from the local machine. It accepts `sk_test_` keys only and prints no credentials.
+Use `npm run paystack:check` if the test secret is instead in the local environment.
+This check does not deploy code, initialize a checkout, charge money, send email or
+activate membership. A successful result does not test requests originating from
+Convex, individual payment channels, callback/webhook delivery or settlement.
+Paystack checkout and verified membership activation are not implemented yet;
+manual payment remains the application's available payment flow.

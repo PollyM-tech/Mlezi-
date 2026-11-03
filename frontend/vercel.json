@@ -56,6 +56,10 @@
     {
       "source": "/tickets/:path*",
       "destination": "/app/index.html"
+    },
+    {
+      "source": "/admin-mlezicareaccess/:path*",
+      "destination": "/app/index.html"
     }
   ],
   "headers": [
@@ -207,6 +211,15 @@
     },
     {
       "source": "/tickets/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/admin-mlezicareaccess/:path*",
       "headers": [
         {
           "key": "X-Robots-Tag",

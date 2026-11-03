@@ -115,3 +115,84 @@ it('prefills new-tab magic-link account setup from the matching verified-email d
  expect(screen.getByLabelText('Contact phone').value).toBe('0712345678')
  expect(screen.getByLabelText('I am joining as').value).toBe('employer')
 })
+
+it('opens a dedicated admin sign-in page without a public registration option', () => {
+  window.history.replaceState({}, '', '/admin-mlezicareaccess')
+  render(<ConvexSession />)
+  expect(screen.getByRole('heading', { name: 'Administrator sign in' })).toBeTruthy()
+  expect(screen.queryByText('Regular Mlezi app')).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Create account' })).toBeNull()
+})
+it.each(['employer', 'caregiver'])('blocks a signed-in %s from the administrator URL', role => {
+  window.history.replaceState({}, '', '/admin-mlezicareaccess')
+  state.auth.isAuthenticated = true
+  state.query = { status: 'ready', account: { id: 'ordinary-account', role } }
+  render(<ConvexSession />)
+  expect(screen.getByRole('heading', { name: 'Administrator access only' })).toBeTruthy()
+  expect(screen.queryByText('Regular Mlezi app')).toBeNull()
+})
+it('directs a signed-in administrator to the restricted dashboard URL', () => {
+  window.history.replaceState({}, '', '/signin')
+  state.auth.isAuthenticated = true
+  state.query = { status: 'ready', account: { id: 'admin-account', role: 'admin' } }
+  render(<ConvexSession />)
+  expect(window.location.pathname).toBe('/admin-mlezicareaccess')
+})
+it('links a pre-provisioned administrator after first email verification instead of offering public registration', async () => {
+  window.history.replaceState({}, '', '/admin-mlezicareaccess')
+  state.auth.isAuthenticated = true
+  state.query = { status: 'onboarding', email: 'owner@example.test', account: null }
+  state.mutation.mockResolvedValue({ role: 'admin' })
+  render(<ConvexSession />)
+  await waitFor(() => expect(state.mutation).toHaveBeenCalled())
+  expect(screen.getByRole('heading', { name: 'Checking administrator permissions' })).toBeTruthy()
+  expect(screen.queryByLabelText('I am joining as')).toBeNull()
+})
+
+it('takes a verified new employer from account completion directly into the workspace without another sign-in', async () => {
+  window.history.replaceState({}, '', '/employer')
+  state.auth.isAuthenticated = true
+  state.query = { status: 'onboarding', account: null, email: 'newparent@example.test' }
+  const view = render(<ConvexSession />)
+  await screen.findByLabelText('Contact phone')
+  const user = userEvent.setup()
+  await user.type(screen.getByLabelText('Your name'), 'Test Parent')
+  await user.type(screen.getByLabelText('Contact phone'), '0712345678')
+  await user.click(screen.getByRole('checkbox', { name: /I am at least 18/ }))
+  state.mutation.mockResolvedValueOnce({ id: 'newparent', role: 'employer' })
+  await user.click(screen.getByRole('button', { name: 'Continue to my workspace' }))
+  expect(window.location.pathname).toBe('/workspace')
+  state.query = { status: 'ready', account: { id: 'newparent', role: 'employer' } }
+  view.rerender(<ConvexSession />)
+  expect(screen.getByText('Regular Mlezi app')).toBeTruthy()
+  expect(state.signIn).not.toHaveBeenCalled()
+  expect(state.signOut).not.toHaveBeenCalled()
+})
+
+it('takes a newly verified caregiver to signed-in profile setup with a workspace URL', () => {
+  window.history.replaceState({}, '', '/caregiver')
+  state.auth.isAuthenticated = true
+  state.query = { status: 'profile_required', account: { id: 'newcaregiver', role: 'caregiver' } }
+  render(<ConvexSession />)
+  expect(window.location.pathname).toBe('/workspace')
+  expect(screen.getByRole('heading', { name: 'Your profile photo is required' })).toBeTruthy()
+  expect(state.signIn).not.toHaveBeenCalled()
+  expect(state.signOut).not.toHaveBeenCalled()
+})
+
+it('continues a successful magic-link signup into account setup with one authentication request', async () => {
+  window.history.replaceState({}, '', '/signin?code=fixture-magic-code')
+  state.signIn.mockImplementationOnce(async () => {
+    state.auth.isAuthenticated = true
+    state.query = { status: 'onboarding', account: null, email: 'magicparent@example.test' }
+    return { signingIn: true }
+  })
+  render(<ConvexSession />)
+  expect(await screen.findByRole('heading', { name: 'Complete your account' })).toBeTruthy()
+  expect(window.location.pathname).toBe('/workspace')
+  expect(window.location.search).toBe('')
+  await screen.findByLabelText('Contact phone')
+  expect(state.signIn).toHaveBeenCalledExactlyOnceWith(undefined, { code: 'fixture-magic-code' })
+  expect(state.signOut).not.toHaveBeenCalled()
+  expect(screen.queryByLabelText('Password')).toBeNull()
+})

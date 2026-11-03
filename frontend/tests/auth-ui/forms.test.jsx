@@ -6,7 +6,7 @@ import ConvexAuthForm from '../../src/components/ConvexAuthForm.jsx'
 const mocks = vi.hoisted(() => ({ signIn: vi.fn(), settings: { emailReady: true } }))
 vi.mock('@convex-dev/auth/react', () => ({ useAuthActions: () => ({ signIn: mocks.signIn }) }))
 vi.mock('convex/react', () => ({ useQuery: () => mocks.settings }))
-beforeEach(() => { mocks.signIn.mockReset().mockResolvedValue({ signingIn: false }); mocks.settings = { emailReady: true }; sessionStorage.clear() })
+beforeEach(() => { mocks.signIn.mockReset().mockResolvedValue({ signingIn: false }); mocks.settings = { emailReady: true, allowedSignInOrigins: ['http://localhost:5173'] }; sessionStorage.clear() })
 afterEach(cleanup)
 
 it('password signup collects role details, then verifies the email code', async () => {
@@ -106,4 +106,98 @@ it.each(['password','magic','otp'])('returning %s sign-in asks for no role, name
  expect(screen.queryByLabelText('Your full name')).toBeNull()
  expect(screen.queryByLabelText('Contact phone')).toBeNull()
  expect(screen.getByLabelText('Email address')).toBeTruthy()
+})
+
+it('restricts the admin entry form to password sign-in and offers email-verified password setup', async () => {
+  const user = userEvent.setup()
+  render(<ConvexAuthForm adminOnly />)
+  expect(screen.getByRole('heading', { name: 'Administrator sign in' })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Create account' })).toBeNull()
+  expect(screen.queryByLabelText('How would you like to continue?')).toBeNull()
+  expect(screen.queryByLabelText('I am joining as')).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Forgot password?' }))
+  await user.type(screen.getByLabelText('Email address'), 'owner@example.test')
+  await user.click(screen.getByRole('button', { name: 'Send reset code' }))
+  expect(mocks.signIn).toHaveBeenCalledWith('password-recovery', expect.objectContaining({ flow: 'reset', email: 'owner@example.test' }))
+})
+
+it('lets a failed signup continue through password recovery without losing the email or changing the stored password', async () => {
+  const user = userEvent.setup()
+  render(<ConvexAuthForm initialRegistering initialRole="employer" />)
+  await user.type(screen.getByLabelText('Your full name'), 'Test Parent')
+  await user.type(screen.getByLabelText('Contact phone'), '0712345678')
+  await user.type(screen.getByLabelText('Email address'), 'retry@example.test')
+  await user.type(screen.getByLabelText('Password'), 'DifferentPassword123!')
+  mocks.signIn.mockRejectedValueOnce({ data: { code: 'ACCOUNT_EXISTS', message: 'An account already exists for this email. Sign in with your original password, or reset your password using an email code.' } })
+  await user.click(screen.getByRole('button', { name: 'Create account →' }))
+  expect(screen.getByRole('alert').textContent).toContain('original password')
+  expect(screen.getByRole('button', { name: 'Sign in to existing account' })).toBeTruthy()
+  await user.click(screen.getByRole('button', { name: 'Reset existing password' }))
+  expect(screen.getByLabelText('Email address').value).toBe('retry@example.test')
+  expect(mocks.signIn).toHaveBeenCalledTimes(1)
+  await user.click(screen.getByRole('button', { name: 'Send reset code' }))
+  expect(mocks.signIn).toHaveBeenLastCalledWith('password-recovery', { flow: 'reset', email: 'retry@example.test' })
+})
+
+it('uses the configured site for a magic link when the current preview origin is not allowlisted', async () => {
+  mocks.settings = { emailReady: true, allowedSignInOrigins: ['https://mlezicare.com'] }
+  const user = userEvent.setup()
+  render(<ConvexAuthForm />)
+  await user.selectOptions(screen.getByLabelText('How would you like to continue?'), 'magic')
+  await user.type(screen.getByLabelText('Email address'), 'person@example.test')
+  await user.click(screen.getByRole('button', { name: 'Send magic link' }))
+  expect(mocks.signIn).toHaveBeenCalledWith('magic-link', { email: 'person@example.test', redirectTo: '/signin' })
+})
+
+it('requests and resends OTP without a browser-origin redirect', async () => {
+  mocks.settings = { emailReady: true, allowedSignInOrigins: ['https://mlezicare.com'] }
+  const user = userEvent.setup()
+  render(<ConvexAuthForm />)
+  await user.selectOptions(screen.getByLabelText('How would you like to continue?'), 'otp')
+  await user.type(screen.getByLabelText('Email address'), 'person@example.test')
+  await user.click(screen.getByRole('button', { name: 'Send email code' }))
+  expect(mocks.signIn).toHaveBeenLastCalledWith('email-otp', { email: 'person@example.test' })
+  await user.click(screen.getByRole('button', { name: 'Resend code' }))
+  expect(mocks.signIn).toHaveBeenLastCalledWith('email-otp', { email: 'person@example.test' })
+})
+
+it('uses the safe canonical fallback when an older backend has not exposed its origin allowlist', async () => {
+  mocks.settings = { emailReady: true }
+  const user = userEvent.setup()
+  render(<ConvexAuthForm />)
+  await user.selectOptions(screen.getByLabelText('How would you like to continue?'), 'magic')
+  await user.type(screen.getByLabelText('Email address'), 'person@example.test')
+  await user.click(screen.getByRole('button', { name: 'Send magic link' }))
+  expect(mocks.signIn).toHaveBeenCalledWith('magic-link', { email: 'person@example.test', redirectTo: '/signin' })
+})
+
+it.each(['password', 'otp'])('keeps a newly verified %s account on the signed-in handoff instead of showing sign-in again', async method => {
+  const user = userEvent.setup()
+  render(<ConvexAuthForm initialRegistering />)
+  await user.selectOptions(screen.getByLabelText('How would you like to continue?'), method)
+  await user.type(screen.getByLabelText('Your full name'), 'Test Caregiver')
+  await user.type(screen.getByLabelText('Contact phone'), '0712345678')
+  await user.type(screen.getByLabelText('Email address'), 'newcaregiver@example.test')
+  if (method === 'password') await user.type(screen.getByLabelText('Password'), 'Testing123!')
+  await user.click(screen.getByRole('button', { name: method === 'password' ? 'Create account →' : 'Send email code' }))
+  expect(screen.queryByRole('heading', { name: 'You’re signed in' })).toBeNull()
+  await user.type(screen.getByLabelText(/Email verification code/), '12345678')
+  mocks.signIn.mockResolvedValueOnce({ signingIn: true })
+  await user.click(screen.getByRole('button', { name: 'Verify code & continue' }))
+  expect(screen.getByRole('status').textContent).toContain('Opening your account')
+  expect(screen.queryByLabelText('Password')).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull()
+  expect(mocks.signIn).toHaveBeenCalledTimes(2)
+})
+
+it('shows the signed-in handoff after successful password sign-in without another submit', async () => {
+  const user = userEvent.setup()
+  render(<ConvexAuthForm />)
+  await user.type(screen.getByLabelText('Email address'), 'parent@example.test')
+  await user.type(screen.getByLabelText('Password'), 'Testing123!')
+  mocks.signIn.mockResolvedValueOnce({ signingIn: true })
+  await user.click(screen.getByRole('button', { name: 'Sign in →' }))
+  expect(screen.getByRole('heading', { name: 'You’re signed in' })).toBeTruthy()
+  expect(screen.queryByLabelText('Password')).toBeNull()
+  expect(mocks.signIn).toHaveBeenCalledTimes(1)
 })

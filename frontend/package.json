@@ -25,7 +25,10 @@
     "test:preview": "npm run build && vite preview --host 127.0.0.1",
     "test:seo": "node --test tests/seo.test.mjs",
     "legal:export": "node scripts/export-legal.mjs",
-    "test:responsive": "playwright test --config playwright.responsive.config.mjs"
+    "test:responsive": "playwright test --config playwright.responsive.config.mjs",
+    "convex:admin:provision": "node scripts/provision-admin.mjs",
+    "paystack:check": "node --env-file-if-exists=.env.local scripts/check-paystack.mjs",
+    "deployment:session:check": "node scripts/check-session-deployment.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.41.1",
