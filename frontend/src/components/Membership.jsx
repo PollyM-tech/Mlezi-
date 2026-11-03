@@ -222,10 +222,6 @@ export default function Membership({ user }) {
               prompt or submitting a receipt alone does not activate access.
             </p>
             <p>
-              Early renewal extends your existing expiry. There are no automatic
-              debits. STK access activates only after server confirmation; sandbox tests do not activate membership.
-            </p>
-            <p>
               {user.role === "employer"
                 ? "Previously unlocked contacts remain accessible after ordinary pass expiry. Renew to unlock new contacts."
                 : "Premium gives rotating priority among matching profiles. It does not grant identity approval, ratings or guaranteed work."}
