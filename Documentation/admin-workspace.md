@@ -40,7 +40,7 @@ It creates no password, sign-in session or MFA bypass. Do not add it to a build 
    QR code. Manual setup with the displayed key remains available. The QR is rendered
    locally in the browser from the server-provided enrollment URI; no external QR
    service receives the secret. Enter its current six-digit code to confirm enrollment.
-4. MFA confirmation lasts 15 minutes for that sign-in session. Replayed codes are
+4. MFA confirmation lasts 2 hours for that sign-in session. Replayed codes are
    rejected; repeated wrong attempts are locked out. Never share a setup key or code.
 5. Store the authenticator app's backup securely. Lost enrollment is reset only by a
    deployment operator after checking ownership, using the existing internal
@@ -111,6 +111,6 @@ For example, if testing both local ports with both loopback names, append the ne
 http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
 ```
 
-Refresh the local page, sign in and confirm the authenticator again if its 15-minute grant expired, then reopen the documents. The frontend now diagnoses an unlisted origin rather than displaying the generic application-offline message. This configuration also affects trusted sign-in origins, so keep it limited to intended origins and remove temporary development entries when no longer needed.
+Refresh the local page, sign in and confirm the authenticator again if its two-hour grant expired, then reopen the documents. The frontend now diagnoses an unlisted origin rather than displaying the generic application-offline message. This configuration also affects trusted sign-in origins, so keep it limited to intended origins and remove temporary development entries when no longer needed.
 
 Unauthenticated preflight checks on 3 November 2026 found that `tidy-perch-115` allowed `https://mlezicare.com` but did not allow `http://localhost:5173` or `http://localhost:5174`. No private document was fetched or approved, and no cloud configuration was changed during diagnosis.

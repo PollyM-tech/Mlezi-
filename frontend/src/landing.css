@@ -85,3 +85,6 @@
 .landing-caregiver-photo{display:block;width:100%;height:auto;aspect-ratio:4/5;max-height:420px;object-fit:cover;object-position:80% center;border-radius:12px}
 .landing-caregiver-with-photo>div{min-width:0}
 @media(max-width:760px){.landing-caregiver.landing-caregiver-with-photo{grid-template-columns:minmax(0,1fr);padding:24px;gap:26px}.landing-caregiver-photo{aspect-ratio:16/10;max-height:none;object-position:80% center}}
+
+.landing-hero-copy>p.landing-marketplace-note{font-size:.85rem;line-height:1.7;color:#254b3d;margin-top:14px;max-width:600px}
+.landing-marketplace-note strong{font-weight:700}

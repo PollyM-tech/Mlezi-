@@ -50,9 +50,9 @@ it('preserves unfinished nanny requirements across the former 30-second session 
   expect(screen.queryByText('Checking your sign-in…')).toBeNull()
 })
 it('still rechecks an administrator precisely when the MFA grant expires', async () => {
-  state.session = { status: 'ready', account: { id: 'admin1', role: 'admin' }, adminExpiresAt: Date.now() + 60000 }
+  state.session = { status: 'ready', account: { id: 'admin1', role: 'admin' }, adminExpiresAt: Date.now() + 2 * 60 * 60000 }
   await act(async () => render(<ConvexSession />))
-  act(() => vi.advanceTimersByTime(59000))
+  act(() => vi.advanceTimersByTime(2 * 60 * 60000 - 1000))
   expect(new Set(state.queries)).toEqual(new Set([0]))
   expect(screen.queryByRole('heading', { name: 'Protect your administrator account' })).toBeNull()
   act(() => vi.advanceTimersByTime(1100))

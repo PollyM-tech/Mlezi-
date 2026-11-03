@@ -41,7 +41,7 @@ export const verify = mutation({ args: { code: v.string() }, handler: async (ctx
   if (accepted === undefined) { await ctx.db.patch(record._id, { attempts: record.setupExpiresAt > Date.now() ? record.attempts + 1 : 1, setupExpiresAt: record.setupExpiresAt > Date.now() ? record.setupExpiresAt : Date.now() + 600000 }); await audit(ctx, a._id, 'admin_mfa_failed'); return { ok: false, error: 'Invalid or already used authenticator code.' } }
   await ctx.db.patch(record._id, { enabled: true, attempts: 0, lastStep: accepted, setupExpiresAt: Date.now() + 600000 })
   const sessionId = await getAuthSessionId(ctx), old = await ctx.db.query('adminSessions').withIndex('by_session', q => q.eq('sessionId', sessionId)).unique()
-  const fields = { accountId: a._id, sessionId, expiresAt: Date.now() + 15 * 60000 }
+  const fields = { accountId: a._id, sessionId, expiresAt: Date.now() + 2 * 60 * 60000 }
   if (old) await ctx.db.patch(old._id, fields); else await ctx.db.insert('adminSessions', fields)
   await audit(ctx, a._id, 'admin_mfa_verified')
   return { ok: true }

@@ -13,7 +13,7 @@ async function person(t,role='caregiver'){
 }
 async function upload(t,who,purpose){const id=await t.run(ctx=>ctx.storage.store(new Blob(['fixture'],{type:'image/jpeg'})));await t.run(ctx=>ctx.db.insert('uploadedAssets',{accountId:who.accountId,storageId:id,purpose,claimed:false,createdAt:Date.now()}));return id}
 async function profile(t,who){const body={name:'Caregiver',service_category:'nanny',service_types:['live_in'],photo:await upload(t,who,'photo'),national_id:await upload(t,who,'national_id'),selfie:await upload(t,who,'selfie'),consent:'true'};return who.client.mutation(api.marketplace.write,{path:'/caregivers/profile',method:'POST',body})}
-afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs()})
+afterEach(()=>{vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllEnvs()})
 it('blocks caregiver app access until a stored photo exists, and submits all three images together',async()=>{
  const t=make(),who=await person(t)
  expect((await who.client.query(api.accounts.current)).status).toBe('profile_required')
@@ -50,6 +50,8 @@ it('enforces a global email budget across different email addresses',async()=>{
  await expect(t.mutation(internal.emailLimits.consume,{email:'another@example.test'})).rejects.toThrow('Too many')
 })
 it('requires genuine admin MFA, rejects replay and expires the grant',async()=>{
+ vi.useFakeTimers()
+ const started=Date.now();vi.setSystemTime(started)
  vi.stubEnv('AUTH_ADMIN_ENCRYPTION_KEY',btoa(String.fromCharCode(...new Uint8Array(32).fill(7))))
  const t=make(),who=await person(t,'admin')
  await expect(who.client.query(api.moderation.users)).rejects.toThrow('authenticator')
@@ -58,9 +60,13 @@ it('requires genuine admin MFA, rejects replay and expires the grant',async()=>{
  const code=await totp(setup.secret,Math.floor(Date.now()/30000))
  expect(await who.client.mutation(api.adminSecurity.verify,{code})).toEqual({ok:true})
  expect(await who.client.query(api.moderation.users)).toHaveLength(1)
- expect((await who.client.query(api.accounts.current,{})).adminExpiresAt).toBeGreaterThan(Date.now())
+ const expiresAt=(await who.client.query(api.accounts.current,{})).adminExpiresAt
+ expect(expiresAt-started).toBeGreaterThanOrEqual(2*60*60000)
+ expect(expiresAt-started).toBeLessThan(2*60*60000+1000)
  expect((await who.client.mutation(api.adminSecurity.verify,{code})).ok).toBe(false)
- await t.run(async ctx=>{const grant=await ctx.db.query('adminSessions').first();await ctx.db.patch(grant._id,{expiresAt:Date.now()-1})})
+ vi.setSystemTime(expiresAt-1)
+ expect(await who.client.query(api.moderation.users)).toHaveLength(1)
+ vi.setSystemTime(expiresAt)
  await expect(who.client.query(api.moderation.users)).rejects.toThrow('authenticator')
  expect((await who.client.query(api.accounts.current,{})).status).toBe('admin_security')
  expect(await totp('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ',1)).toBe('287082')

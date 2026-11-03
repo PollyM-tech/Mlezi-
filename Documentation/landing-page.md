@@ -124,3 +124,7 @@ See the [UI/UX and branding guide](ui-ux-branding-guide.md) for the audited pale
 ### Caregiver navigation — 3 November 2026
 
 Signed-in caregivers do not see the homepage caregiver-search form or care-category discovery section. Homepage browsing calls to action point to jobs or their own profile instead, and regional guide calls to action offer Find jobs. Public visitors and employers retain caregiver discovery. The caregiver workspace keeps its jobs/proposals link and labels the owner-only view as Preview my profile. This is presentation only; server-side employer/admin discovery restrictions remain in force.
+
+### Marketplace positioning — 3 November 2026
+
+A visible note beneath the hero introduction explicitly states **“A caregiver marketplace, not a recruitment agency.”** It explains that families interview, hire and pay caregivers directly. The footer repeats this distinction, and the homepage search description identifies the service as a marketplace. Existing identity-review and paid-visibility explanations remain separate from employment arrangements.
