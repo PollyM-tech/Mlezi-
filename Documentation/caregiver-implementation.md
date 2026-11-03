@@ -181,3 +181,9 @@ Profile forms, public profiles, discovery and landing links use the consolidated
 ### Further service simplification — 24 October 2026
 
 Part-time and Short notice are no longer offered as separate options in forms, discovery, or landing pages. Existing selections and saved searches map to On-call / occasional babysitting, with duplicates removed and other services retained. This supersedes the earlier Part-time consolidation. Working hours and duties are agreed directly with the family. Migration `b830e295c614` preserves profiles and their other details.
+
+## Visible identity review journey — 3 November 2026
+
+Caregiver navigation now includes **Identity check**, including from jobs and membership pages. The workspace has a prominent identity panel showing required, pending or approved status and a direct action to open the review screen. New caregiver-profile creation continues to require a profile photo, private national ID, recent selfie and explicit comparison consent; saving creates a pending submission. Upload and administrator-review permissions remain server enforced.
+
+Onboarding, the profile form and identity screen explain that review normally takes **about 24 hours after submission**. This is an expected human-review turnaround, not a timer that automatically approves an account. A pending request cannot be submitted twice; support is linked for delays. Identity remains unverified until an administrator checks all evidence and adult age and approves it. Existing rules allowing eligible pending listings/applications, requiring approval for contact/hiring, and retaining one-time approval after name changes remain unchanged.

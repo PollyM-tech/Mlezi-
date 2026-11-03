@@ -25,3 +25,12 @@ it('an approved caregiver is told the check is one-time and is not asked to resu
  expect(screen.queryByLabelText('A clear, recent selfie')).toBeNull()
  expect(screen.getByText(/Approved identity checks are one-time/)).toBeTruthy()
 })
+it('shows the review timeframe while pending without offering duplicate submission or claiming approval',async()=>{
+ mocks.api.mockResolvedValue({verification_status:'pending'})
+ render(<IdentityCheck profile={{id:'caregiver',national_id_uploaded:true}} onChanged={()=>{}}/>)
+ await screen.findByText(/Your documents have been submitted/)
+ expect(screen.getByRole('status').textContent).toContain('about 24 hours')
+ expect(screen.getByRole('status').textContent).toContain('not verified until approval')
+ expect(screen.queryByRole('button',{name:'Submit identity check'})).toBeNull()
+ expect(screen.getByRole('link',{name:'Contact support about your identity review'}).getAttribute('href')).toBe('/tickets')
+})
