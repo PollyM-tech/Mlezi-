@@ -32,12 +32,14 @@ It creates no password, sign-in session or MFA bypass. Do not add it to a build 
 
 1. Open `/admin-mlezicareaccess` and choose **Forgot password** if a password has not
    already been set. Enter the owner's email, use the delivered code and choose a
-   unique password. The email provider must be able to deliver to this address.
+   unique password. Alternatively, choose **Email me a one-time code** or **Email me a magic link**. These verify email ownership; they do not replace the separate authenticator code or grant an admin role. Administrator magic links return to `/admin-mlezicareaccess`. The email provider must be able to deliver to this address.
 2. The verified email is linked to the pre-provisioned account. Another email cannot
    claim that role. Ordinary accounts get an access-denied screen.
 3. Choose **Set up authenticator**. Add a time-based account named Mlezi in Google
-   Authenticator, Microsoft Authenticator or another TOTP app using the displayed
-   setup key. Enter its current six-digit code to confirm enrollment.
+   Authenticator, Microsoft Authenticator or another TOTP app by scanning the displayed
+   QR code. Manual setup with the displayed key remains available. The QR is rendered
+   locally in the browser from the server-provided enrollment URI; no external QR
+   service receives the secret. Enter its current six-digit code to confirm enrollment.
 4. MFA confirmation lasts 15 minutes for that sign-in session. Replayed codes are
    rejected; repeated wrong attempts are locked out. Never share a setup key or code.
 5. Store the authenticator app's backup securely. Lost enrollment is reset only by a

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api as functions } from "../../convex/_generated/api.js";
 import { api } from "../lib/api";
@@ -13,6 +13,7 @@ export default function Membership({ user }) {
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0);
+  const refreshPayments = useCallback(() => setVersion(v => v + 1), []);
   const submit = useMutation(functions.manualPayments.submit);
   useEffect(() => {
     let active = true;
@@ -124,7 +125,7 @@ export default function Membership({ user }) {
                     ))}
                   </select>
                 </label>
-                {membership.payments_enabled && <StkPayment plan={plan} pending={pending} environment={membership.payment_environment} user={user} onRefresh={() => setVersion(v => v + 1)} />}
+                {membership.payments_enabled && <StkPayment plan={plan} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} />}
                 {membership.manual_payment?.enabled && <><section
                   className="privacy-note"
                   aria-label="Manual M-Pesa instructions"

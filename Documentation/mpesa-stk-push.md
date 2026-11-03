@@ -46,3 +46,15 @@ Obtain live Daraja M-Pesa Express approval, live consumer credentials and passke
 Deploy frontend and Convex together, verify callback reachability, then perform an explicitly authorized small live transaction, cancellation, duplicate-confirmation and renewal check against the business statement. This implementation has not completed those live checks and does not itself satisfy the wider legal, monitoring, backup or production launch gates.
 
 Official reference: [Safaricom Daraja portal](https://developer.safaricom.co.ke/). Check the M-Pesa Express initiation/query documentation and sandbox simulator in your current Daraja app; portal content was not accessible to the implementation browser session.
+
+## Read-only readiness command and status updates
+
+After configuring and publishing the development backend, run from `frontend`:
+
+```bash
+npm run mpesa:check
+```
+
+This reads public backend readiness and prints the callback URL. It does not read or print credentials, request a provider token, or initiate an STK payment. A successful readiness check does not prove credentials or callback delivery work; perform the separate sandbox journey above.
+
+While an STK request is pending, the open membership screen reads its own payment status every five seconds for up to three minutes of visible-page checks. It pauses reads while the tab is hidden, avoids overlapping reads, and stops at confirmation or unmount. This updates the payment display without reloading the page, restarting the request or clearing other forms. The manual Check STK payment status button remains available after the automatic checks stop. Background provider reconciliation remains independent of the browser.

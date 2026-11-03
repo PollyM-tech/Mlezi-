@@ -1,5 +1,8 @@
 # Childcare & Early Education Marketplace
 
+**UI/UX and brand guide (3 November 2026):** See the [current branding inventory](ui-ux-branding-guide.md) for exact colours, font families, official logo assets, image placements, component styling, footer structure and responsive/accessibility behaviour.
+
+
 **26 October 2026 security/age-policy update:** Caregiver-only photo gating and three-image identity submission are enforced. Employer publication/contact access requires an administrator-confirmed 18+ identity check; uploads alone do not verify age. Admin TOTP, upload sanitization/quotas, privacy requests/deletion, audit and retention controls are implemented on Convex. See [current implementation, tests and remaining production blockers](production-security-implementation.md). Earlier API/staged implementation details below are historical where they differ.
 
 ## Technical Documentation

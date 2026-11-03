@@ -28,12 +28,14 @@
     "test:responsive": "playwright test --config playwright.responsive.config.mjs",
     "convex:admin:provision": "node scripts/provision-admin.mjs",
     "paystack:check": "node --env-file-if-exists=.env.local scripts/check-paystack.mjs",
-    "deployment:session:check": "node scripts/check-session-deployment.mjs"
+    "deployment:session:check": "node scripts/check-session-deployment.mjs",
+    "mpesa:check": "node --env-file-if-exists=.env.local scripts/check-mpesa.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.41.1",
     "@convex-dev/auth": "^0.0.96",
     "convex": "^1.48.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "sharp": "0.35.5"

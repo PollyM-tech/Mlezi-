@@ -196,3 +196,21 @@ it('continues a successful magic-link signup into account setup with one authent
   expect(state.signOut).not.toHaveBeenCalled()
   expect(screen.queryByLabelText('Password')).toBeNull()
 })
+
+it('keeps an administrator magic link on the admin route and still requires the authenticator',async()=>{
+ window.history.replaceState({},'', '/admin-mlezicareaccess?code=fixture-admin-link')
+ state.signIn.mockImplementationOnce(async()=>{state.auth.isAuthenticated=true;state.query={status:'admin_security',account:{id:'operator',role:'admin'},configured:true,enrolled:true};return {signingIn:true}})
+ render(<ConvexSession/>);
+ expect(await screen.findByRole('heading',{name:'Protect your administrator account'})).toBeTruthy();expect(window.location.pathname).toBe('/admin-mlezicareaccess');expect(window.location.search).toBe('');expect(screen.queryByText('Regular Mlezi app')).toBeNull();expect(screen.getByLabelText('Authenticator code')).toBeTruthy()
+})
+it('does not grant administrator access to an ordinary account signing in through an admin magic link',async()=>{
+ window.history.replaceState({},'', '/admin-mlezicareaccess?code=fixture-ordinary-link')
+ state.signIn.mockImplementationOnce(async()=>{state.auth.isAuthenticated=true;state.query={status:'ready',account:{id:'parent',role:'employer'}};return {signingIn:true}})
+ render(<ConvexSession/>);
+ expect(await screen.findByRole('heading',{name:'Administrator access only'})).toBeTruthy();expect(screen.queryByText('Regular Mlezi app')).toBeNull();expect(window.location.pathname).toBe('/admin-mlezicareaccess')
+})
+it('returns an expired administrator magic link to administrator sign-in',async()=>{
+ window.history.replaceState({},'', '/admin-mlezicareaccess?code=expired-admin-link');state.signIn.mockResolvedValue({signingIn:false});render(<ConvexSession/>);
+ await screen.findByRole('alert');await userEvent.click(screen.getByRole('button',{name:'Back to sign in'}));
+ expect(screen.getByRole('heading',{name:'Administrator sign in'})).toBeTruthy();expect(window.location.pathname).toBe('/admin-mlezicareaccess');expect(window.location.search).toBe('')
+})

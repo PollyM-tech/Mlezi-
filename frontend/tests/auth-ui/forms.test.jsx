@@ -108,12 +108,12 @@ it.each(['password','magic','otp'])('returning %s sign-in asks for no role, name
  expect(screen.getByLabelText('Email address')).toBeTruthy()
 })
 
-it('restricts the admin entry form to password sign-in and offers email-verified password setup', async () => {
+it('keeps public registration off the admin entry and preserves email-verified password recovery', async () => {
   const user = userEvent.setup()
   render(<ConvexAuthForm adminOnly />)
   expect(screen.getByRole('heading', { name: 'Administrator sign in' })).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Create account' })).toBeNull()
-  expect(screen.queryByLabelText('How would you like to continue?')).toBeNull()
+  expect(screen.getByLabelText('How would you like to continue?')).toBeTruthy()
   expect(screen.queryByLabelText('I am joining as')).toBeNull()
   await user.click(screen.getByRole('button', { name: 'Forgot password?' }))
   await user.type(screen.getByLabelText('Email address'), 'owner@example.test')
@@ -200,4 +200,21 @@ it('shows the signed-in handoff after successful password sign-in without anothe
   expect(screen.getByRole('heading', { name: 'You’re signed in' })).toBeTruthy()
   expect(screen.queryByLabelText('Password')).toBeNull()
   expect(mocks.signIn).toHaveBeenCalledTimes(1)
+})
+
+it('lets administrators request and verify an email code without public registration fields',async()=>{
+ const user=userEvent.setup();render(<ConvexAuthForm adminOnly/>);
+ expect(screen.queryByRole('button',{name:'Create account'})).toBeNull();
+ await user.selectOptions(screen.getByLabelText('How would you like to continue?'),'otp');
+ expect(screen.queryByLabelText('Password')).toBeNull();expect(screen.queryByLabelText('I am joining as')).toBeNull()
+ await user.type(screen.getByLabelText('Email address'),'operator@example.test');await user.click(screen.getByRole('button',{name:'Send email code'}));
+ expect(mocks.signIn).toHaveBeenLastCalledWith('email-otp',{email:'operator@example.test'});
+ await user.type(screen.getByLabelText(/Email verification code/),'12345678');mocks.signIn.mockResolvedValueOnce({signingIn:true});await user.click(screen.getByRole('button',{name:'Verify code & continue'}));
+ expect(mocks.signIn).toHaveBeenLastCalledWith('email-otp',{email:'operator@example.test',code:'12345678'});expect(sessionStorage.getItem('mlezi-registration-draft')).toBeNull()
+})
+it.each([true,false])('returns administrator magic links to the protected entry with allowed origin=%s',async allowed=>{
+ const user=userEvent.setup();mocks.settings.allowedSignInOrigins=allowed?[window.location.origin]:[];render(<ConvexAuthForm adminOnly/>);
+ await user.selectOptions(screen.getByLabelText('How would you like to continue?'),'magic');await user.type(screen.getByLabelText('Email address'),'operator@example.test');await user.click(screen.getByRole('button',{name:'Send magic link'}));
+ expect(mocks.signIn).toHaveBeenLastCalledWith('magic-link',{email:'operator@example.test',redirectTo:allowed?`${window.location.origin}/admin-mlezicareaccess`:'/admin-mlezicareaccess'});
+ expect(screen.queryByRole('button',{name:'Create account'})).toBeNull()
 })

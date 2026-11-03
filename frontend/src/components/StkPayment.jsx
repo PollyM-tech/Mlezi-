@@ -1,10 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { supportError } from '../lib/support.js'
 
 export default function StkPayment({plan,pending,environment,user,onRefresh}) {
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[payment,setPayment]=useState(null)
-  const current=payment?.status==='pending'?payment:pending
+  const current=payment?.status==='pending'?payment:pending?.id===payment?.id?null:pending
+  const pendingId=current?.provider==='daraja_stk' ? current.id : null
+  useEffect(()=>{
+    if(!pendingId)return
+    let active=true,inFlight=false,attempts=0
+    const timer=setInterval(async()=>{
+      if(document.hidden||inFlight)return
+      if(++attempts>=36)clearInterval(timer)
+      inFlight=true
+      try{
+        const result=await api(`/payments/${encodeURIComponent(pendingId)}`)
+        if(!active)return
+        setPayment(previous=>previous?.id===pendingId&&previous.status!=='pending'?previous:result.payment)
+        if(result.payment.status!=='pending'){clearInterval(timer);onRefresh()}
+      }catch{/* A read failure never retries or starts a payment. Manual status check remains available. */}
+      finally{inFlight=false}
+    },5000)
+    return()=>{active=false;clearInterval(timer)}
+  },[pendingId,onRefresh])
   async function request(path,body) {
     setBusy(true);setError('')
     try { const result=await api(path,{method:'POST',body});setPayment(result.payment);onRefresh() }

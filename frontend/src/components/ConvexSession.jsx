@@ -107,17 +107,18 @@ function SessionContent({ publicRoute = false, publicPage }) {
     const code = url.searchParams.get('code')
     if (!code || auth.isLoading || linkHandled.current) return
     linkHandled.current = true
+    const administratorLink = currentAppRoute().split('?')[0] === '#/admin'
     url.searchParams.delete('code')
     window.history.replaceState({}, '', url.pathname + url.search + url.hash)
     // Handle magic links explicitly so invalid/expired links get a visible retry path.
     Promise.resolve().then(() => setHandlingLink(true))
-    signIn(undefined, { code }).then(result => { if (!result.signingIn) throw new Error('Invalid link'); navigateApp('#/workspace') })
+    signIn(undefined, { code }).then(result => { if (!result.signingIn) throw new Error('Invalid link'); navigateApp(administratorLink ? '#/admin' : '#/workspace') })
       .catch(() => setLinkError('This sign-in link is invalid or expired. Please request a new link or email code.'))
       .finally(() => setHandlingLink(false))
   }, [auth.isLoading, signIn])
   if (publicRoute) return <><PublicPages page={publicPage} user={auth.isAuthenticated && session?.status !== 'expired' ? account || { role: 'pending' } : null} checkingSession={auth.isLoading || serverAuth.isLoading} onSignOut={signOut} /><CookieConsent /></>
   if (['#/privacy', '#/cookies', '#/terms'].includes(route.split('?')[0])) return <><CookieConsent /><LegalPage type={route.slice(2)} /></>
-  if (linkError) return <main className="card state-panel"><h1>We couldn’t sign you in</h1><p role="alert">{linkError}</p><button className="button primary" onClick={() => { setLinkError(''); navigateApp('#/signin') }}>Back to sign in</button></main>
+  if (linkError) return <main className="card state-panel"><h1>We couldn’t sign you in</h1><p role="alert">{linkError}</p><button className="button primary" onClick={() => { setLinkError(''); navigateApp(currentAppRoute().split('?')[0] === '#/admin' ? '#/admin' : '#/signin') }}>Back to sign in</button></main>
   if (auth.isLoading || serverAuth.isLoading || handlingLink || auth.isAuthenticated && (!serverAuth.isAuthenticated || session === undefined)) return <main className="card state-panel" role="status">Checking your sign-in…</main>
   const adminEntry = route.split('?')[0] === '#/admin'
   if (adminEntry && !auth.isAuthenticated) return <main className="app-shell"><CookieConsent /><a href="/">← Mlezi home</a><ConvexAuthForm adminOnly /></main>
