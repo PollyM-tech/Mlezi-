@@ -214,13 +214,6 @@ export default function Membership({ user }) {
             )}
           </section>
           <aside className="card side-card">
-            <h3>How it works</h3>
-            <p>
-              For manual payments, an administrator matches your receipt, amount,
-              phone and destination against the business statement. STK payments
-              are checked directly with Safaricom by the server. Requesting a
-              prompt or submitting a receipt alone does not activate access.
-            </p>
             <p>
               {user.role === "employer"
                 ? "Previously unlocked contacts remain accessible after ordinary pass expiry. Renew to unlock new contacts."
