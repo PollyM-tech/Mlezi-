@@ -120,3 +120,7 @@ Latest signup update: every Create account method (password, magic link and OTP)
 ## UI/UX and branding reference — 3 November 2026
 
 See the [UI/UX and branding guide](ui-ux-branding-guide.md) for the audited palette, typography, official and partner logos, current image placements, icon-removal decisions, footer groups, responsive patterns and motion behaviour. It records the current local implementation and supersedes earlier visual descriptions here where they differ.
+
+### Caregiver navigation — 3 November 2026
+
+Signed-in caregivers do not see the homepage caregiver-search form or care-category discovery section. Homepage browsing calls to action point to jobs or their own profile instead, and regional guide calls to action offer Find jobs. Public visitors and employers retain caregiver discovery. The caregiver workspace keeps its jobs/proposals link and labels the owner-only view as Preview my profile. This is presentation only; server-side employer/admin discovery restrictions remain in force.

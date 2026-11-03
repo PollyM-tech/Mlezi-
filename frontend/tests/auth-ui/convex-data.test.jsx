@@ -34,3 +34,17 @@ it('derives the HTTP upload origin when only the cloud URL is configured, and re
   expect(() => convexSiteUrl({ VITE_CONVEX_SITE_URL: 'https://example.convex.cloud' })).toThrow('HTTP Actions')
   expect(() => convexSiteUrl({ VITE_CONVEX_SITE_URL: 'https://example.convex.site.evil.test' })).toThrow('HTTP Actions')
 })
+
+it('explains a blocked local document origin without signing out or leaking tokens',async()=>{
+ vi.spyOn(globalThis,'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+ state.query.mockResolvedValue({allowedSignInOrigins:['https://mlezicare.com']})
+ const fetchToken=vi.fn().mockResolvedValue('fixture-private-token')
+ const request=nativeConvexApi('/admin/verification/fixture/documents',{}, {fetchToken})
+ await expect(request).rejects.toMatchObject({status:503,message:expect.stringContaining('APP_ALLOWED_ORIGINS')})
+ await expect(request).rejects.not.toThrow('fixture-private-token')
+})
+it('keeps actual file outages distinct from configured origin failures',async()=>{
+ vi.spyOn(globalThis,'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+ state.query.mockResolvedValue({allowedSignInOrigins:[window.location.origin]})
+ await expect(nativeConvexApi('/admin/verification/fixture/documents',{}, {fetchToken:async()=>'fixture-token'})).rejects.toMatchObject({status:503,message:expect.stringContaining('Unable to reach Mlezi file storage')})
+})

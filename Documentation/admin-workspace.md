@@ -98,3 +98,19 @@ Before production use, test the complete owner login and authenticator enrollmen
 the intended deployment, a real test identity submission/rejection/approval, a guest
 support email reply and manual-payment review against a test record. No live evidence,
 email, account or payment was changed during local implementation.
+
+## Private documents blocked on localhost
+
+If the identity queue loads but **Open private documents** reports a network failure, check the file endpoint’s CORS allowlist. The queue uses Convex queries; document bytes use authenticated HTTP Actions and need the browser’s exact origin allowed separately.
+
+In the **same Convex deployment used by the frontend**, keep `SITE_URL` as the canonical website origin and add the intended local origins to `APP_ALLOWED_ORIGINS`, preserving existing entries. For a local frontend on port 5174, the added entry is `http://localhost:5174`. Ports and `localhost`/`127.0.0.1` are distinct origins; include only the development origins actually needed. Do not use `*`, disable MFA, publish private storage URLs or change the document route to anonymous access.
+
+For example, if testing both local ports with both loopback names, append the needed entries from:
+
+```text
+http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
+```
+
+Refresh the local page, sign in and confirm the authenticator again if its 15-minute grant expired, then reopen the documents. The frontend now diagnoses an unlisted origin rather than displaying the generic application-offline message. This configuration also affects trusted sign-in origins, so keep it limited to intended origins and remove temporary development entries when no longer needed.
+
+Unauthenticated preflight checks on 3 November 2026 found that `tidy-perch-115` allowed `https://mlezicare.com` but did not allow `http://localhost:5173` or `http://localhost:5174`. No private document was fetched or approved, and no cloud configuration was changed during diagnosis.
