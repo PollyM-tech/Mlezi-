@@ -15,7 +15,7 @@ export default function SignOutProvider({ storage, children }) {
     beginSignOut({ revoke, storage,
       clearSession: () => configureConvexSession(null),
       detach: () => detachConvexClient(client),
-      goHome: () => navigateApp('/', {replace: true}),
+      goHome: () => { navigateApp('/', {replace: true}); window.dispatchEvent(new Event('mlezi-signed-out')) },
       dispose: () => client.close?.(),
     })
   }, [revoke, storage])

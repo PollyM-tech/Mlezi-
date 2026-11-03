@@ -158,3 +158,59 @@ that the same fields and their values remain mounted. New-employer onboarding is
 also checked. A separate test proves the timed administrator reauthentication still
 occurs. No authentication credentials or optional-storage rules were changed. Deploy
 the frontend and Convex account-query updates to apply the complete fix.
+
+## Live deployment verification and full-app regression — 3 November 2026
+
+A subsequent public-asset inspection of `https://mlezicare.com/caregivers` found entry
+`/assets/index-BCC75n3A.js` loading `/assets/ConvexSession-BoPW0Aq8.js`. That deployed
+session module still contained `setInterval(..., 30000)` and lacked the new MFA-expiry
+timer. The local timer correction had not reached the live frontend. Rebuilding or
+redeploying an older Git revision does not include uncommitted workspace edits.
+
+The expanded regression uses the actual ConvexSession, App, Discovery and employer
+account components with only authentication/transport fixtures. It fills unsaved care
+requirements, advances six 30-second windows, processes account-data updates and
+repeated same-route history events, and checks field identity and values. It also
+checks unsaved employer account details. A second reset path was corrected: App now
+ignores history events that do not change the route, rather than setting loading and
+unmounting the form without a new load effect.
+
+After publishing the updated frontend source, run from `frontend`:
+
+```bash
+npm run deployment:session:check
+```
+
+This read-only public-asset check fails if the live session bundle still contains the
+legacy 30-second interval. It supplements, rather than replaces, testing the live
+employer form. It does not sign in or mutate application data. Publishing remains a
+separate action from local builds/tests; no Vercel deployment was run during this
+verification.
+
+## Signed-in homepage navigation — 3 November 2026
+
+PublicPages rendered the homepage without any account context, so even a visitor with
+stored authentication credentials saw Log in/Get started. Returning from a workspace
+also unmounted the auth provider (or reloaded the public page), making a signed-in
+visitor appear signed out. Merely visiting home did not intentionally revoke tokens.
+
+Website now retains an initialized Convex session while navigating between account
+and public pages. A direct public visit with an existing tab-scoped token initializes
+that session too; the token is only a loading hint and the provider/backend still
+validate authentication. A cold signed-out public visit remains statically rendered
+without mounting auth. Authenticated homepage navigation shows My workspace and
+Sign out, with an admin-specific workspace destination. Public pages remain available
+during profile setup or MFA requirements; returning to the workspace enforces those
+gates. The home search uses client navigation rather than a browser reload.
+
+Explicit sign-out emits a local completion event so Website unmounts the retired auth
+provider and the next sign-in receives a fresh storage adapter. No storage lifetime,
+server permissions, token verification or optional-cookie rules were relaxed. Public
+metadata is restored on client navigation; preview/local origins cannot become
+indexable through this transition.
+
+Tests use the real Website, session, application and homepage components with fixture
+transport/authentication. They cover workspace/home/workspace and Back navigation,
+stable provider identity, retained credentials, direct signed-in home visits, caregiver
+photo gates, explicit homepage sign-out, fresh sign-in and anonymous public rendering.
+Deploy the updated frontend source before expecting this behavior on mlezicare.com.

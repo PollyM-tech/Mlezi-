@@ -1,3 +1,4 @@
+import { navigateApp } from '../lib/routes.js'
 import { useState } from 'react'
 import logo from '../assets/logo.png'
 import Partners from './Partners.jsx'
@@ -28,7 +29,7 @@ const careTypes = [
 ]
 const questions = FAQ_ENTRIES.filter(entry => entry.featured).map(entry => [entry.question, entry.answer])
 
-export default function Landing({ user }) {
+export default function Landing({ user, onSignOut, checkingSession = false }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [category, setCategory] = useState('')
   const [arrangement, setArrangement] = useState('')
@@ -42,7 +43,7 @@ export default function Landing({ user }) {
     const params = new URLSearchParams()
     if (category) params.set('category', category)
     if (arrangement) params.set('service_type', arrangement)
-    window.location.href = `/caregivers?${params}`
+    navigateApp(`/caregivers${params.size ? `?${params}` : ''}`)
   }
   return <div className="landing">
     <header className="site-header landing-header">
@@ -53,7 +54,7 @@ export default function Landing({ user }) {
         <button onClick={() => scrollTo('care-categories')}>Find your care</button>
         <button onClick={() => scrollTo('for-caregivers')}>For caregivers</button>
         <button onClick={() => scrollTo('mlezi-questions')}>FAQs</button>
-        {user ? <a className="button primary" href="/workspace">My workspace <Icon name="arrow" width="17" /></a> : <><a className="landing-signin" href="/signin">Log in</a><a className="button primary" href="/employer">Get started <Icon name="arrow" width="17" /></a></>}
+        {checkingSession ? <span role="status">Checking account…</span> : user ? <><a className="button primary" href={user.role === 'admin' ? '/admin-mlezicareaccess' : '/workspace'}>My workspace <Icon name="arrow" width="17" /></a>{onSignOut && <button type="button" className="landing-signin" onClick={() => onSignOut()}>Sign out</button>}</> : <><a className="landing-signin" href="/signin">Log in</a><a className="button primary" href="/employer">Get started <Icon name="arrow" width="17" /></a></>}
       </nav>
     </header>
     <section className="landing-hero">

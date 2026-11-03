@@ -10,6 +10,7 @@ import { useMutation, useQuery, useConvexAuth as useServerAuth } from 'convex/re
 import { api } from '../../convex/_generated/api.js'
 import { configureConvexSession } from '../lib/api.js'
 import { getConvexClient } from '../lib/convexClient.js'
+import PublicPages from './PublicPages.jsx'
 import LegalPage from './LegalPage'
 import SupportInbox from './SupportInbox.jsx'
 import AdminSecurity from './AdminSecurity'
@@ -69,7 +70,7 @@ function RestrictedAccount({ session }) {
   return <main className="app-shell"><CookieConsent /><header className="site-header"><strong>Mlezi</strong><a href="/tickets">Support</a><button className="text-button" onClick={()=>setPrivacy(value=>!value)}>Privacy and account requests</button><button className="text-button" onClick={()=>signOut()}>Sign out</button></header>{privacy?<PrivacyAccount />:session.status==='restricted'?<section className="card state-panel"><h1>Account access restricted</h1><p>Your account has a pending deletion request or has been suspended. Use privacy requests to contact an administrator.</p></section>:<><section className="card form-section"><h1>Your profile photo is required</h1><p>Complete your caregiver profile to access Mlezi. Submit your profile photo, national ID and selfie for identity review.</p></section><ProfileForm profile={session.setupProfile} user={session.account} onSaved={()=>{navigateApp('#/workspace')}} /></>}</main>
 }
 
-function SessionContent() {
+function SessionContent({ publicRoute = false, publicPage }) {
   const auth = useConvexAuth()
   const serverAuth = useServerAuth()
   const { signIn } = useAuthActions()
@@ -114,6 +115,7 @@ function SessionContent() {
       .catch(() => setLinkError('This sign-in link is invalid or expired. Please request a new link or email code.'))
       .finally(() => setHandlingLink(false))
   }, [auth.isLoading, signIn])
+  if (publicRoute) return <><PublicPages page={publicPage} user={auth.isAuthenticated && session?.status !== 'expired' ? account || { role: 'pending' } : null} checkingSession={auth.isLoading || serverAuth.isLoading} onSignOut={signOut} /><CookieConsent /></>
   if (['#/privacy', '#/cookies', '#/terms'].includes(route.split('?')[0])) return <><CookieConsent /><LegalPage type={route.slice(2)} /></>
   if (linkError) return <main className="card state-panel"><h1>We couldn’t sign you in</h1><p role="alert">{linkError}</p><button className="button primary" onClick={() => { setLinkError(''); navigateApp('#/signin') }}>Back to sign in</button></main>
   if (auth.isLoading || serverAuth.isLoading || handlingLink || auth.isAuthenticated && (!serverAuth.isAuthenticated || session === undefined)) return <main className="card state-panel" role="status">Checking your sign-in…</main>
@@ -129,8 +131,9 @@ function SessionContent() {
   return account?.role === 'admin' ? <AdminBoundary><App key={account.id} /></AdminBoundary> : <App key={account?.id || 'signed-out'} />
 }
 
-export default function ConvexSession() {
+export default function ConvexSession({ publicRoute = false, publicPage }) {
   const [storage] = useState(createAuthStorage)
+  if (!import.meta.env.VITE_CONVEX_URL && publicRoute) return <><PublicPages page={publicPage} /><CookieConsent /></>
   if (!import.meta.env.VITE_CONVEX_URL) return <main className="card state-panel"><h1>Account service needs configuration</h1><p>Set the public VITE_CONVEX_URL in the website environment, then restart or rebuild the website.</p><a href="/">Return home</a></main>
-  return <ConvexAuthProvider client={getConvexClient()} storage={storage} storageNamespace={AUTH_STORAGE_NAMESPACE} shouldHandleCode={false}><SignOutProvider storage={storage}><SessionContent /></SignOutProvider></ConvexAuthProvider>
+  return <ConvexAuthProvider client={getConvexClient()} storage={storage} storageNamespace={AUTH_STORAGE_NAMESPACE} shouldHandleCode={false}><SignOutProvider storage={storage}><SessionContent publicRoute={publicRoute} publicPage={publicPage} /></SignOutProvider></ConvexAuthProvider>
 }

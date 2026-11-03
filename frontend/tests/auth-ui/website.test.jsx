@@ -2,7 +2,10 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import Website from '../../src/components/Website.jsx'
 
-vi.mock('../../src/components/ConvexSession.jsx', () => ({ default: () => <main>Private account application</main> }))
+vi.mock('../../src/components/ConvexSession.jsx', async () => {
+  const { default: PublicPages } = await import('../../src/components/PublicPages.jsx')
+  return { default: ({ publicRoute, publicPage }) => publicRoute ? <PublicPages page={publicPage} /> : <main>Private account application</main> }
+})
 afterEach(() => { cleanup(); window.history.replaceState({}, '', '/'); document.head.innerHTML = '' })
 
 it('public regional guides work without loading the authenticated application', () => {
