@@ -4,21 +4,26 @@ import { v } from 'convex/values'
 import { requireAccount } from './lib/permissions.js'
 import { PLANS,fail,find,paymentData } from './lib/marketplace.js'
 import { consume,audit } from './lib/security.js'
+import { LEGAL_VERSION } from './lib/legalPolicy.js'
 import { mpesaSettings,mpesaPhone,initiateProvider,queryProvider } from './lib/mpesa.js'
 
-export const prepare = internalMutation({ args:{planCode:v.string(),phone:v.string()},handler:async(ctx,args)=>{
+export const prepare = internalMutation({ args:{planCode:v.string(),phone:v.string(),termsAccepted:v.optional(v.boolean()),termsVersion:v.optional(v.string()),replaceSandbox:v.optional(v.boolean())},handler:async(ctx,args)=>{
   const account=await requireAccount(ctx,'employer','caregiver'),settings=mpesaSettings()
-  if(!settings.enabled)fail('M-Pesa sandbox settings are not configured yet.',503)
+  if(!settings.enabled)fail('M-Pesa payments are not configured yet.',503)
+  if(args.termsAccepted!==true||args.termsVersion!==LEGAL_VERSION)fail('Read and agree to the current Mlezi Terms of Service before requesting payment')
   const plan=PLANS[args.planCode]
   if(!plan||plan.role!==account.role)fail('Select a valid membership plan')
   const profile=await ctx.db.query(account.role==='employer'?'employers':'caregivers').withIndex('by_account',q=>q.eq('accountId',account._id)).unique()
   if(!profile)fail('Complete your profile before purchasing membership')
-  const pending=await ctx.db.query('payments').withIndex('by_account',q=>q.eq('accountId',account._id)).filter(q=>q.eq(q.field('status'),'pending')).first()
-  if(pending)return{payment:pending,fresh:false}
+  const pending=await ctx.db.query('payments').withIndex('by_account',q=>q.eq('accountId',account._id)).filter(q=>q.and(q.eq(q.field('status'),'pending'),q.or(q.neq(q.field('environment'),'sandbox'),q.eq(q.field('environment'),settings.environment)))).first()
+  if(pending&&!args.replaceSandbox)return{payment:pending,fresh:false}
+  if(pending&&(settings.environment!=='sandbox'||pending.environment!=='sandbox'))fail('This payment is still pending. Wait for confirmation before sending another request')
+  if(pending&&pending.createdAt>Date.now()-180000)fail('Please allow three minutes for the current sandbox test before trying again')
   let phone;try{phone=mpesaPhone(args.phone)}catch{fail('Enter a valid Kenyan M-Pesa phone number')}
   await consume(ctx,`payment-starts:${account._id}`,3,600000)
   await consume(ctx,'payment-starts-global',50,3600000)
-  const id=await ctx.db.insert('payments',{accountId:account._id,type:plan.type,planCode:args.planCode,durationDays:plan.days,amount:plan.amount,status:'pending',phone,
+  if(pending){await ctx.db.patch(pending._id,{status:'failed',resultDescription:'Sandbox test superseded by a new authorized test. No membership activated.',updatedAt:Date.now()});await audit(ctx,account._id,'sandbox_payment_superseded',pending._id)}
+  const id=await ctx.db.insert('payments',{provider:'daraja_stk',termsAcceptedAt:Date.now(),termsVersion:LEGAL_VERSION,accountId:account._id,type:plan.type,planCode:args.planCode,durationDays:plan.days,amount:plan.amount,status:'pending',phone,
     environment:settings.environment,initiationState:'prepared',resultDescription:settings.environment==='sandbox'?'Sandbox test request is starting. No real membership payment.':'Payment request is starting.',createdAt:Date.now(),updatedAt:Date.now()})
   await audit(ctx,account._id,'payment_prepared',id)
   return{payment:await ctx.db.get(id),fresh:true}
@@ -43,17 +48,31 @@ export const ownPayment = internalQuery({args:{id:v.string()},handler:async(ctx,
 export const claimQuery = internalMutation({args:{paymentId:v.id('payments')},handler:async(ctx,{paymentId})=>{
   const p=await ctx.db.get(paymentId),settings=mpesaSettings()
   if(!settings.enabled||!p||p.status!=='pending'||!p.checkoutRequestId||p.environment!==settings.environment||p.lastCheckedAt&&p.lastCheckedAt>Date.now()-10000)return null
+  const state=await ctx.db.query('mpesaQueryState').withIndex('by_environment',q=>q.eq('environment',p.environment)).unique()
+  if(state?.notBefore>Date.now())return null
+  const fields={environment:p.environment,notBefore:Date.now()+60000}
+  if(state)await ctx.db.patch(state._id,fields);else await ctx.db.insert('mpesaQueryState',fields)
   await ctx.db.patch(paymentId,{lastCheckedAt:Date.now()});return p
 } })
 export const get = internalQuery({args:{paymentId:v.id('payments')},handler:(ctx,{paymentId})=>ctx.db.get(paymentId)})
+export const waiting = internalMutation({args:{paymentId:v.id('payments'),retryAfterMs:v.optional(v.number())},handler:async(ctx,{paymentId,retryAfterMs})=>{
+  const p=await ctx.db.get(paymentId);if(!p||p.status!=='pending')return
+  if(retryAfterMs){
+    const state=await ctx.db.query('mpesaQueryState').withIndex('by_environment',q=>q.eq('environment',p.environment)).unique()
+    const notBefore=Math.max(state?.notBefore||0,Date.now()+Math.min(3600000,Math.max(60000,retryAfterMs)))
+    if(state)await ctx.db.patch(state._id,{notBefore});else await ctx.db.insert('mpesaQueryState',{environment:p.environment,notBefore})
+  }
+  await ctx.db.patch(p._id,{resultDescription:retryAfterMs?'Safaricom is busy. We will check your payment automatically after a short wait.':'Waiting for Safaricom confirmation. Your status will update automatically.',updatedAt:Date.now()})
+}})
 export const reconcile = internalAction({args:{paymentId:v.id('payments')},handler:async(ctx,{paymentId})=>{
   const p=await ctx.runMutation(internal.mpesa.claimQuery,{paymentId});if(!p)return
   try{
     const code=await queryProvider(mpesaSettings(),p)
     if(code!==null)await ctx.runMutation(internal.memberships.settle,{paymentId,resultCode:code})
-  }catch{/* Keep pending on network, provider or validation failures. Never log provider payloads. */}
+    else await ctx.runMutation(internal.mpesa.waiting,{paymentId})
+  }catch(error){await ctx.runMutation(internal.mpesa.waiting,{paymentId,...(error.retryAfterMs?{retryAfterMs:error.retryAfterMs}:{})})}
 } })
-export const start = action({args:{planCode:v.string(),phone:v.string()},handler:async(ctx,args)=>{
+export const start = action({args:{planCode:v.string(),phone:v.string(),termsAccepted:v.optional(v.boolean()),termsVersion:v.optional(v.string()),replaceSandbox:v.optional(v.boolean())},handler:async(ctx,args)=>{
   const prepared=await ctx.runMutation(internal.mpesa.prepare,args),p=prepared.payment
   if(prepared.fresh){
     try{const result=await initiateProvider(mpesaSettings(),p);await ctx.runMutation(internal.mpesa.initiated,{paymentId:p._id,...result})}
@@ -84,8 +103,9 @@ export const callback = httpAction(async(ctx,request)=>{
     return Response.json({ResultCode:0,ResultDesc:'Accepted'},{headers:{'Cache-Control':'no-store'}})
   }catch{return Response.json({error:'Unable to accept callback'},{status:400})}
 })
-export const pending = internalQuery({args:{},handler:ctx=>ctx.db.query('payments').withIndex('by_status',q=>q.eq('status','pending')).take(50)})
+export const pending = internalQuery({args:{},handler:ctx=>ctx.db.query('payments').withIndex('by_status',q=>q.eq('status','pending')).filter(q=>q.and(q.neq(q.field('provider'),'manual_mpesa'),q.gt(q.field('createdAt'),Date.now()-86400000))).take(50)})
 export const sweep = internalAction({args:{},handler:async ctx=>{
   if(!mpesaSettings().enabled)return
-  for(const p of await ctx.runQuery(internal.mpesa.pending,{}))if(p.checkoutRequestId&&p.createdAt>Date.now()-86400000)await ctx.runAction(internal.mpesa.reconcile,{paymentId:p._id})
+  const rows=(await ctx.runQuery(internal.mpesa.pending,{})).sort((a,b)=>(a.lastCheckedAt||0)-(b.lastCheckedAt||0))
+  for(const p of rows)if(p.checkoutRequestId)await ctx.runAction(internal.mpesa.reconcile,{paymentId:p._id})
 } })

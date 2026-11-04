@@ -19,26 +19,28 @@ export function mpesaPhone(value) {
   return number
 }
 export class ProviderError extends Error {
-  constructor(uncertain = true) { super(uncertain ? 'Payment confirmation is delayed. Check its status before paying again.' : 'M-Pesa could not start this request. Please try again later.'); this.uncertain = uncertain }
+  constructor(uncertain = true, retryAfterMs = 0) { super(uncertain ? 'Payment confirmation is delayed. Check its status before paying again.' : 'M-Pesa could not start this request. Please try again later.'); this.uncertain = uncertain; this.retryAfterMs = retryAfterMs }
 }
 async function json(url, options, initiation = false) {
   let response
   try { response = await fetch(url, { ...options, signal: AbortSignal.timeout(20000) }) } catch { throw new ProviderError(true) }
+  if(response.status===429){const header=response.headers.get('retry-after');const delay=header&&/^\d+$/.test(header)?Number(header)*1000:header?Date.parse(header)-Date.now():300000;throw new ProviderError(true,Math.min(3600000,Math.max(60000,Number.isFinite(delay)?delay:300000)))}
   if (!response.ok) throw new ProviderError(!(initiation && [400,401,403].includes(response.status)))
   try { const data = await response.json(); if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error(); return data } catch { throw new ProviderError(true) }
 }
 async function credentials(settings) {
   let data
-  try { data = await json(`${settings.host}/oauth/v1/generate?grant_type=client_credentials`, { method:'GET', headers:{ Authorization:`Basic ${bytes64(new TextEncoder().encode(`${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`))}` } }) } catch { throw new ProviderError(false) }
+  try { data = await json(`${settings.host}/oauth/v1/generate?grant_type=client_credentials`, { method:'GET', headers:{ Authorization:`Basic ${bytes64(new TextEncoder().encode(`${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`))}` } }) } catch(error) { throw new ProviderError(false,error.retryAfterMs||0) }
   if (typeof data.access_token !== 'string' || !data.access_token) throw new ProviderError(false)
   const timestamp = new Date(Date.now()+3*3600000).toISOString().slice(0,19).replace(/[-:T]/g,'')
   return { headers:{ Authorization:`Bearer ${data.access_token}`,'Content-Type':'application/json' }, body:{ BusinessShortCode:settings.shortcode, Password:bytes64(new TextEncoder().encode(`${settings.shortcode}${process.env.MPESA_PASSKEY}${timestamp}`)), Timestamp:timestamp } }
 }
-export async function initiateProvider(settings, payment) {
+export async function initiateProvider(settings, payment, options = {}) {
   const auth = await credentials(settings)
   const body = { ...auth.body, TransactionType:'CustomerPayBillOnline', Amount:payment.amount, PartyA:payment.phone, PartyB:settings.shortcode,
-    PhoneNumber:payment.phone, CallBackURL:settings.callbackUrl, AccountReference:`MZ${payment._id.slice(-10)}`, TransactionDesc:'Mlezi membership' }
+    PhoneNumber:payment.phone, CallBackURL:settings.callbackUrl, AccountReference:options.accountReference || `MZ${payment._id.slice(-10)}`, TransactionDesc:options.description || 'Mlezi access' }
   const result = await json(`${settings.host}/mpesa/stkpush/v1/processrequest`, { method:'POST', headers:auth.headers, body:JSON.stringify(body) }, true)
+  if(result.ResponseCode===undefined||result.ResponseCode===null)throw new ProviderError(true)
   if (String(result.ResponseCode) !== '0') throw new ProviderError(false)
   if (typeof result.CheckoutRequestID !== 'string' || !result.CheckoutRequestID || result.CheckoutRequestID.length > 128) throw new ProviderError(true)
   return { checkoutRequestId:result.CheckoutRequestID, ...(typeof result.MerchantRequestID === 'string' ? {merchantRequestId:result.MerchantRequestID} : {}) }

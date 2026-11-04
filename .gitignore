@@ -23,3 +23,6 @@ private-exports/
 
 # Keep nested private backup directories out of commits as well.
 **/.backups/
+
+# Private terminal payment-test attempts
+**/.mpesa-test/

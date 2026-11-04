@@ -1,3 +1,4 @@
+import { mpesaSettings } from './lib/mpesa.js'
 import { query, mutation } from './_generated/server.js'
 import { consume, audit } from './lib/security.js'
 import { v } from 'convex/values'
@@ -101,7 +102,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
     const a = await requireAccount(ctx, 'employer', 'caregiver'), table = a.role === 'employer' ? 'employers' : 'caregivers'
     const p = await ctx.db.query(table).withIndex('by_account', q => q.eq('accountId', a._id)).unique()
     const expiry = a.role === 'employer' ? p?.accessExpiresAt : p?.premiumExpiresAt
-    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: false, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan })) }
+    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: mpesaSettings().enabled, payment_environment: mpesaSettings().environment, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan })) }
   }
   if (path === '/payments' || path.startsWith('/payments/')) {
     const a = await requireAccount(ctx, 'employer', 'caregiver')

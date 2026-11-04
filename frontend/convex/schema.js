@@ -80,12 +80,14 @@ export default defineSchema({
     reason: v.string(), details: optionalText,
     status: v.union(v.literal('open'), v.literal('reviewed'), v.literal('resolved')), createdAt: v.number(),
   }).index('by_status', ['status']).index('by_legacy_id', ['legacyId']),
+  mpesaQueryState: defineTable({ environment:v.union(v.literal('sandbox'),v.literal('production')),notBefore:v.number() }).index('by_environment',['environment']),
   // Server-priced payments. Callback claims never directly grant membership.
   payments: defineTable({
     ...legacy, accountId: v.id('accounts'),
     type: v.union(v.literal('unlock_pass'), v.literal('caregiver_premium'), v.literal('featured_boost')),
     environment: v.optional(v.union(v.literal('sandbox'), v.literal('production'))),
     initiationState: v.optional(v.union(v.literal('prepared'), v.literal('sent'), v.literal('unknown'), v.literal('rejected'))),
+    provider:v.optional(v.union(v.literal('daraja_stk'),v.literal('manual_mpesa'))),termsAcceptedAt:optionalNumber,termsVersion:optionalText,reviewedBy:v.optional(v.id('accounts')),reviewedAt:optionalNumber,
     planCode: optionalText, durationDays: optionalNumber, amount: v.number(),
     status: v.union(v.literal('pending'), v.literal('completed'), v.literal('failed')),
     mpesaRef: optionalText, checkoutRequestId: optionalText, merchantRequestId: optionalText,

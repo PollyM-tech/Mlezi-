@@ -683,3 +683,13 @@ footer .official-brand img { width:245px; height:245px; left:-49px; top:-92px; }
 .legal-contents { display: flex; flex-direction: column; gap: 8px; margin: 24px 0; }
 .legal-links { display: block; margin-top: 32px; padding-top: 20px; border-top: 1px solid #e3e7db; }
 @media(max-width:600px) { .legal-page { margin: 16px auto; } .legal-operator dl { grid-template-columns: 1fr; gap: 4px; } .legal-operator dd { margin-bottom: 12px; } }
+
+.mpesa-checkout{max-width:620px;margin:0 auto 28px}
+.mpesa-checkout-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.mpesa-checkout .mpesa-checkout-amount{font-size:2rem;font-weight:700;color:var(--green);margin:16px 0 24px}
+.mpesa-checkout-amount small{display:block;font-size:.85rem;font-weight:400}
+.mpesa-checkout form>p{margin:12px 0 18px}
+.mpesa-checkout .checkbox-label{align-items:flex-start;margin-top:20px}
+.mpesa-checkout .checkbox-label a{text-decoration:underline;text-underline-offset:3px}
+.mpesa-checkout .button{white-space:normal;min-height:48px}
+.mpesa-checkout-status{margin-top:18px}

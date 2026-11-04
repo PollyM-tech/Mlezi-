@@ -25,6 +25,7 @@ export async function nativeConvexApi(path, { method = 'GET', body } = {}, sessi
         return { documents: { national_id: urls[0], selfie: urls[1] }, expires_in: 60 }
       } catch (error) { urls.forEach(URL.revokeObjectURL); throw error }
     }
+    if(method==='POST' && url.pathname==='/payments/stk/start')return await client.action(functions.mpesa.start,body)
     if (method === 'GET') return await client.query(functions.marketplace.read, { path: url.pathname, params })
     if (body instanceof FormData) {
       const fields = {}
