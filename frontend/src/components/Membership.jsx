@@ -13,7 +13,10 @@ export default function Membership({ user }) {
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0);
-  const refreshPayments = useCallback(() => setVersion(v => v + 1), []);
+  const refreshPayments = useCallback(payment => {
+    if (payment) setPayments(current => [payment, ...current.filter(item => item.id !== payment.id)]);
+    setVersion(v => v + 1);
+  }, []);
   const submit = useMutation(functions.manualPayments.submit);
   useEffect(() => {
     let active = true;
@@ -34,6 +37,21 @@ export default function Membership({ user }) {
   const pending = payments.find(
     (p) => p.status === "pending",
   );
+  const refreshablePaymentId = pending && (pending.provider !== 'daraja_stk' || !membership?.payments_enabled) ? pending.id : null;
+  useEffect(() => {
+    if (!refreshablePaymentId) return;
+    let active = true, inFlight = false;
+    const timer = setInterval(async () => {
+      if (document.hidden || inFlight) return;
+      inFlight = true;
+      try {
+        const [status, history] = await Promise.all([api('/memberships'), api('/payments')]);
+        if (active) { setMembership(status); setPayments(history.payments); }
+      } catch { /* Keep the last known state; the next read can recover. */ }
+      finally { inFlight = false; }
+    }, 10000);
+    return () => { active = false; clearInterval(timer); };
+  }, [refreshablePaymentId]);
   const plan =
     membership?.plans.find(
       (p) => p.code === (selected || pending?.plan_code),
@@ -70,7 +88,7 @@ export default function Membership({ user }) {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">MEMBERSHIP</span>
+          <span className="eyebrow">PAYMENTS</span>
           <h1>
             {user.role === "employer"
               ? "Make your next connection."
@@ -156,23 +174,9 @@ export default function Membership({ user }) {
                     cancel and use Support.
                   </p>
                 </section>
-                {pending ? (
-                  <div className="privacy-note">
-                    <p role="status">
-                      {pending.provider === 'manual_mpesa' ? `Receipt ${pending.receipt} is awaiting administrator review.` : 'An STK payment is awaiting confirmation.'} Do not pay again while it is pending.
-                    </p>
-                    <button
-                      className="button secondary"
-                      disabled={busy}
-                      onClick={() => setVersion((v) => v + 1)}
-                    >
-                      Refresh payment status
-                    </button>
-                    <p>
-                      <a href="/tickets">Contact support about this payment</a>
-                    </p>
-                  </div>
-                ) : (
+                {pending ? pending.provider === 'manual_mpesa' ? (
+                  <p role="status">Receipt {pending.receipt} is awaiting administrator review. Status updates automatically.</p>
+                ) : null : (
                   <form onSubmit={report}>
                     <label>
                       M-Pesa receipt code

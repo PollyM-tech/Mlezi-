@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, it, expect, vi } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { act, render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { getFunctionName } from "convex/server";
 import Membership from "../../src/components/Membership.jsx";
@@ -48,7 +48,7 @@ beforeEach(() => {
         : { payments: state.history },
     );
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 it("shows the manual destination and sends only the selected plan, receipt and paying phone for review", async () => {
   const user = userEvent.setup();
   state.submit.mockImplementation(async () => {
@@ -94,13 +94,7 @@ it("shows the manual destination and sends only the selected plan, receipt and p
   expect(
     screen.queryByText(/Check your phone for the M-Pesa prompt/),
   ).toBeNull();
-  state.active = true;
-  state.history = [{ ...state.history[0], status: "completed" }];
-  await user.click(
-    screen.getByRole("button", { name: "Refresh payment status" }),
-  );
-  expect(await screen.findByText("Active")).toBeTruthy();
-  expect(screen.queryByText(/is awaiting administrator review/)).toBeNull();
+  expect(screen.queryByRole("button", { name: "Refresh payment status" })).toBeNull();
 });
 it("requires administrator statement confirmation or a rejection reason before submitting a decision", async () => {
   const user = userEvent.setup();
@@ -142,4 +136,15 @@ it("requires administrator statement confirmation or a rejection reason before s
     confirmed: true,
     reason: "",
   });
+});
+
+it('automatically updates a pending manual payment without a refresh button or page reload',async()=>{
+ vi.useFakeTimers();vi.spyOn(document,'hidden','get').mockReturnValue(false);
+ state.history=[{id:'auto-payment',provider:'manual_mpesa',amount:300,plan_code:'employer_30_days',receipt:'TESTCODE02',status:'pending'}];
+ await act(async()=>{render(<Membership user={{role:'employer'}}/>)});
+ expect(screen.getByText(/Status updates automatically/)).toBeTruthy();
+ state.active=true;state.history=[{...state.history[0],status:'completed'}];
+ await act(async()=>{await vi.advanceTimersByTimeAsync(10000)});
+ expect(screen.getByText('Active')).toBeTruthy();expect(screen.queryByText(/awaiting administrator review/)).toBeNull();
+ const reads=state.read.mock.calls.length;await act(async()=>{await vi.advanceTimersByTimeAsync(30000)});expect(state.read.mock.calls.length).toBe(reads);
 });

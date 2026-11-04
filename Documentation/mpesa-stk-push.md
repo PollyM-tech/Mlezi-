@@ -57,7 +57,7 @@ npm run mpesa:check
 
 This reads public backend readiness and prints the callback URL. It does not read or print credentials, request a provider token, or initiate an STK payment. A successful readiness check does not prove credentials or callback delivery work; perform the separate sandbox journey above.
 
-While an STK request is pending, the open membership screen reads its own payment status every five seconds for up to three minutes of visible-page checks. It pauses reads while the tab is hidden, avoids overlapping reads, and stops at confirmation or unmount. This updates the payment display without reloading the page, restarting the request or clearing other forms. The manual Check STK payment status button remains available after the automatic checks stop. Background provider reconciliation remains independent of the browser.
+While an STK request is pending, the open membership screen reads its own payment status every five seconds while the visible payment screen has a pending STK request. It pauses reads while the tab is hidden, avoids overlapping reads, and stops at confirmation or unmount. This updates the payment display without reloading the page, restarting the request or clearing other forms. STK status refresh is automatic; the manual Check STK payment status button is no longer shown. Returning focus to the browser or making the tab visible triggers an immediate stored-status read. When a terminal result arrives, payment history and membership data refresh, and the normal payment form returns. Pending requests continue to block duplicate payment attempts. The duplicate STK waiting/Refresh payment status/support block beneath the manual instructions has been removed. Manual payment reports update automatically every ten seconds while pending, without a refresh button. Background provider reconciliation remains independent of the browser.
 
 ## Stalled sandbox simulation recovery
 
@@ -72,3 +72,11 @@ For an owned `daraja_stk` request recorded as `sandbox`, **Close sandbox test** 
 A read-only query on 3 November 2026 returned **HTTP 429** from the sandbox STK status endpoint. An earlier query returned a non-JSON response. These observations explain why those diagnostic calls could not confirm payment; they do not establish the result of the underlying request.
 
 Status reconciliation now shares a minimum one-minute query spacing across all requests in each environment. A 429 response respects `Retry-After` (seconds or HTTP date), bounded to one minute–one hour, defaulting to five minutes when absent/invalid. Other accounts, manual status checks, callbacks and the cron share that cooldown. The background sweep prioritizes least-recently-checked records in its bounded batch. Requests remain pending during throttling, with a clear message; cooldown expiry never grants membership by itself. The browser’s five-second reads fetch stored state only and do not call Safaricom.
+
+### Payment screen simplification — 4 November 2026
+
+The sandbox-close explanation, Close sandbox test button and Get help with this payment link have been removed from the STK section at the owner’s request. Automatic status updates remain. The server-side sandbox-only close operation is retained, but the payment screen no longer exposes it. Earlier descriptions of that button reflect the previous UI.
+
+### Automatic return to Payments — 4 November 2026
+
+The STK component passes the confirmed/failed server record directly to the Payments page so its pending state clears immediately, then refreshes membership/history data. Reads resume immediately on browser focus/visibility after using the phone prompt. This updates the existing payment view without a full reload or sending another STK request. It does not treat prompt delivery as payment confirmation or bypass provider cooldowns.
