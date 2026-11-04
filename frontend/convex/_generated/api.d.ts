@@ -28,6 +28,7 @@ import type * as lib_listingPolicy from "../lib/listingPolicy.js";
 import type * as lib_manualPaymentPolicy from "../lib/manualPaymentPolicy.js";
 import type * as lib_marketplace from "../lib/marketplace.js";
 import type * as lib_mpesa from "../lib/mpesa.js";
+import type * as lib_paymentPricing from "../lib/paymentPricing.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_security from "../lib/security.js";
 import type * as lib_supportEmail from "../lib/supportEmail.js";
@@ -73,6 +74,7 @@ declare const fullApi: ApiFromModules<{
   "lib/manualPaymentPolicy": typeof lib_manualPaymentPolicy;
   "lib/marketplace": typeof lib_marketplace;
   "lib/mpesa": typeof lib_mpesa;
+  "lib/paymentPricing": typeof lib_paymentPricing;
   "lib/permissions": typeof lib_permissions;
   "lib/security": typeof lib_security;
   "lib/supportEmail": typeof lib_supportEmail;

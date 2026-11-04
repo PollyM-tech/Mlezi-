@@ -90,6 +90,7 @@ export default defineSchema({
     environment: v.optional(v.union(v.literal('sandbox'), v.literal('production'))),
     initiationState: v.optional(v.union(v.literal('prepared'), v.literal('sent'), v.literal('unknown'), v.literal('rejected'))),
     provider: v.optional(v.union(v.literal('manual_mpesa'), v.literal('daraja_stk'))), reviewedBy: v.optional(v.id('accounts')), reviewedAt: optionalNumber,
+    standardAmount: optionalNumber, testPricingExpiresAt: optionalNumber, testPricingAccountId: v.optional(v.id('accounts')),
     planCode: optionalText, durationDays: optionalNumber, amount: v.number(),
     status: v.union(v.literal('pending'), v.literal('completed'), v.literal('failed')),
     mpesaRef: optionalText, checkoutRequestId: optionalText, merchantRequestId: optionalText,

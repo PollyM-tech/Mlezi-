@@ -1,3 +1,4 @@
+import { mpesaSettings } from './lib/mpesa.js';
 import { query, mutation } from "./_generated/server.js";
 import { v } from "convex/values";
 import { requireAccount, hasProfilePhoto } from "./lib/permissions.js";
@@ -47,7 +48,7 @@ export const submit = mutation({
       .query("payments")
       .withIndex("by_account", (q) => q.eq("accountId", account._id))
       .filter((q) =>
-        q.eq(q.field("status"), "pending"),
+        q.and(q.eq(q.field("status"), "pending"), q.or(q.neq(q.field("environment"), "sandbox"), q.eq(q.field("environment"), mpesaSettings().environment))),
       )
       .first();
     if (own)

@@ -80,3 +80,39 @@ The sandbox-close explanation, Close sandbox test button and Get help with this 
 ### Automatic return to Payments — 4 November 2026
 
 The STK component passes the confirmed/failed server record directly to the Payments page so its pending state clears immediately, then refreshes membership/history data. Reads resume immediately on browser focus/visibility after using the phone prompt. This updates the existing payment view without a full reload or sending another STK request. It does not treat prompt delivery as payment confirmation or bypass provider cooldowns.
+
+### Temporary KES 5 account checkout test
+
+The server can price STK checkout at KES 5 exclusively for
+`paulinemoraa36@gmail.com`. Standard plan durations and benefits apply. Other
+accounts and manual payment reporting retain standard prices. Payment does not
+grant identity approval.
+
+After deploying the local code to the backend used by the website, run from `frontend`:
+
+```sh
+npm run mpesa:test-price -- --enable
+```
+
+This sets `MPESA_TEST_PRICING_ENABLED=true` and a 23-hour
+`MPESA_TEST_PRICING_EXPIRES_AT` deadline on the configured Convex deployment.
+Add `--prod` only when targeting a Convex production deployment. This command
+sets pricing configuration; it does not send a payment request.
+
+Sign in as that account, open Payments and confirm that the STK price reads
+KES 5. Select the intended plan, send one prompt, and approve it on the phone.
+Live mode and approved live credentials are required for automatic membership
+activation. Sandbox confirmation never activates membership. The backend checks
+Safaricom, activates access once, and the page automatically refreshes status.
+Verify the purchased contact access or Premium benefit as appropriate.
+
+Restore normal pricing immediately after testing:
+
+```sh
+npm run mpesa:test-price -- --disable
+```
+
+Pricing also expires automatically. Already initiated authorized KES 5 payments
+can settle after pricing is disabled. Restoring prices does not revoke benefits
+already purchased. Never change the browser amount or global plan constants to
+run this test.

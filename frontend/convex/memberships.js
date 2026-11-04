@@ -1,3 +1,4 @@
+import { validPaymentAmount } from './lib/paymentPricing.js'
 import { internalMutation } from './_generated/server.js'
 import { v } from 'convex/values'
 import { DAY, PLANS, fail } from './lib/marketplace.js'
@@ -9,7 +10,7 @@ export const settle = internalMutation({ args: { paymentId: v.id('payments'), re
   if (!payment || payment.status !== 'pending') return payment
   const plan = PLANS[payment.planCode]
   const account = await ctx.db.get(payment.accountId)
-  if (!plan || plan.role !== account?.role || payment.type !== plan.type || payment.amount !== plan.amount || payment.durationDays !== plan.days) fail('Payment does not match server pricing')
+  if (!plan || plan.role !== account?.role || payment.type !== plan.type || !validPaymentAmount(payment, plan) || payment.durationDays !== plan.days) fail('Payment does not match server pricing')
   if (resultCode === 0 && payment.environment !== 'sandbox') {
     const table = plan.role === 'employer' ? 'employers' : 'caregivers'
     const profile = await ctx.db.query(table).withIndex('by_account', q => q.eq('accountId', payment.accountId)).unique()

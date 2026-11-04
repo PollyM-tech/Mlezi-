@@ -1,3 +1,4 @@
+import { stkPricing } from './lib/paymentPricing.js'
 import { mpesaSettings } from './lib/mpesa.js'
 import { canPublish } from './lib/listingPolicy.js'
 import { MANUAL_MPESA } from './lib/manualPaymentPolicy.js'
@@ -127,7 +128,7 @@ export const read = query({ args, handler: async (ctx, { path, params = {} }) =>
     const a = await requireAccount(ctx, 'employer', 'caregiver'), table = a.role === 'employer' ? 'employers' : 'caregivers'
     const p = await ctx.db.query(table).withIndex('by_account', q => q.eq('accountId', a._id)).unique()
     const expiry = a.role === 'employer' ? p?.accessExpiresAt : p?.premiumExpiresAt
-    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: mpesaSettings().enabled, payment_environment: mpesaSettings().environment, manual_payment: MANUAL_MPESA, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan })) }
+    return { active: active(expiry), expires_at: iso(expiry), payments_enabled: mpesaSettings().enabled, payment_environment: mpesaSettings().environment, manual_payment: MANUAL_MPESA, plans: Object.entries(PLANS).filter(([, plan]) => plan.role === a.role).map(([code, plan]) => ({ code, ...plan, stk_amount: stkPricing(a, code).amount })) }
   }
   if (path === '/payments' || path.startsWith('/payments/')) {
     const a = await requireAccount(ctx, 'employer', 'caregiver')

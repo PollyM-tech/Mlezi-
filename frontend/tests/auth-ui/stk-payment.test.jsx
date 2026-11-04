@@ -3,6 +3,7 @@ import {act,fireEvent,render,screen,cleanup,waitFor} from '@testing-library/reac
 import userEvent from '@testing-library/user-event'
 import StkPayment from '../../src/components/StkPayment.jsx'
 const state=vi.hoisted(()=>({api:vi.fn()}))
+vi.mock('convex/react',()=>({useMutation:()=>vi.fn()}))
 vi.mock('../../src/lib/api',()=>({api:(...args)=>state.api(...args)}))
 afterEach(()=>{cleanup();state.api.mockReset();vi.useRealTimers();vi.restoreAllMocks()})
 const props={plan:{code:'employer_30_days',amount:300,days:30},environment:'sandbox',user:{phone:'0712345678'},onRefresh:vi.fn()}
@@ -11,12 +12,12 @@ it('submits only the chosen plan and phone, labels sandbox, and blocks repeat pr
  render(<StkPayment {...props}/>);expect(screen.getByText(/does not activate paid membership/)).toBeTruthy()
  await user.click(screen.getByRole('checkbox'));await user.click(screen.getByRole('button',{name:'Send test STK request'}))
  await waitFor(()=>expect(state.api).toHaveBeenCalledWith('/payments/stk/start',{method:'POST',body:{planCode:'employer_30_days',phone:'0712345678'}}))
- expect(screen.queryByRole('button',{name:'Send test STK request'})).toBeNull()
+ expect(screen.getByRole('button',{name:'Send test STK request'}).disabled).toBe(true)
  expect(screen.queryByRole('button',{name:'Check STK payment status'})).toBeNull()
 })
 it('keeps any existing pending payment from starting a second request',()=>{
  render(<StkPayment {...props} pending={{id:'manual',provider:'manual_mpesa',status:'pending'}}/>);
- expect(screen.queryByRole('button',{name:'Send test STK request'})).toBeNull();expect(screen.getByRole('status').textContent).toContain('Do not pay again')
+ expect(screen.getByRole('button',{name:'Send test STK request'}).disabled).toBe(true);expect(screen.getByRole('status').textContent).toContain('Do not pay again')
 })
 
 it('updates a confirmed request without reloading or resending, even while parent history is stale',async()=>{
@@ -48,4 +49,15 @@ it('returns to the normal payment form as soon as confirmation is read after ret
  expect(state.api).toHaveBeenCalledWith('/payments/returning-payment');expect(refresh).toHaveBeenCalledWith(result)
  expect(screen.getByRole('button',{name:'Send test STK request'})).toBeTruthy();expect(screen.getByRole('status').textContent).toBe('Payment confirmed')
  expect(state.api).toHaveBeenCalledTimes(1)
+})
+
+it('ignores an old sandbox request when showing the live payment form',()=>{
+ render(<StkPayment {...props} environment="production" pending={{id:'old-test',provider:'daraja_stk',status:'pending',environment:'sandbox'}}/>);
+ expect(screen.getByRole('button',{name:'Send payment request'}).disabled).toBe(false)
+ expect(screen.queryByText(/Do not pay again/)).toBeNull()
+})
+it('shows a reset action for a pending sandbox test without allowing a duplicate prompt',()=>{
+ render(<StkPayment {...props} pending={{id:'test',provider:'daraja_stk',status:'pending',environment:'sandbox'}}/>);
+ expect(screen.getByRole('button',{name:'Reset sandbox test'}).disabled).toBe(false)
+ expect(screen.getByRole('button',{name:'Send test STK request'}).disabled).toBe(true)
 })

@@ -35,7 +35,7 @@ export default function Membership({ user }) {
     };
   }, [version]);
   const pending = payments.find(
-    (p) => p.status === "pending",
+    (p) => p.status === "pending" && !(p.environment === "sandbox" && membership?.payment_environment === "production"),
   );
   const refreshablePaymentId = pending && (pending.provider !== 'daraja_stk' || !membership?.payments_enabled) ? pending.id : null;
   useEffect(() => {
@@ -58,6 +58,7 @@ export default function Membership({ user }) {
     ) || membership?.plans[0];
   async function report(event) {
     event.preventDefault();
+    if (pending || busy) return;
     const fields = new FormData(event.currentTarget);
     setBusy(true);
     setError("");
@@ -143,7 +144,7 @@ export default function Membership({ user }) {
                     ))}
                   </select>
                 </label>
-                {membership.payments_enabled && <StkPayment plan={plan} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} />}
+                {membership.payments_enabled && <StkPayment plan={{...plan, amount: plan.stk_amount ?? plan.amount}} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} />}
                 {membership.manual_payment?.enabled && <><section
                   className="privacy-note"
                   aria-label="Manual M-Pesa instructions"
@@ -176,7 +177,7 @@ export default function Membership({ user }) {
                 </section>
                 {pending ? pending.provider === 'manual_mpesa' ? (
                   <p role="status">Receipt {pending.receipt} is awaiting administrator review. Status updates automatically.</p>
-                ) : null : (
+                ) : <p role="status">Payment status updates automatically. Wait for confirmation before submitting another payment.</p> : null}
                   <form onSubmit={report}>
                     <label>
                       M-Pesa receipt code
@@ -207,11 +208,11 @@ export default function Membership({ user }) {
                       <input type="checkbox" required disabled={busy} />I have
                       paid KES {plan.amount} to this Paybill and account.
                     </label>
-                    <button className="button primary" disabled={busy}>
+                    <button className="button primary" disabled={busy || !!pending}>
                       {busy ? "Submitting…" : "Submit payment for confirmation"}
                     </button>
                   </form>
-                )}</>}
+                </>}
               </>
             ) : (
               <p>Manual payment reporting is currently unavailable.</p>

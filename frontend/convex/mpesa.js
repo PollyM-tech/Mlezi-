@@ -1,24 +1,25 @@
+import { stkPricing } from './lib/paymentPricing.js'
 import { action,mutation,internalAction,internalMutation,internalQuery,httpAction } from './_generated/server.js'
 import { internal } from './_generated/api.js'
 import { v } from 'convex/values'
 import { requireAccount } from './lib/permissions.js'
-import { PLANS,fail,find,paymentData } from './lib/marketplace.js'
+import { fail,find,paymentData } from './lib/marketplace.js'
 import { consume,audit } from './lib/security.js'
 import { mpesaSettings,mpesaPhone,initiateProvider,queryProvider } from './lib/mpesa.js'
 
 export const prepare = internalMutation({ args:{planCode:v.string(),phone:v.string()},handler:async(ctx,args)=>{
   const account=await requireAccount(ctx,'employer','caregiver'),settings=mpesaSettings()
   if(!settings.enabled)fail('M-Pesa STK payments are not configured yet.',503)
-  const plan=PLANS[args.planCode]
+  const plan=stkPricing(account,args.planCode)
   if(!plan||plan.role!==account.role)fail('Select a valid membership plan')
   const profile=await ctx.db.query(account.role==='employer'?'employers':'caregivers').withIndex('by_account',q=>q.eq('accountId',account._id)).unique()
   if(!profile)fail('Complete your profile before purchasing membership')
-  const pending=await ctx.db.query('payments').withIndex('by_account',q=>q.eq('accountId',account._id)).filter(q=>q.eq(q.field('status'),'pending')).first()
+  const pending=await ctx.db.query('payments').withIndex('by_account',q=>q.eq('accountId',account._id)).filter(q=>q.and(q.eq(q.field('status'),'pending'),q.or(q.neq(q.field('environment'),'sandbox'),q.eq(q.field('environment'),settings.environment)))).first()
   if(pending)return{payment:pending,fresh:false}
   let phone;try{phone=mpesaPhone(args.phone)}catch{fail('Enter a valid Kenyan M-Pesa phone number')}
   await consume(ctx,`payment-starts:${account._id}`,3,600000)
   await consume(ctx,'payment-starts-global',50,3600000)
-  const id=await ctx.db.insert('payments',{provider:'daraja_stk',accountId:account._id,type:plan.type,planCode:args.planCode,durationDays:plan.days,amount:plan.amount,status:'pending',phone,
+  const id=await ctx.db.insert('payments',{provider:'daraja_stk',accountId:account._id,type:plan.type,planCode:args.planCode,durationDays:plan.days,amount:plan.amount,...(plan.testPricingExpiresAt?{standardAmount:plan.standardAmount,testPricingExpiresAt:plan.testPricingExpiresAt,testPricingAccountId:account._id}:{}),status:'pending',phone,
     environment:settings.environment,initiationState:'prepared',resultDescription:settings.environment==='sandbox'?'Sandbox test request is starting. No real membership payment.':'Payment request is starting.',createdAt:Date.now(),updatedAt:Date.now()})
   await audit(ctx,account._id,'payment_prepared',id)
   return{payment:await ctx.db.get(id),fresh:true}

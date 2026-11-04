@@ -30,7 +30,8 @@
     "paystack:check": "node --env-file-if-exists=.env.local scripts/check-paystack.mjs",
     "deployment:session:check": "node scripts/check-session-deployment.mjs",
     "mpesa:check": "node --env-file-if-exists=.env.local scripts/check-mpesa.mjs",
-    "mpesa:diagnose": "node scripts/diagnose-mpesa.mjs"
+    "mpesa:diagnose": "node scripts/diagnose-mpesa.mjs",
+    "mpesa:test-price": "node scripts/mpesa-test-price.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.41.1",
