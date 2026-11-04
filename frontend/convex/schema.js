@@ -82,6 +82,7 @@ export default defineSchema({
     reason: v.string(), details: optionalText,
     status: v.union(v.literal('open'), v.literal('reviewed'), v.literal('resolved')), createdAt: v.number(),
   }).index('by_status', ['status']).index('by_legacy_id', ['legacyId']),
+  mpesaQueryState: defineTable({ environment: v.union(v.literal('sandbox'),v.literal('production')), notBefore: v.number() }).index('by_environment',['environment']),
   // Server-priced payments. Callback claims never directly grant membership.
   payments: defineTable({
     ...legacy, accountId: v.id('accounts'),

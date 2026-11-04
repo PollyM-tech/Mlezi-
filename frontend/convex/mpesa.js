@@ -43,12 +43,21 @@ export const ownPayment = internalQuery({args:{id:v.string()},handler:async(ctx,
 export const claimQuery = internalMutation({args:{paymentId:v.id('payments')},handler:async(ctx,{paymentId})=>{
   const p=await ctx.db.get(paymentId),settings=mpesaSettings()
   if(!settings.enabled||!p||p.status!=='pending'||!p.checkoutRequestId||p.environment!==settings.environment||p.lastCheckedAt&&p.lastCheckedAt>Date.now()-10000)return null
+  const state=await ctx.db.query('mpesaQueryState').withIndex('by_environment',q=>q.eq('environment',p.environment)).unique()
+  if(state?.notBefore>Date.now())return null
+  const fields={environment:p.environment,notBefore:Date.now()+60000}
+  if(state)await ctx.db.patch(state._id,fields);else await ctx.db.insert('mpesaQueryState',fields)
   await ctx.db.patch(paymentId,{lastCheckedAt:Date.now()});return p
 } })
 export const get = internalQuery({args:{paymentId:v.id('payments')},handler:(ctx,{paymentId})=>ctx.db.get(paymentId)})
-export const waiting = internalMutation({args:{paymentId:v.id('payments'),reason:v.union(v.literal('pending'),v.literal('unavailable'))},handler:async(ctx,{paymentId,reason})=>{
+export const waiting = internalMutation({args:{paymentId:v.id('payments'),reason:v.union(v.literal('pending'),v.literal('unavailable')),retryAfterMs:v.optional(v.number())},handler:async(ctx,{paymentId,reason,retryAfterMs})=>{
   const p=await ctx.db.get(paymentId);if(!p||p.status!=='pending')return
-  const resultDescription=reason==='unavailable'?'Unable to confirm the result with Safaricom yet. This request remains pending; no membership has been activated.':p.environment==='sandbox'?'Safaricom sandbox has not returned a final result yet. This is a simulated test, not proof of a phone prompt or payment.':'Safaricom is still processing this request. Check again before paying.'
+  if(retryAfterMs){
+    const state=await ctx.db.query('mpesaQueryState').withIndex('by_environment',q=>q.eq('environment',p.environment)).unique()
+    const notBefore=Math.max(state?.notBefore||0,Date.now()+Math.min(3600000,Math.max(60000,retryAfterMs)))
+    if(state)await ctx.db.patch(state._id,{notBefore});else await ctx.db.insert('mpesaQueryState',{environment:p.environment,notBefore})
+  }
+  const resultDescription=retryAfterMs?'Safaricom is limiting status checks. We will retry after a short wait. This request is not yet confirmed; do not send another payment.':reason==='unavailable'?'Unable to confirm the result with Safaricom yet. This request remains pending; no membership has been activated.':p.environment==='sandbox'?'Safaricom sandbox has not returned a final result yet. This is a simulated test, not proof of a phone prompt or payment.':'Safaricom is still processing this request. Check again before paying.'
   await ctx.db.patch(paymentId,{resultDescription,updatedAt:Date.now()})
 }})
 export const closeSandboxTest = mutation({args:{id:v.string()},handler:async(ctx,{id})=>{
@@ -67,7 +76,7 @@ export const reconcile = internalAction({args:{paymentId:v.id('payments')},handl
     const code=await queryProvider(mpesaSettings(),p)
     if(code!==null)await ctx.runMutation(internal.memberships.settle,{paymentId,resultCode:code})
     else await ctx.runMutation(internal.mpesa.waiting,{paymentId,reason:'pending'})
-  }catch{await ctx.runMutation(internal.mpesa.waiting,{paymentId,reason:'unavailable'})}
+  }catch(error){await ctx.runMutation(internal.mpesa.waiting,{paymentId,reason:'unavailable',...(error.retryAfterMs?{retryAfterMs:error.retryAfterMs}:{})})}
 } })
 export const start = action({args:{planCode:v.string(),phone:v.string()},handler:async(ctx,args)=>{
   const prepared=await ctx.runMutation(internal.mpesa.prepare,args),p=prepared.payment
@@ -103,7 +112,7 @@ export const callback = httpAction(async(ctx,request)=>{
 export const pending = internalQuery({args:{},handler:ctx=>ctx.db.query('payments').withIndex('by_status',q=>q.eq('status','pending')).filter(q=>q.and(q.eq(q.field('provider'),'daraja_stk'),q.gt(q.field('createdAt'),Date.now()-86400000))).take(50)})
 export const sweep = internalAction({args:{},handler:async ctx=>{
   if(!mpesaSettings().enabled)return
-  const rows=await ctx.runQuery(internal.mpesa.pending,{})
+  const rows=(await ctx.runQuery(internal.mpesa.pending,{})).sort((a,b)=>(a.lastCheckedAt||0)-(b.lastCheckedAt||0))
   // Bound simultaneous provider calls and keep a slow provider within action limits.
   for(let i=0;i<rows.length;i+=5)await Promise.allSettled(rows.slice(i,i+5).filter(p=>p.checkoutRequestId).map(p=>ctx.runAction(internal.mpesa.reconcile,{paymentId:p._id})))
 } })
