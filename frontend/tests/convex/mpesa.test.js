@@ -33,7 +33,7 @@ it('uses server pricing, isolates accounts, and prevents repeated STK or manual 
  expect(fetcher).toHaveBeenCalledTimes(2)
  const request=JSON.parse(fetcher.mock.calls[1][1].body);expect(request).toMatchObject({Amount:300,PartyA:'254712345678',BusinessShortCode:'174379',TransactionType:'CustomerPayBillOnline'})
  await expect(other.client.action(api.mpesa.check,{id:first.payment.id})).rejects.toThrow('not found')
- await expect(e.client.mutation(api.manualPayments.submit,{planCode:input.planCode,phone:input.phone,receipt:'TESTCODE01'})).rejects.toThrow('already awaiting')
+ await expect(e.client.mutation(api.manualPayments.submit,{planCode:input.planCode,phone:input.phone,receipt:'TESTCODE01'})).rejects.toThrow('currently unavailable')
 })
 it('treats callback as a hint and confirms sandbox without granting real membership',async()=>{
  const t=convexTest(schema,modules),e=await setup(t);provider();const {payment}=await e.client.action(api.mpesa.start,input)

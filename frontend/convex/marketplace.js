@@ -1,3 +1,4 @@
+import { assertNoContact, PROFILE_TEXT_FIELDS } from './lib/contactPolicy.js'
 import { stkPricing } from './lib/paymentPricing.js'
 import { mpesaSettings } from './lib/mpesa.js'
 import { canPublish } from './lib/listingPolicy.js'
@@ -162,6 +163,7 @@ async function saveProfile(ctx, data, creating, requestedId) {
   if (!creating && !old) fail('Caregiver profile not found', 404)
   if (requestedId && (await find(ctx, 'caregivers', requestedId))._id !== old?._id) fail('You can only edit your own profile', 403)
   const fields = profileFields(data, old), contactPhone = data.phone === undefined ? a.phone : phone(data.phone)
+  assertNoContact(PROFILE_TEXT_FIELDS.map(key => fields[key]))
   if (creating && (!data.photo || !data.national_id || !data.selfie)) fail('Profile photo, National ID and selfie are required')
   if (creating && data.consent !== 'true') fail('Confirm permission to compare your ID, selfie and profile photo')
   const oldDocuments = old ? await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', old._id)).unique() : null
@@ -211,6 +213,7 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
     const { account, profile } = await owned(ctx, 'employers', 'employer')
     if (Object.keys(data).some(key => !['name', 'phone'].includes(key))) fail('Only your name and phone can be changed here')
     const name = text(data.name ?? profile.name ?? '', 'your name', 120, true), value = phone(data.phone ?? account.phone)
+    assertNoContact([name])
     await ctx.db.patch(account._id, { name, phone: value }); await ctx.db.patch(profile._id, { name })
     return { profile: employerProfile({ ...profile, name }, { ...account, phone: value }) }
   }
@@ -240,6 +243,7 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
     const comment = text(data.comment, 'a review', 2000, true), authorName = text(data.author_name, 'your first name', 80, true).split(/\s+/)[0]
     const old = await ctx.db.query('reviews').withIndex('by_pair', q => q.eq('employerAccountId', account._id).eq('caregiverId', p._id)).unique()
     if (old && !old.isPublic) fail('This review is under moderation. Contact support.', 403)
+    assertNoContact([comment, authorName])
     const fields = { rating: data.rating, comment, authorName, updatedAt: Date.now() }
     if (old) await ctx.db.patch(old._id, fields)
     const id = old?._id || await ctx.db.insert('reviews', { ...fields, employerAccountId: account._id, caregiverId: p._id, isPublic: true, createdAt: Date.now() })
@@ -250,6 +254,7 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   if ((match = path.match(/^\/reviews\/([^/]+)\/reply$/)) && method === 'PUT') {
     const a = await requireAccount(ctx, 'caregiver'), r = await find(ctx, 'reviews', match[1]), p = await ctx.db.get(r.caregiverId)
     if (!r.isPublic || p.accountId !== a._id) fail('Review not found', 404)
+    assertNoContact([data.reply])
     await ctx.db.patch(r._id, { reply: text(data.reply, 'a reply', 2000, true), updatedAt: Date.now() })
     return { review: reviewData(await ctx.db.get(r._id)) }
   }

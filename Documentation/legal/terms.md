@@ -1,6 +1,6 @@
 # Mlezi Terms of use
 
-Prepared 1 November 2026 · Version 2026-11-03
+Prepared 1 November 2026 · Version 2026-11-04
 
 **Pre-launch review copy. Not a legal approval or publication authorization.**
 
@@ -48,7 +48,7 @@ Browsing, shortlisting and a basic caregiver profile are free. Employer contact 
 
 Renewal is manual. No automatic recurring charge is authorized here. Early renewal extends the existing unexpired term; otherwise a term starts on confirmed activation. Previously unlocked contacts remain after ordinary expiry, while new unlocks require active access. Deletion and identity/safety restrictions can still affect access.
 
-Where enabled, M-Pesa STK Push sends a one-off payment request to your phone. Confirm the amount and business on your phone; never enter your M-Pesa PIN on Mlezi. Membership activates after server confirmation, not merely after requesting a prompt. Sandbox confirmations are tests and do not activate membership. Manual M-Pesa payment uses Paybill 4125123, account mlezicare. Review the selected plan and amount before paying, then submit the receipt code and paying phone in Membership. An administrator confirms receipt, amount, sender and destination against the business statement before activating access; a submitted code alone grants no membership or identity approval. Automated Paystack checkout is not enabled. For incorrect, duplicate, failed or unrecognized payments, contact Support for investigation and any applicable correction or refund; do not pay again while a report is pending. Rejection of a report does not reverse or refund an M-Pesa transfer automatically. This draft imposes no blanket no-refunds rule or waiver of statutory rights. Mlezi does not collect caregiver wages.
+Where enabled, M-Pesa STK Push sends a one-off payment request to your phone. Confirm the amount and business on your phone; never enter your M-Pesa PIN on Mlezi. Membership activates after server confirmation, not merely after requesting a prompt. Sandbox confirmations are tests and do not activate membership. Manual Paybill receipt submissions are currently unavailable. Automated Paystack checkout is not enabled. For incorrect, duplicate, failed or unrecognized payments, contact Support for investigation and any applicable correction or refund; do not pay again while a report is pending. Rejection of a report does not reverse or refund an M-Pesa transfer automatically. Confirmed platform membership payments are non-refundable for a change of mind, unused access, account deletion or dissatisfaction with a caregiver. This policy does not exclude refunds, payment corrections or other remedies required by applicable law. Mlezi does not collect caregiver wages.
 
 
 ## 6. Content and conduct
@@ -62,14 +62,14 @@ Do not harass, discriminate unlawfully, impersonate, scam, publish children’s 
 
 We may remove content, pause publication, restrict contacts or suspend an account for suspected breaches, identity problems, safety or legal obligations. We explain the basis and offer a review route through Support where appropriate, without compromising privacy or investigations. Platform action does not change legal employment obligations.
 
-You can stop using the service and request deletion through Privacy and account. The Privacy notice explains the seven-day cancellation period, file removal and justified retention. Previously shared information cannot always be recalled. Use Support to request review of cancellation/refund concerns. Any refund must be investigated and processed separately; withdrawing access or rejecting a report does not itself reverse a payment.
+You can stop using the service and request deletion through Privacy and account. The Privacy notice explains the two-hour cancellation period, file removal and justified retention. Previously shared information cannot always be recalled. Use Support to request review of cancellation/refund concerns. Any refund must be investigated and processed separately; withdrawing access or rejecting a report does not itself reverse a payment.
 
 
 ## 8. Support and responsibility
 
 Use Support for account, technical, identity, privacy and safety concerns. Signed-out users can submit an issue with their email once delivery/spam protection is configured. Acknowledgements and staff replies are emailed. Our support commitment is to address an issue within 48 hours; it is not emergency response.
 
-We remain responsible for our own platform obligations. Families and caregivers remain responsible for their actual care and employment arrangements. Report interruptions, inaccurate information and misconduct for assessment. Nothing here excludes liability or removes consumer, employment, data-protection or other rights that applicable law does not allow us to exclude.
+Mlezi is a marketplace, not a recruitment agency or the employer or supervisor of caregivers. Families select, hire, supervise and pay caregivers directly. To the extent permitted by applicable law, Lintech Telecom and Mlezi are not responsible for a caregiver’s independent acts, omissions or misconduct, or disputes arising from the family’s employment or care arrangement. Identity checking and Premium membership do not guarantee conduct, suitability or safety. We remain responsible for our own platform obligations. Report interruptions, inaccurate information and misconduct for assessment. Nothing here excludes liability or removes consumer, employment, data-protection or other rights that applicable law does not allow us to exclude.
 
 These terms are prepared for a Kenya-focused marketplace under applicable Kenyan law. Cross-border arrangements may also involve other local requirements. Support can help seek a practical resolution without waiving access to competent courts, regulators or other lawful remedies. This draft imposes no compulsory private arbitration or blanket release of claims.
 

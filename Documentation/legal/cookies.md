@@ -1,6 +1,6 @@
 # Mlezi Cookie policy
 
-Prepared 1 November 2026 · Version 2026-11-03
+Prepared 1 November 2026 · Version 2026-11-04
 
 **Pre-launch review copy. Not a legal approval or publication authorization.**
 

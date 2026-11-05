@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useMutation } from "convex/react";
-import { api as functions } from "../../convex/_generated/api.js";
 import { api } from "../lib/api";
 
 import StkPayment from './StkPayment.jsx';
@@ -10,14 +8,11 @@ export default function Membership({ user }) {
     [payments, setPayments] = useState([]),
     [selected, setSelected] = useState("");
   const [error, setError] = useState(""),
-    [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0);
   const refreshPayments = useCallback(payment => {
     if (payment) setPayments(current => [payment, ...current.filter(item => item.id !== payment.id)]);
     setVersion(v => v + 1);
   }, []);
-  const submit = useMutation(functions.manualPayments.submit);
   useEffect(() => {
     let active = true;
     Promise.all([api("/memberships"), api("/payments")])
@@ -56,35 +51,6 @@ export default function Membership({ user }) {
     membership?.plans.find(
       (p) => p.code === (selected || pending?.plan_code),
     ) || membership?.plans[0];
-  async function report(event) {
-    event.preventDefault();
-    if (pending || busy) return;
-    const fields = new FormData(event.currentTarget);
-    setBusy(true);
-    setError("");
-    setMessage("");
-    try {
-      await submit({
-        planCode: plan.code,
-        receipt: String(fields.get("receipt") || ""),
-        phone: String(fields.get("phone") || ""),
-      });
-      setMessage(
-        "Payment report received. Access activates after an administrator checks the business statement.",
-      );
-      setVersion((v) => v + 1);
-    } catch (e) {
-      setError(
-        typeof e.data === "string"
-          ? e.data
-          : e.data?.message ||
-              e.message ||
-              "Unable to submit your payment report.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <>
       <div className="page-heading">
@@ -107,11 +73,6 @@ export default function Membership({ user }) {
           {error}
         </div>
       )}
-      {message && (
-        <p className="alert" role="status">
-          {message}
-        </p>
-      )}
       {!membership ? (
         <p>Loading membership…</p>
       ) : (
@@ -128,94 +89,27 @@ export default function Membership({ user }) {
             {membership.expires_at && (
               <p>Expiry: {new Date(membership.expires_at).toLocaleString()}</p>
             )}
-            {(membership.manual_payment?.enabled || membership.payments_enabled) && plan ? (
+            {membership.payments_enabled && plan ? (
               <>
                 <label>
                   Choose your plan
                   <select
                     value={plan.code}
-                    disabled={busy || !!pending}
+                    disabled={!!pending}
                     onChange={(e) => setSelected(e.target.value)}
                   >
                     {membership.plans.map((p) => (
                       <option key={p.code} value={p.code}>
-                        KES {p.amount} · {p.days} days
+                        KES {p.stk_amount ?? p.amount} · {p.days} days
                       </option>
                     ))}
                   </select>
                 </label>
                 {membership.payments_enabled && <StkPayment plan={{...plan, amount: plan.stk_amount ?? plan.amount}} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} />}
-                {membership.manual_payment?.enabled && <><section
-                  className="privacy-note"
-                  aria-label="Manual M-Pesa instructions"
-                >
-                  <h3>Pay manually with M-Pesa</h3>
-                  <ol>
-                    <li>Open M-Pesa → Lipa na M-Pesa → Pay Bill.</li>
-                    <li>
-                      Business number:{" "}
-                      <strong>{membership.manual_payment.paybill}</strong>
-                    </li>
-                    <li>
-                      Account number:{" "}
-                      <strong>{membership.manual_payment.account}</strong>
-                    </li>
-                    <li>
-                      Amount: <strong>KES {plan.amount}</strong> for {plan.days}{" "}
-                      days.
-                    </li>
-                    <li>
-                      Check the business details shown by M-Pesa, then confirm
-                      in M-Pesa.
-                    </li>
-                  </ol>
-                  <p>
-                    Return here and submit the receipt code. Never share your
-                    M-Pesa PIN or an OTP. If the business details look wrong,
-                    cancel and use Support.
-                  </p>
-                </section>
-                {pending ? pending.provider === 'manual_mpesa' ? (
-                  <p role="status">Receipt {pending.receipt} is awaiting administrator review. Status updates automatically.</p>
-                ) : <p role="status">Payment status updates automatically. Wait for confirmation before submitting another payment.</p> : null}
-                  <form onSubmit={report}>
-                    <label>
-                      M-Pesa receipt code
-                      <input
-                        name="receipt"
-                        autoComplete="off"
-                        maxLength={10}
-                        minLength={10}
-                        pattern="[A-Za-z0-9]{10}"
-                        placeholder="10-character receipt code"
-                        required
-                        disabled={busy}
-                      />
-                    </label>
-                    <label>
-                      Phone number used to pay
-                      <input
-                        name="phone"
-                        type="tel"
-                        autoComplete="tel"
-                        defaultValue={user.phone || ""}
-                        maxLength={32}
-                        required
-                        disabled={busy}
-                      />
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" required disabled={busy} />I have
-                      paid KES {plan.amount} to this Paybill and account.
-                    </label>
-                    <button className="button primary" disabled={busy || !!pending}>
-                      {busy ? "Submitting…" : "Submit payment for confirmation"}
-                    </button>
-                  </form>
-                </>}
+
               </>
             ) : (
-              <p>Manual payment reporting is currently unavailable.</p>
+              <p>M-Pesa STK payments are currently unavailable. Please try again later.</p>
             )}
           </section>
           <aside className="card side-card">

@@ -1,10 +1,10 @@
+import { ACCOUNT_DELETION_GRACE_MS } from './lib/privacyPolicy.js'
 import { query, mutation, internalMutation } from './_generated/server.js'
 import { internal } from './_generated/api.js'
 import { v } from 'convex/values'
 import { verifiedIdentity, requireAccount } from './lib/permissions.js'
 import { audit, consume } from './lib/security.js'
 import { fail, text } from './lib/marketplace.js'
-const DAY = 86400000
 async function own(ctx) {
   const identity = await verifiedIdentity(ctx)
   const a = await ctx.db.query('accounts').withIndex('by_auth_subject', q => q.eq('authSubject', identity.userId)).unique()
@@ -13,7 +13,7 @@ async function own(ctx) {
 }
 export const status = query({ args: {}, handler: async ctx => {
   const a = await own(ctx)
-  return { deletionRequestedAt: a.deletionRequestedAt || null, requests: (await ctx.db.query('dataRequests').withIndex('by_account', q => q.eq('accountId', a._id)).collect()).map(r => ({ id: r._id, type: r.type, status: r.status, createdAt: r.createdAt })) }
+  return { deletionRequestedAt: a.deletionRequestedAt || null, deletionScheduledFor: a.deletionRequestedAt ? a.deletionRequestedAt + ACCOUNT_DELETION_GRACE_MS : null, requests: (await ctx.db.query('dataRequests').withIndex('by_account', q => q.eq('accountId', a._id)).collect()).map(r => ({ id: r._id, type: r.type, status: r.status, createdAt: r.createdAt })) }
 } })
 export const exportOwn = mutation({ args: {}, handler: async ctx => {
   const a = await own(ctx); await consume(ctx, `export:${a._id}`, 3, 86400000)
@@ -42,7 +42,7 @@ export const request = mutation({ args: { type: v.union(v.literal('deletion'), v
     await ctx.db.patch(a._id, { deletionRequestedAt: Date.now() })
     const p = await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', a._id)).unique()
     if (p) await ctx.db.patch(p._id, { isAvailable: false })
-    await ctx.scheduler.runAfter(7 * DAY, internal.privacy.purge, { accountId: a._id })
+    await ctx.scheduler.runAfter(ACCOUNT_DELETION_GRACE_MS, internal.privacy.purge, { accountId: a._id })
   }
   await ctx.db.insert('dataRequests', { accountId: a._id, type: args.type, details: text(args.details, 'request details', 2000), status: 'open', createdAt: Date.now() })
   await audit(ctx, a._id, `privacy_${args.type}_requested`)
@@ -51,6 +51,7 @@ export const request = mutation({ args: { type: v.union(v.literal('deletion'), v
 export const cancelDeletion = mutation({ args: {}, handler: async ctx => {
   const a = await own(ctx)
   if (!a.deletionRequestedAt) return
+  if (a.deletionRequestedAt + ACCOUNT_DELETION_GRACE_MS <= Date.now()) fail('The two-hour cancellation period has ended. Account deletion is being processed.', 409)
   await ctx.db.patch(a._id, { deletionRequestedAt: undefined })
   for (const r of await ctx.db.query('dataRequests').withIndex('by_account', q => q.eq('accountId', a._id)).collect()) if (r.type === 'deletion' && r.status === 'open') await ctx.db.patch(r._id, { status: 'resolved' })
   await audit(ctx, a._id, 'privacy_deletion_cancelled')
@@ -59,7 +60,7 @@ export const requests = query({ args: {}, handler: async ctx => { await requireA
 export const resolve = mutation({ args: { id: v.id('dataRequests') }, handler: async (ctx, { id }) => { const a = await requireAccount(ctx, 'admin'); const r = await ctx.db.get(id); if (!r || r.type === 'deletion') fail('Deletion requests are completed by the retention worker'); await ctx.db.patch(id, { status: 'resolved' }); await audit(ctx, a._id, 'privacy_request_resolved', id) } })
 export const purge = internalMutation({ args: { accountId: v.id('accounts') }, handler: async (ctx, { accountId }) => {
   const a = await ctx.db.get(accountId)
-  if (!a?.deletionRequestedAt || a.deletionRequestedAt + 7 * DAY > Date.now()) return
+  if (!a?.deletionRequestedAt || a.deletionRequestedAt + ACCOUNT_DELETION_GRACE_MS > Date.now()) return
   const jobBatch = await ctx.db.query('jobs').withIndex('by_employer',q=>q.eq('employerAccountId',accountId)).take(5)
   for (const job of jobBatch) {
     for (const proposal of await ctx.db.query('jobApplications').withIndex('by_job',q=>q.eq('jobId',job._id)).take(100)) await ctx.db.delete(proposal._id)

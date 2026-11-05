@@ -1,3 +1,4 @@
+import { assertNoContact, safePublicText } from './lib/contactPolicy.js'
 import { query, mutation } from './_generated/server.js'
 import { v } from 'convex/values'
 import { requireAccount } from './lib/permissions.js'
@@ -10,8 +11,8 @@ const applicationId = { id: v.id('jobApplications') }
 const pair = (ctx, id, accountId) => ctx.db.query('jobApplications').withIndex('by_pair',q=>q.eq('jobId',id).eq('caregiverAccountId',accountId)).unique()
 const restricted = a => !a || !!a.suspendedAt || !!a.deletionRequestedAt
 function amount(value) { if (!Number.isInteger(value) || value < 1 || value > 2147483647) fail('Enter a positive whole-shilling pay amount'); return value }
-function jobData(j) { return { id:j._id,title:j.title,description:j.description,category:j.category,serviceTypes:j.serviceTypes,location:j.location,payMin:j.payMin,payMax:j.payMax,payPeriod:j.payPeriod,status:j.status,applicationsCount:j.applicationsCount,createdAt:j.createdAt,updatedAt:j.updatedAt } }
-function applicationData(a) { return {id:a._id,jobId:a.jobId,message:a.message,proposedPay:a.proposedPay,payPeriod:a.payPeriod,status:a.status,createdAt:a.createdAt,updatedAt:a.updatedAt} }
+function jobData(j) { return { id:j._id,title:safePublicText(j.title),description:safePublicText(j.description),category:j.category,serviceTypes:j.serviceTypes,location:safePublicText(j.location),payMin:j.payMin,payMax:j.payMax,payPeriod:j.payPeriod,status:j.status,applicationsCount:j.applicationsCount,createdAt:j.createdAt,updatedAt:j.updatedAt } }
+function applicationData(a) { return {id:a._id,jobId:a.jobId,message:safePublicText(a.message),proposedPay:a.proposedPay,payPeriod:a.payPeriod,status:a.status,createdAt:a.createdAt,updatedAt:a.updatedAt} }
 async function viewJob(ctx, id, viewer) {
   const job = await ctx.db.get(id)
   if (!job || restricted(await ctx.db.get(job.employerAccountId))) return null
@@ -41,7 +42,7 @@ export const detail = query({args:jobId,handler:async(ctx,{id})=>{
   const a=await requireAccount(ctx,'employer','caregiver','admin'),job=await viewJob(ctx,id,a)
   if(!job)return null
   const owner=await ctx.db.get(job.employerAccountId),application=a.role==='caregiver'?await pair(ctx,id,a._id):null
-  return {...jobData(job),employerName:owner.name||'Employer',ownApplication:application?applicationData(application):null,...(application?.status==='hired'&&job.hiredApplicationId===application._id?{employerContact:{email:owner.email,phone:owner.phone||null}}:{})}
+  return {...jobData(job),employerName:safePublicText(owner.name)||'Employer',ownApplication:application?applicationData(application):null,...(application?.status==='hired'&&job.hiredApplicationId===application._id?{employerContact:{email:owner.email,phone:owner.phone||null}}:{})}
 }})
 export const applications = query({args:{...jobId,cursor:v.optional(v.string())},handler:async(ctx,{id,cursor})=>{
   const a=await requireAccount(ctx,'employer','admin'),j=await viewJob(ctx,id,a)
@@ -55,9 +56,10 @@ export const applications = query({args:{...jobId,cursor:v.optional(v.string())}
 export const mine = query({args:{cursor:v.optional(v.string())},handler:async(ctx,{cursor})=>{
   const a=await requireAccount(ctx,'caregiver')
   const page=await ctx.db.query('jobApplications').withIndex('by_caregiver',q=>q.eq('caregiverAccountId',a._id)).order('desc').paginate({numItems:20,cursor:cursor||null})
-  return {applications:await Promise.all(page.page.map(async r=>{const j=await ctx.db.get(r.jobId);return {...applicationData(r),jobTitle:j?.title||'Job unavailable',jobStatus:j?.status||'closed'}})),cursor:page.isDone?null:page.continueCursor}
+  return {applications:await Promise.all(page.page.map(async r=>{const j=await ctx.db.get(r.jobId);return {...applicationData(r),jobTitle:safePublicText(j?.title)||'Job unavailable',jobStatus:j?.status||'closed'}})),cursor:page.isDone?null:page.continueCursor}
 }})
 export const create = mutation({args:{title:v.string(),description:v.string(),category:v.string(),serviceTypes:v.array(v.string()),location:v.string(),payMin:v.number(),payMax:v.number(),payPeriod:period},handler:async(ctx,args)=>{
+  assertNoContact([args.title,args.description,args.location])
   const a=await requireAccount(ctx,'employer');await consume(ctx,`job-create:${a._id}`,10,86400000)
   if(!CATEGORIES.includes(args.category)||!args.serviceTypes.length||args.serviceTypes.length>SERVICES.length||args.serviceTypes.some(s=>!SERVICES.includes(s)))fail('Choose valid care requirements')
   amount(args.payMin);amount(args.payMax);if(args.payMin>args.payMax)fail('Minimum pay cannot exceed maximum pay')
@@ -65,6 +67,7 @@ export const create = mutation({args:{title:v.string(),description:v.string(),ca
   await audit(ctx,a._id,'job_posted',id);return {id}
 }})
 export const apply = mutation({args:{...jobId,message:v.string(),proposedPay:v.number(),payPeriod:period},handler:async(ctx,{id,message,proposedPay,payPeriod})=>{
+  assertNoContact([message])
   const a=await requireAccount(ctx,'caregiver'),p=await candidate(ctx,a),j=await viewJob(ctx,id,a)
   if(!j||j.status!=='open')fail('This job is not accepting applications')
   const previous=await pair(ctx,id,a._id)

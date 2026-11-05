@@ -1,3 +1,4 @@
+import { ACCOUNT_DELETION_GRACE_MS } from './lib/privacyPolicy.js'
 import { internalMutation } from './_generated/server.js'
 import { internal } from './_generated/api.js'
 const DAY = 86400000
@@ -13,7 +14,7 @@ export const sweep = internalMutation({ args: {}, handler: async ctx => {
   for (const r of await ctx.db.query('authEmailLimits').collect()) if (r.lastSentAt < Date.now() - 7 * DAY) await ctx.db.delete(r._id)
   for (const r of await ctx.db.query('securityAudit').withIndex('by_created', q => q.lt('createdAt', Date.now() - 90 * DAY)).take(500)) await ctx.db.delete(r._id)
   for (const r of await ctx.db.query('adminSessions').collect()) if (r.expiresAt < Date.now()) await ctx.db.delete(r._id)
-  for (const r of await ctx.db.query('accounts').collect()) if (r.deletionRequestedAt && r.deletionRequestedAt + 7 * DAY <= Date.now() && r.authSubject) await ctx.scheduler.runAfter(0, internal.privacy.purge, { accountId: r._id })
+  for (const r of await ctx.db.query('accounts').collect()) if (r.deletionRequestedAt && r.deletionRequestedAt + ACCOUNT_DELETION_GRACE_MS <= Date.now() && r.authSubject) await ctx.scheduler.runAfter(0, internal.privacy.purge, { accountId: r._id })
   for (const s of await ctx.db.query('verificationSubmissions').collect()) {
     if (s.status === 'pending' && s.submittedAt < Date.now() - 30 * DAY) {
       if (s.selfie?.provider === 'convex') await ctx.storage.delete(s.selfie.storageId)

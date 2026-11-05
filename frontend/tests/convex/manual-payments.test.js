@@ -1,11 +1,13 @@
-import { it, expect, vi, afterEach } from "vitest";
+import { MANUAL_MPESA } from '../../convex/lib/manualPaymentPolicy.js';
+import { it, expect, vi, afterEach, beforeEach } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "../../convex/schema.js";
 import { api } from "../../convex/_generated/api.js";
 import { DAY } from "../../convex/lib/marketplace.js";
 const modules = import.meta.glob("../../convex/**/*.js");
 const make = () => convexTest(schema, modules);
-afterEach(() => vi.restoreAllMocks());
+beforeEach(() => { MANUAL_MPESA.enabled = true });
+afterEach(() => { MANUAL_MPESA.enabled = false; vi.restoreAllMocks() });
 async function person(t, role = "employer", suffix = role) {
   const ids = await t.run(async (ctx) => {
     const userId = await ctx.db.insert("users", {
@@ -240,4 +242,12 @@ it("does not activate restricted accounts or missing-profile caregivers", async 
   await expect(report(c, "TESTCODE04", "caregiver_365_days")).rejects.toThrow(
     "photo",
   );
+});
+
+it("rejects receipt submissions when manual payments are disabled without granting access", async () => {
+ MANUAL_MPESA.enabled=false;
+ const t=make(), e=await person(t);
+ await expect(report(e)).rejects.toThrow('currently unavailable');
+ expect(await t.run(ctx=>ctx.db.query('payments').collect())).toHaveLength(0);
+ expect((await t.run(ctx=>ctx.db.get(e.profileId))).accessExpiresAt).toBeUndefined();
 });

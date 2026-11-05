@@ -1,3 +1,4 @@
+import { safeProfileText, safePublicText } from './contactPolicy.js'
 import { ConvexError } from 'convex/values'
 import { requireAccount } from './permissions.js'
 
@@ -34,6 +35,7 @@ export async function owned(ctx, table, ...roles) {
   return { account, profile }
 }
 export async function publicProfile(ctx, p, account) {
+  p = { ...p, ...safeProfileText(p) }
   const result = { id: externalId(p), name: p.name, photo_url: p.photo.provider === 'convex' ? await ctx.storage.getUrl(p.photo.storageId) : p.photoUrl,
     bio: p.bio || null, service_category: p.category, service_types: p.services, other_service_description: p.otherServiceDescription || null,
     location: p.location || null, years_experience: p.yearsExperience, expected_pay_min: p.payMin ?? null, expected_pay_max: p.payMax ?? null,
@@ -50,7 +52,7 @@ export async function publicProfile(ctx, p, account) {
 export function employerProfile(p, account) {
   return { name: p.name || account.name || '', email: account.email, phone: account.phone || '', pass_active: active(p.accessExpiresAt), pass_expires_at: iso(p.accessExpiresAt) }
 }
-export function reviewData(r) { return { id: externalId(r), rating: r.rating, comment: r.comment || '', author_name: r.authorName || 'Employer', reply: r.reply || null, created_at: iso(r.createdAt) } }
+export function reviewData(r) { return { id: externalId(r), rating: r.rating, comment: safePublicText(r.comment) || '', author_name: safePublicText(r.authorName) || 'Employer', reply: safePublicText(r.reply) || null, created_at: iso(r.createdAt) } }
 export function verificationData(s) { return s ? { id: externalId(s), status: s.status, submitted_at: iso(s.submittedAt), reviewed_at: iso(s.reviewedAt), rejection_reason: s.rejectionReason || null } : null }
 export function paymentData(p) { return { id: externalId(p), type: p.type, plan_code: p.planCode || null, amount: p.amount, status: p.status, provider: p.provider || null, environment: p.environment || null, initiation_state: p.initiationState || null, receipt: p.provider === 'manual_mpesa' ? p.mpesaRef || null : null, phone: p.provider === 'manual_mpesa' ? p.phone || null : null, reviewed_at: iso(p.reviewedAt), result_description: p.resultDescription || null, created_at: iso(p.createdAt) } }
 export async function aggregate(ctx, caregiverId) {

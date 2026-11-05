@@ -1,6 +1,6 @@
 # Mlezi Privacy notice
 
-Prepared 1 November 2026 · Version 2026-11-03
+Prepared 1 November 2026 · Version 2026-11-04
 
 **Pre-launch review copy. Not a legal approval or publication authorization.**
 
@@ -77,7 +77,7 @@ Ratings are calculated from public employer reviews. Unlocking a contact permits
 
 ## 8. Retention and deletion
 
-Deletion is scheduled/batched, so removal can finish after a threshold rather than at its exact instant. An account-deletion request hides caregiver availability and restricts ordinary use immediately, followed by a seven-day cancellation period before personal records and associated files are purged. Limited pseudonymous audit/financial references may remain where justified.
+Deletion is scheduled/batched, so removal can finish after a threshold rather than at its exact instant. An account-deletion request hides caregiver availability and restricts ordinary use immediately, followed by a two-hour cancellation period before personal records and associated files are purged. Limited pseudonymous audit/financial references may remain where justified.
 
 Cloud backups, provider logs and former migration/rollback copies need their own approved retention and secure-disposal schedule. That schedule is not yet finalized. Live-record deletion does not immediately erase every protected backup. Final backup limits, restore safeguards and payment-record retention must be documented before the relevant production use.
 

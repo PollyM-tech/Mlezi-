@@ -1,2 +1,2 @@
 // Increment when the published terms/privacy text materially changes.
-export const LEGAL_VERSION = '2026-11-03'
+export const LEGAL_VERSION = '2026-11-04'

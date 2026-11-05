@@ -116,3 +116,44 @@ Pricing also expires automatically. Already initiated authorized KES 5 payments
 can settle after pricing is disabled. Restoring prices does not revoke benefits
 already purchased. Never change the browser amount or global plan constants to
 run this test.
+
+### Employer contact-access enforcement
+
+Contact authorization is enforced in Convex, not by hiding browser buttons.
+An employer needs an active server-stored contact-access pass to create a new
+contact unlock. Pending, failed and sandbox payments do not activate a pass.
+Browser-supplied payment flags and expiry dates cannot grant access. Each unlock
+belongs to one employer and one caregiver; another employer cannot reuse it.
+Previously unlocked contacts remain available after ordinary pass expiry, while
+new unlocks require renewal. Identity approval and availability rules still apply.
+
+Search, profile, shortlist and job-applicant projections exclude stored caregiver
+phone/email fields. Job acceptance requires active employer contact access or an
+existing unlock for that caregiver. Private identity documents remain restricted
+to administrator review. Regression tests cover unpaid and anonymous access,
+role restrictions, forged entitlement updates, employer isolation and expiry.
+This protects stored contact fields; users can still attempt to put contact
+information in free-text proposals, biographies or images, which needs moderation.
+
+### Contact sharing in public text
+
+Convex rejects common phone numbers, email addresses, contact links, social
+handles and common obfuscations in caregiver profile text, job posts, proposals,
+reviews and replies. Existing matching text is redacted in shared responses,
+without deleting the stored original. Private account phone/email fields and
+paid contact unlocks keep their normal behavior. Detection includes spaced and
+Unicode phone digits, zero-width characters, spelled-out English digits, and
+common “at/dot” email obfuscation. Ordinary pay ranges and experience text remain
+allowed. This is a heuristic: images, QR codes and novel obfuscation still require
+moderation. It cannot guarantee detection of every attempt to exchange contacts.
+
+### Current release: STK-only checkout
+
+Manual Paybill instructions and receipt entry are removed from customer checkout.
+`MANUAL_MPESA.enabled` is false, so Convex rejects new manual receipt submissions
+as well. The FAQ and payment terms describe STK checkout. Existing manual payment
+records and administrator review remain available to resolve earlier submissions;
+disabling new submissions does not delete or auto-approve any records. Restore
+manual checkout only after its separate C2B verification integration is tested.
+The previous manual-payment setup sections describe historical/future functionality,
+not an available customer payment option in this release.

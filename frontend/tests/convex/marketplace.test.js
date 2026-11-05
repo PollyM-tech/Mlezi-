@@ -371,3 +371,59 @@ it('lets a legacy caregiver restore a missing photo and ID from profile setup wi
  expect(restored.profile.national_id_uploaded).toBe(true);expect(restored.profile.verification_status).toBe('pending')
  expect((await c.client.query(api.accounts.current,{})).status).toBe('ready')
 })
+
+it('keeps caregiver contacts out of unpaid employer responses and rejects direct unlock attempts', async () => {
+  const t=make(), c=await caregiver(t,'paywall-target'), e=await person(t,'employer','unpaid-parent')
+  const target=await t.run(ctx=>ctx.db.get(c.accountId))
+  const assertPrivate=result=>{
+    const serialized=JSON.stringify(result)
+    expect(serialized).not.toContain(target.email)
+    expect(serialized).not.toContain('0798765432')
+    expect(result.contact).toBeUndefined()
+  }
+  assertPrivate(await e.read('/caregivers'))
+  assertPrivate(await e.read(`/caregivers/${c.id}`))
+  await e.write(`/shortlist/${c.id}`,{},'POST')
+  assertPrivate(await e.read('/shortlist'))
+  expect(await e.read('/employers/contacts')).toMatchObject({contacts:[],total:0})
+  expect(await e.read(`/contact/unlock/${c.id}`)).toMatchObject({unlocked:false,can_unlock:false})
+  await expect(e.write(`/contact/unlock/${c.id}`,{paid:true,amount:300,status:'completed'},'POST')).rejects.toThrow('contact-access pass')
+  await expect(t.mutation(api.marketplace.write,{path:`/contact/unlock/${c.id}`,method:'POST',body:{}})).rejects.toThrow()
+  await expect(c.write(`/contact/unlock/${c.id}`,{},'POST')).rejects.toThrow()
+  // Client-controlled profile fields cannot create a paid entitlement.
+  await expect(e.write('/employers/profile',{name:'Parent',phone:'0712345678',accessExpiresAt:Date.now()+DAY,pass_active:true})).rejects.toThrow('Only your name and phone')
+  expect((await e.read('/memberships')).active).toBe(false)
+  await expect(e.write(`/contact/unlock/${c.id}`,{},'POST')).rejects.toThrow('contact-access pass')
+  expect(await t.run(ctx=>ctx.db.query('contactUnlocks').collect())).toHaveLength(0)
+})
+
+it('isolates paid unlocks between employers and retains only previously unlocked contacts after expiry', async () => {
+  const t=make(), c=await caregiver(t,'first-paid-target'), second=await caregiver(t,'second-paid-target')
+  const payer=await person(t,'employer','payer'), other=await person(t,'employer','nonpayer')
+  const employerId=await t.run(async ctx=>{
+    const e=await ctx.db.query('employers').withIndex('by_account',q=>q.eq('accountId',payer.accountId)).unique()
+    await ctx.db.patch(e._id,{accessExpiresAt:Date.now()+DAY});return e._id
+  })
+  expect((await payer.write(`/contact/unlock/${c.id}`,{},'POST')).contact).toMatchObject({phone:'0798765432'})
+  expect((await other.read(`/contact/unlock/${c.id}`)).contact).toBeUndefined()
+  expect((await other.read('/employers/contacts')).contacts).toEqual([])
+  await expect(other.write(`/contact/unlock/${c.id}`,{},'POST')).rejects.toThrow('contact-access pass')
+  await t.run(ctx=>ctx.db.patch(employerId,{accessExpiresAt:Date.now()-1}))
+  expect((await payer.read(`/contact/unlock/${c.id}`)).unlocked).toBe(true)
+  expect((await payer.read('/employers/contacts')).contacts).toHaveLength(1)
+  expect((await payer.read(`/contact/unlock/${second.id}`)).can_unlock).toBe(false)
+  await expect(payer.write(`/contact/unlock/${second.id}`,{},'POST')).rejects.toThrow('contact-access pass')
+})
+
+it('blocks contact details in profile edits and redacts existing legacy profile and review text',async()=>{
+ const t=make(),c=await caregiver(t,'contact-moderation'),e=await person(t,'employer','contact-reader')
+ for(const body of [{bio:'Call 0712345678'},{name:'Nanny care@example.com'},{travel_notes:'wa.me/254712345678'},{skills:['First aid','0712345678']}]) {
+  await expect(c.write('/caregivers/profile',body)).rejects.toThrow('private contact fields')
+ }
+ await t.run(ctx=>ctx.db.patch(c.id,{bio:'Call 0712345678',travelNotes:'care at example dot com'}))
+ const detail=await e.read(`/caregivers/${c.id}`)
+ expect(detail.profile.bio).toBe('[Contact details removed]')
+ expect(detail.profile.travel_notes).toBe('[Contact details removed]')
+ const result=await e.read('/caregivers')
+ expect(JSON.stringify(result)).not.toContain('0712345678')
+})
