@@ -88,3 +88,34 @@
 
 .landing-hero-copy>p.landing-marketplace-note{font-size:.85rem;line-height:1.7;color:#254b3d;margin-top:14px;max-width:600px}
 .landing-marketplace-note strong{font-weight:700}
+/* Keep the service, cost and next steps together in the opening view. */
+.landing-hero-content{min-height:0;padding-top:32px;padding-bottom:28px}
+.landing-hero-content .landing-hero-copy{width:64%;max-width:720px}
+.landing-hero h1{font-size:clamp(2.4rem,4.2vw,3.7rem);margin:18px 0;line-height:1.08}
+.landing-hero-copy>p{max-width:570px;line-height:1.65}
+.landing-hero-actions{gap:12px;flex-wrap:wrap;margin-top:22px}
+.landing-hero-actions .button{font-size:.86rem}
+.landing-hero-copy>p.landing-start-note{font-size:.81rem;font-weight:600;margin-top:12px;color:#254b3d}
+.landing-quick-steps{display:flex;flex-wrap:wrap;gap:12px 20px;list-style:none;padding:16px 0 0;margin:18px 0 0;border-top:1px solid #b6c3ae;max-width:620px}
+.landing-quick-steps li{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600}
+.landing-quick-steps li>span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#e4eadb;color:#235b45;flex-shrink:0}
+.landing-hero-copy>p.landing-marketplace-note{font-size:.74rem;line-height:1.6;margin-top:14px;max-width:570px}
+.landing-search-wrap{padding-top:20px;padding-bottom:0}
+.landing-search{padding:20px 24px}
+.landing .button:focus-visible,.landing a:focus-visible,.landing button:focus-visible,.landing select:focus-visible{outline:3px solid #ac7d41;outline-offset:4px}
+@media(max-width:1050px){.landing-hero-content .landing-hero-copy{width:78%}.landing-hero-actions{flex-direction:row;align-items:center}}
+@media(max-width:600px){
+ .landing-hero-content{padding-top:25px;padding-bottom:24px;min-height:0}
+ .landing-hero-content .landing-hero-copy{width:100%;max-width:none}
+ .landing-kicker{font-size:.54rem;letter-spacing:1px;line-height:1.6}
+ .landing-hero h1{font-size:clamp(2rem,8.5vw,3rem);letter-spacing:-1.2px;margin:14px 0}
+ .landing-hero-copy>p{font-size:.9rem;line-height:1.6}
+ .landing-hero-actions{gap:10px;margin-top:18px;align-items:stretch}
+ .landing-hero-actions .button{font-size:.8rem;justify-content:center;padding:12px 14px;white-space:normal}
+ .landing-quick-steps{gap:10px 14px;padding-top:14px;margin-top:15px}
+ .landing-quick-steps li{font-size:.72rem}
+ .landing-hero-copy>p.landing-start-note{font-size:.76rem}
+ .landing-search{gap:14px;padding:20px}
+ .landing-search-wrap{padding-top:16px}
+}
+@media(max-width:360px){.landing-hero-actions{flex-direction:column}.landing-quick-steps{gap:8px}.landing-quick-steps li{font-size:.69rem}}
