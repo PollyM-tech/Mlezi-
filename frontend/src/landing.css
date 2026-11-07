@@ -119,3 +119,5 @@
  .landing-search-wrap{padding-top:16px}
 }
 @media(max-width:360px){.landing-hero-actions{flex-direction:column}.landing-quick-steps{gap:8px}.landing-quick-steps li{font-size:.69rem}}
+
+@media(min-width:801px){.landing-plans.landing-plans-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
