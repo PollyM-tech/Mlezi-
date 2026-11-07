@@ -1,6 +1,6 @@
 import { PLANS } from './marketplace.js'
 
-export const TEST_ACCOUNT = 'paulinemoraa36@gmail.com'
+export const TEST_ACCOUNT = 'pmoraa431@gmail.com'
 // Disabled by default; require a short, explicitly configured test window.
 export function stkPricing(account, code, now = Date.now()) {
   const plan = PLANS[code]

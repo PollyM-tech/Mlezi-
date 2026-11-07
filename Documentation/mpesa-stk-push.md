@@ -84,7 +84,7 @@ The STK component passes the confirmed/failed server record directly to the Paym
 ### Temporary KES 5 account checkout test
 
 The server can price STK checkout at KES 5 exclusively for
-`paulinemoraa36@gmail.com`. Standard plan durations and benefits apply. Other
+`pmoraa431@gmail.com`. Standard plan durations and benefits apply. Other
 accounts and manual payment reporting retain standard prices. Payment does not
 grant identity approval.
 

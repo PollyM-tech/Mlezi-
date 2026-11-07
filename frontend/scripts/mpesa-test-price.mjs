@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process'
+import { TEST_ACCOUNT } from '../convex/lib/paymentPricing.js'
 const flag = process.argv[2]
 if (!['--enable', '--disable'].includes(flag)) {
   console.error('Usage: npm run mpesa:test-price -- --enable|--disable [--prod]')
@@ -12,7 +13,7 @@ function set(name, value) {
 if (flag === '--enable') {
   set('MPESA_TEST_PRICING_EXPIRES_AT', new Date(Date.now() + 23 * 3600000).toISOString())
   set('MPESA_TEST_PRICING_ENABLED', 'true')
-  console.log('KES 5 STK pricing enabled for paulinemoraa36@gmail.com for 23 hours. Other accounts and manual payments keep normal prices.')
+  console.log(`KES 5 STK pricing enabled for ${TEST_ACCOUNT} for 23 hours. Other accounts and manual payments keep normal prices.`)
 } else {
   set('MPESA_TEST_PRICING_ENABLED', 'false')
   console.log('Normal STK prices restored. Already initiated test payments can still settle.')
