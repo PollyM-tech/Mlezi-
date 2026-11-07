@@ -218,3 +218,27 @@ it.each([true,false])('returns administrator magic links to the protected entry 
  expect(mocks.signIn).toHaveBeenLastCalledWith('magic-link',{email:'operator@example.test',redirectTo:allowed?`${window.location.origin}/admin-mlezicareaccess`:'/admin-mlezicareaccess'});
  expect(screen.queryByRole('button',{name:'Create account'})).toBeNull()
 })
+
+it.each(['caregiver', 'employer'])('starts Google signup for a %s without requiring password or contact fields first', async role => {
+  mocks.settings = { googleReady: true, emailReady: false, allowedSignInOrigins: [] }
+  render(<ConvexAuthForm initialRegistering initialRole={role} />)
+  await userEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
+  expect(mocks.signIn).toHaveBeenCalledExactlyOnceWith('google', { redirectTo: `/signin?role=${role}` })
+})
+
+it('uses an allowed browser origin for Google and shows a useful retry error', async () => {
+  mocks.settings.googleReady = true
+  mocks.signIn.mockRejectedValueOnce(new Error('Sensitive provider detail'))
+  render(<ConvexAuthForm />)
+  await userEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
+  expect(mocks.signIn).toHaveBeenCalledWith('google', { redirectTo: 'http://localhost:5173/signin' })
+  expect(screen.getByRole('alert').textContent).toContain('We could not connect to Google')
+  expect(screen.getByRole('button', { name: 'Continue with Google' }).disabled).toBe(false)
+  expect(screen.queryByText('Sensitive provider detail')).toBeNull()
+})
+
+it.each([false, true])('hides Google until configured and keeps it out of administrator sign-in (admin=%s)', adminOnly => {
+  mocks.settings.googleReady = adminOnly
+  render(<ConvexAuthForm adminOnly={adminOnly} />)
+  expect(screen.queryByRole('button', { name: 'Continue with Google' })).toBeNull()
+})

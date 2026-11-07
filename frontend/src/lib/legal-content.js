@@ -33,6 +33,7 @@ export const LEGAL_CONTENT = {
       'Shortlists and private identity/support records are not public profiles. Necessary disclosures for valid legal processes or serious safety/security concerns are assessed for lawful basis and scope. Deleting information here cannot always recall copies another person has already downloaded or shared.'] },
     { id: 'providers', title: 'Providers and international processing', items: [
       'Convex: authentication, database functions, file storage, sessions and operational records.',
+      'Google sign-in: if you choose Continue with Google, Google authenticates your account and shares an account identifier, email address and email verification status with Mlezi. Your Google password is not shared with Mlezi.',
       'Resend: account email and support acknowledgements/replies, including recipient address and email content.',
       'Website hosting: frontend delivery and connection information. Vercel is the planned host; the final deployment must be confirmed.',
       'Cloudflare Turnstile: browser/network information and challenge results when the visitor chooses to load the guest-support anti-spam check.',

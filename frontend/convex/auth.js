@@ -1,10 +1,12 @@
 import { Password } from '@convex-dev/auth/providers/Password'
+import Google from '@auth/core/providers/google'
 import { ConvexError } from 'convex/values'
 import { convexAuth } from '@convex-dev/auth/server'
 import { normalizeEmail, validatePassword, safeRedirect } from './lib/authPolicy.js'
 import { createOrUpdateUser } from './lib/authUsers.js'
 import { emailProvider } from './lib/email.js'
 import { passwordRecoveryProvider } from './passwordRecovery.js'
+import { googleProfile } from './lib/googleAuth.js'
 
 const passwordProvider = Password({
   profile: params => ({ email: normalizeEmail(params.email) }),
@@ -29,6 +31,7 @@ passwordProvider.options.authorize = async (params, ctx) => {
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
+    Google({ profile: googleProfile, allowDangerousEmailAccountLinking: false }),
     passwordProvider,
     passwordRecoveryProvider(passwordProvider),
     emailProvider('email-otp'),

@@ -5,6 +5,7 @@ import { normalizeEmail, registrationDetails } from './lib/authPolicy.js'
 import { publicProfile } from './lib/marketplace.js'
 import { trustedWebOrigins } from './lib/webOrigins.js'
 import { emailIsConfigured } from './lib/email.js'
+import { googleIsConfigured } from './lib/googleAuth.js'
 import { LEGAL_VERSION } from './lib/legalPolicy.js'
 
 function ownAccount(account) {
@@ -15,7 +16,7 @@ function ownAccount(account) {
 export const authSettings = query({ args: {}, handler: () => {
   let allowedSignInOrigins = []
   try { allowedSignInOrigins = [...trustedWebOrigins(process.env.SITE_URL, process.env.APP_ALLOWED_ORIGINS)] } catch { /* Missing/invalid configuration grants no browser origin. */ }
-  return { emailReady: emailIsConfigured(), testSender: /@resend\.dev>?$/i.test(process.env.AUTH_EMAIL_FROM || ''), allowedSignInOrigins }
+  return { emailReady: emailIsConfigured(), googleReady: googleIsConfigured(), testSender: /@resend\.dev>?$/i.test(process.env.AUTH_EMAIL_FROM || ''), allowedSignInOrigins }
 } })
 export const me = query({ args: {}, handler: async ctx => ownAccount(await accountIdentity(ctx)) })
 export const current = query({ args: { refresh: v.optional(v.number()) }, handler: async ctx => {

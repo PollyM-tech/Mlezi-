@@ -8,7 +8,9 @@ export async function createOrUpdateUser(ctx, args) {
   const email = normalizeEmail(args.profile.email)
   const current = args.existingUserId ? await ctx.db.get(args.existingUserId) : null
   if (args.existingUserId && !current) throw new ConvexError('This account is no longer available.')
-  const proof = args.type === 'verification' && args.profile.emailVerified === true
+  const google = args.type === 'oauth' && args.provider.id === 'google'
+  if (google && args.profile.emailVerified !== true) throw new ConvexError('Choose a Google account with a verified email address.')
+  const proof = (args.type === 'verification' || google) && args.profile.emailVerified === true
   const mayLink = !current && (args.shouldLinkViaEmail || args.provider.type === 'email') || proof && typeof current?.emailVerificationTime !== 'number'
   let userId = args.existingUserId
   if (mayLink) {

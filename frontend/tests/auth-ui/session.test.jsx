@@ -216,3 +216,19 @@ it('returns an expired administrator magic link to administrator sign-in',async(
  await screen.findByRole('alert');await userEvent.click(screen.getByRole('button',{name:'Back to sign in'}));
  expect(screen.getByRole('heading',{name:'Administrator sign in'})).toBeTruthy();expect(window.location.pathname).toBe('/admin-mlezicareaccess');expect(window.location.search).toBe('')
 })
+
+it.each(['caregiver', 'employer'])('keeps the %s role through a Google callback and requires account completion', async role => {
+  window.history.replaceState({}, '', `/signin?role=${role}&code=google-callback`)
+  state.signIn.mockImplementationOnce(async () => {
+    state.auth.isAuthenticated = true
+    state.query = { status: 'onboarding', account: null, email: 'google@example.test' }
+    return { signingIn: true }
+  })
+  render(<ConvexSession />)
+  await screen.findByLabelText('Contact phone')
+  expect(screen.getByLabelText('I am joining as').value).toBe(role)
+  expect(window.location.pathname).toBe('/workspace')
+  expect(window.location.search).toBe(`?role=${role}`)
+  expect(state.signIn).toHaveBeenCalledExactlyOnceWith(undefined, { code: 'google-callback' })
+  expect(screen.getByRole('checkbox').required).toBe(true)
+})

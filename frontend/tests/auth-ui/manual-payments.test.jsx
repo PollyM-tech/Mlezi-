@@ -56,6 +56,18 @@ it("removes manual instructions and receipt submission even if an old backend ad
   expect(screen.queryByLabelText('M-Pesa receipt code')).toBeNull();
   expect(state.submit).not.toHaveBeenCalled();
 });
+it('shows plans and prices while checkout is unavailable without accepting a payment', async () => {
+  const user = userEvent.setup();
+  render(<Membership user={{role:'employer'}} />);
+  const selector = await screen.findByLabelText('Choose your plan');
+  expect(screen.getByRole('heading', {name:'Payment options'})).toBeTruthy();
+  expect(screen.getByRole('heading', {name:'Pay with M-Pesa'})).toBeTruthy();
+  await user.selectOptions(selector, 'employer_90_days');
+  expect(screen.getByText('KES 500 · 90 days', {selector:'p'})).toBeTruthy();
+  expect(screen.getByRole('button', {name:'Payment temporarily unavailable'}).disabled).toBe(true);
+  expect(state.read.mock.calls.every(([path]) => ['/memberships', '/payments'].includes(path))).toBe(true);
+  expect(state.submit).not.toHaveBeenCalled();
+});
 it("requires administrator statement confirmation or a rejection reason before submitting a decision", async () => {
   const user = userEvent.setup();
   state.pending = {

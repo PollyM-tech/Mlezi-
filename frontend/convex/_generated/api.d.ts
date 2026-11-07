@@ -24,6 +24,7 @@ import type * as lib_authUsers from "../lib/authUsers.js";
 import type * as lib_contactPolicy from "../lib/contactPolicy.js";
 import type * as lib_discoverySearch from "../lib/discoverySearch.js";
 import type * as lib_email from "../lib/email.js";
+import type * as lib_googleAuth from "../lib/googleAuth.js";
 import type * as lib_legalPolicy from "../lib/legalPolicy.js";
 import type * as lib_listingPolicy from "../lib/listingPolicy.js";
 import type * as lib_manualPaymentPolicy from "../lib/manualPaymentPolicy.js";
@@ -72,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   "lib/contactPolicy": typeof lib_contactPolicy;
   "lib/discoverySearch": typeof lib_discoverySearch;
   "lib/email": typeof lib_email;
+  "lib/googleAuth": typeof lib_googleAuth;
   "lib/legalPolicy": typeof lib_legalPolicy;
   "lib/listingPolicy": typeof lib_listingPolicy;
   "lib/manualPaymentPolicy": typeof lib_manualPaymentPolicy;

@@ -233,3 +233,59 @@ it.each(['password', 'email-otp', 'magic-link'].flatMap(method => ['caregiver', 
   expect(current.account.role).toBe(role)
   expect((await signedIn.query(api.accounts.me, {})).emailVerified).toBe(true)
 })
+
+// Exercise the trusted OAuth callback handoff with a synthetic Google identity.
+// No Google account or external token exchange is used in these tests.
+async function googleSignIn(t, email, sub = email) {
+  const { internal } = await import('../../convex/_generated/api.js')
+  const { googleProfile } = await import('../../convex/lib/googleAuth.js')
+  const signature = crypto.randomUUID()
+  const verifier = await t.run(ctx => ctx.db.insert('authVerifiers', { signature }))
+  const { id, ...profile } = googleProfile({ sub, email, email_verified: true })
+  const code = await t.mutation(internal.auth.store, { args: { type: 'userOAuth', provider: 'google', providerAccountId: id, profile, signature } })
+  return t.action(api.auth.signIn, { params: { code }, verifier })
+}
+
+it.each(['caregiver', 'employer'])('Google verifies a new %s while still requiring account details and terms', async role => {
+  const t = convexTest(schema, modules), email = `google-${role}@example.test`
+  const signedIn = clientFor(t, await googleSignIn(t, email))
+  expect(await signedIn.query(api.accounts.current, {})).toMatchObject({ status: 'onboarding', email })
+  await expect(signedIn.mutation(api.accounts.register, { role, name: 'Google Member', phone: '0712345678' })).rejects.toThrow('accept the current Terms')
+  await signedIn.mutation(api.accounts.register, { role, name: 'Google Member', phone: '0712345678', termsAccepted: true, termsVersion: LEGAL_VERSION })
+  expect(await signedIn.query(api.accounts.current, {})).toMatchObject({ status: role === 'employer' ? 'ready' : 'profile_required', account: { role, email, emailVerified: true } })
+  expect(sent).toHaveLength(0)
+})
+
+it('links Google to the same verified email account and preserves its role', async () => {
+  const t = convexTest(schema, modules), email = 'linked-google@example.test'
+  await sign(t, 'email-otp', { email })
+  const original = clientFor(t, await sign(t, 'email-otp', { email, code: code() }))
+  const account = await original.mutation(api.accounts.register, { role: 'employer', name: 'Existing Parent', phone: '0712345678', termsAccepted: true, termsVersion: LEGAL_VERSION })
+  const google = clientFor(t, await googleSignIn(t, email))
+  expect(await google.query(api.accounts.me)).toMatchObject({ id: account.id, role: 'employer' })
+  expect(await t.run(ctx => ctx.db.query('users').collect())).toHaveLength(1)
+  expect(await t.run(ctx => ctx.db.query('accounts').collect())).toHaveLength(1)
+})
+
+it('rejects unverified Google emails before linking or creating any user', async () => {
+  const { googleProfile } = await import('../../convex/lib/googleAuth.js')
+  const { createOrUpdateUser } = await import('../../convex/lib/authUsers.js')
+  expect(() => googleProfile({ sub: 'google-user', email: 'person@example.test', email_verified: false })).toThrow('verified email')
+  expect(() => googleProfile({ sub: 'google-user', email: 'person@example.test' })).toThrow('verified email')
+  const t = convexTest(schema, modules)
+  await expect(t.run(ctx => createOrUpdateUser(ctx, { existingUserId: null, type: 'oauth', provider: { id: 'google', type: 'oidc' }, profile: { email: 'person@example.test', emailVerified: false } }))).rejects.toThrow('verified email')
+  expect(await t.run(ctx => ctx.db.query('users').collect())).toHaveLength(0)
+})
+
+it('exposes Google readiness only when the server credentials are configured', async () => {
+  const t = convexTest(schema, modules)
+  vi.stubEnv('AUTH_GOOGLE_ID', '')
+  vi.stubEnv('AUTH_GOOGLE_SECRET', '')
+  expect(await t.query(api.accounts.authSettings)).toMatchObject({ googleReady: false })
+  vi.stubEnv('AUTH_GOOGLE_ID', 'test-client-id')
+  expect(await t.query(api.accounts.authSettings)).toMatchObject({ googleReady: false })
+  vi.stubEnv('AUTH_GOOGLE_SECRET', 'test-secret-not-for-delivery')
+  const settings = await t.query(api.accounts.authSettings)
+  expect(settings.googleReady).toBe(true)
+  expect(JSON.stringify(settings)).not.toMatch(/test-client-id|test-secret-not-for-delivery/)
+})

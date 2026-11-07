@@ -1,4 +1,4 @@
-import { saveRegistrationDraft } from '../lib/registrationDraft.js'
+import { saveRegistrationDraft, clearRegistrationDraft } from '../lib/registrationDraft.js'
 import { useState } from 'react'
 import { useAuthActions } from '@convex-dev/auth/react'
 import { useQuery } from 'convex/react'
@@ -30,6 +30,16 @@ export default function ConvexAuthForm({ initialRegistering = false, initialRole
   const [notice, setNotice] = useState('')
   const [accountConflict, setAccountConflict] = useState(false)
   function reset() { setStep('start'); setError(''); setNotice(''); setAccountConflict(false) }
+  async function continueWithGoogle() {
+    setBusy(true); setError(''); setNotice(''); setAccountConflict(false)
+    try {
+      if (registering) clearRegistrationDraft()
+      const destination = registering ? `/signin?role=${role}` : '/signin'
+      const redirectTo = settings?.allowedSignInOrigins?.includes(window.location.origin) ? `${window.location.origin}${destination}` : destination
+      await signIn('google', { redirectTo })
+    } catch { setError('We could not connect to Google. Please try again or use another sign-in method.') }
+    finally { setBusy(false) }
+  }
   async function verify(provider, params) {
     const result = await signIn(provider, params)
     if (!result.signingIn) throw new Error('Invalid code')
@@ -89,6 +99,7 @@ export default function ConvexAuthForm({ initialRegistering = false, initialRole
     {settings?.testSender && <p className="alert" role="status">Email delivery is in test mode. Public registration needs a verified sending domain; the test sender can only deliver to its approved test recipient.</p>}
     {settings && !settings.emailReady && <p className="alert" role="status">Email sign-in is being set up. Please try again once email delivery is available.</p>}
     {error && <p className="alert error" role="alert">{error}</p>}{notice && <p className="alert success" role="status">{notice}</p>}
+    {step === 'start' && !adminOnly && settings?.googleReady && <><button type="button" className="button secondary full" disabled={busy} onClick={continueWithGoogle}>Continue with Google</button>{registering && <p className="form-footnote">Use Google to verify your email, then complete your name, phone and account details.</p>}</>}
     {accountConflict && <div className="action-row"><button type="button" className="button secondary" disabled={busy} onClick={() => { setRegistering(false); reset() }}>Sign in to existing account</button><button type="button" className="button secondary" disabled={busy} onClick={() => { setRegistering(false); setAccountConflict(false); setError(''); setStep('reset-start') }}>Reset existing password</button></div>}
     {step === 'magic-sent' ? <button className="text-button" onClick={reset}>Use another sign-in method</button> : <form onSubmit={send}>
       {step === 'start' && registering && <><label>I am joining as<select value={role} disabled={busy} onChange={event => setRole(event.target.value)}><option value="caregiver">Caregiver / nanny</option><option value="employer">Employer / parent</option></select></label><label>Your full name<input name="name" value={name} onChange={event => setName(event.target.value)} autoComplete="name" maxLength={120} required disabled={busy} /></label><label>Contact phone<input name="phone" value={phone} onChange={event => setPhone(event.target.value)} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label></>}

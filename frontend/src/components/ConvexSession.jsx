@@ -109,12 +109,14 @@ function SessionContent({ publicRoute = false, publicPage }) {
     if (!code || auth.isLoading || linkHandled.current) return
     linkHandled.current = true
     const administratorLink = currentAppRoute().split('?')[0] === '#/admin'
+    const signupRole = new URLSearchParams(currentAppRoute().split('?')[1] || '').get('role')
+    const destination = administratorLink ? '#/admin' : ['caregiver', 'employer'].includes(signupRole) ? `#/workspace?role=${signupRole}` : '#/workspace'
     url.searchParams.delete('code')
     window.history.replaceState({}, '', url.pathname + url.search + url.hash)
     // Handle magic links explicitly so invalid/expired links get a visible retry path.
     Promise.resolve().then(() => setHandlingLink(true))
-    signIn(undefined, { code }).then(result => { if (!result.signingIn) throw new Error('Invalid link'); navigateApp(administratorLink ? '#/admin' : '#/workspace') })
-      .catch(() => setLinkError('This sign-in link is invalid or expired. Please request a new link or email code.'))
+    signIn(undefined, { code }).then(result => { if (!result.signingIn) throw new Error('Invalid link'); navigateApp(destination) })
+      .catch(() => setLinkError('This sign-in link is invalid or expired. Please request a new link or email code, or try Google again.'))
       .finally(() => setHandlingLink(false))
   }, [auth.isLoading, signIn])
   if (publicRoute) return <><PublicPages page={publicPage} user={auth.isAuthenticated && session?.status !== 'expired' ? account || { role: 'pending' } : null} checkingSession={auth.isLoading || serverAuth.isLoading} onSignOut={signOut} /><CookieConsent /></>

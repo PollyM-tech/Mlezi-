@@ -4,6 +4,8 @@ Mlezi uses JavaScript/React for the frontend and JavaScript functions on Convex 
 
 ## Run locally
 
+For Google signup configuration, see the [Google signup guide](../Documentation/google-signup.md).
+
 From the repository root:
 
 ```bash

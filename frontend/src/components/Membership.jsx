@@ -89,8 +89,9 @@ export default function Membership({ user }) {
             {membership.expires_at && (
               <p>Expiry: {new Date(membership.expires_at).toLocaleString()}</p>
             )}
-            {membership.payments_enabled && plan ? (
+            {plan ? (
               <>
+                <h3>Payment options</h3>
                 <label>
                   Choose your plan
                   <select
@@ -105,11 +106,17 @@ export default function Membership({ user }) {
                     ))}
                   </select>
                 </label>
-                {membership.payments_enabled && <StkPayment plan={{...plan, amount: plan.stk_amount ?? plan.amount}} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} />}
+                {membership.payments_enabled ? <StkPayment plan={{...plan, amount: plan.stk_amount ?? plan.amount}} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} /> : <section className="privacy-note" aria-label="M-Pesa payment availability">
+                  <h3>Pay with M-Pesa</h3>
+                  <p>KES {plan.amount} · {plan.days} days</p>
+                  <p role="status">M-Pesa STK payments are currently unavailable. Please try again later.</p>
+                  <button type="button" className="button primary" disabled>Payment temporarily unavailable</button>
+                  <p>Need help with a payment? <a href="/tickets">Contact Support</a>.</p>
+                </section>}
 
               </>
             ) : (
-              <p>M-Pesa STK payments are currently unavailable. Please try again later.</p>
+              <p>No membership plans are available right now. <a href="/tickets">Contact Support</a>.</p>
             )}
           </section>
           <aside className="card side-card">
