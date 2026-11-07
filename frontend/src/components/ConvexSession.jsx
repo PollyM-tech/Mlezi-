@@ -1,5 +1,6 @@
 import { readRegistrationDraft, clearRegistrationDraft } from '../lib/registrationDraft.js'
 import AdminBoundary from './AdminBoundary.jsx'
+import AccountServiceBoundary from './AccountServiceBoundary.jsx'
 import ConvexAuthForm from './ConvexAuthForm.jsx'
 import SignOutProvider from './SignOutProvider.jsx'
 import { AUTH_STORAGE_NAMESPACE, createAuthStorage, useSignOut } from '../lib/signOut.js'
@@ -136,5 +137,5 @@ export default function ConvexSession({ publicRoute = false, publicPage }) {
   const [storage] = useState(createAuthStorage)
   if (!import.meta.env.VITE_CONVEX_URL && publicRoute) return <><PublicPages page={publicPage} /><CookieConsent /></>
   if (!import.meta.env.VITE_CONVEX_URL) return <main className="card state-panel"><h1>Account service needs configuration</h1><p>Set the public VITE_CONVEX_URL in the website environment, then restart or rebuild the website.</p><a href="/">Return home</a></main>
-  return <ConvexAuthProvider client={getConvexClient()} storage={storage} storageNamespace={AUTH_STORAGE_NAMESPACE} shouldHandleCode={false}><SignOutProvider storage={storage}><SessionContent publicRoute={publicRoute} publicPage={publicPage} /></SignOutProvider></ConvexAuthProvider>
+  return <AccountServiceBoundary><ConvexAuthProvider client={getConvexClient()} storage={storage} storageNamespace={AUTH_STORAGE_NAMESPACE} shouldHandleCode={false}><SignOutProvider storage={storage}><SessionContent publicRoute={publicRoute} publicPage={publicPage} /></SignOutProvider></ConvexAuthProvider></AccountServiceBoundary>
 }
