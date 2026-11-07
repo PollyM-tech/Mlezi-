@@ -28,7 +28,7 @@ export const PUBLIC_PAGES = [
     ['Travel care needs its own agreement', 'A travel nanny helps children during a family trip. Agree destinations, working hours, costs and accommodation before accepting. A travel-care profile is not an offer of overseas placement or a substitute for travel and work eligibility.'],
     ['Understand the trust signals', 'Identity checked follows administrator review and an adult age check. Premium is optional paid visibility within matching results; it does not purchase an identity badge, a better rating or a guarantee of work.'],
   ] },
-  ...['privacy', 'cookies', 'terms'].map(type => ({ path: `/${type}/`, type, title: `${({ privacy: 'Privacy notice', cookies: 'Cookie policy', terms: 'Terms of use' })[type]} | Mlezi`, description: 'How Mlezi handles marketplace use, privacy, identity evidence and cookie choices.' })),
+  ...['privacy', 'cookies', 'terms'].map(type => ({ path: `/${type}/`, type, title: `${({ privacy: 'Privacy notice', cookies: 'Cookie policy', terms: 'Terms of use' })[type]} | Mlezi`, description: ({ privacy: 'Read how Mlezi handles account information, private identity evidence, support requests and your privacy rights on its caregiver marketplace.', cookies: 'Understand Mlezi’s essential sign-in storage, optional fonts and search preferences, and how to manage your cookie choices.', terms: 'Read Mlezi’s marketplace terms for families and caregivers, including account eligibility, identity review, membership payments and responsibility.' })[type] })),
 ]
 
 export function publicPage(pathname) {

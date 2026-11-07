@@ -4,7 +4,8 @@ import PublicPages from './PublicPages.jsx'
 import CookieConsent from './CookieConsent.jsx'
 import FaqAssistant from './FaqAssistant.jsx'
 import { AUTH_STORAGE_NAMESPACE } from '../lib/signOut.js'
-import { entryRoute, publicPage, siteConfig } from '../lib/public-pages.js'
+import { entryRoute, publicPage } from '../lib/public-pages.js'
+import { updatePageMetadata } from '../lib/seo.js'
 
 const ConvexSession = lazy(() => import('./ConvexSession.jsx'))
 
@@ -33,20 +34,8 @@ export default function Website() {
   }, [keepSession])
   useEffect(() => {
     if (route.redirect) navigateApp(route.redirect, {replace:true})
-    if (route.private || !route.page) {
-      document.title = route.private ? 'Your account | Mlezi' : 'Page not found | Mlezi'
-      document.querySelector('meta[name="robots"]')?.setAttribute('content', 'noindex, nofollow')
-      document.querySelector('link[rel="canonical"]')?.remove()
-    } else {
-      const config = siteConfig(import.meta.env)
-      document.title = route.page.title
-      document.querySelector('meta[name="robots"]')?.setAttribute('content', config.indexable && config.origin === window.location.origin ? 'index, follow' : 'noindex, nofollow')
-      if (config.origin) {
-        let canonical = document.querySelector('link[rel="canonical"]')
-        if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical) }
-        canonical.href = config.origin + route.page.path
-      }
-    }
+    updatePageMetadata(document, route.private ? null : route.page, import.meta.env, window.location.origin)
+    if (!route.private && !route.page) document.title = 'Page not found | Mlezi'
   }, [route])
   if (route.redirect) return <p role="status">Opening Mlezi…</p>
   if (route.private || keepSession) return <><Suspense fallback={route.private ? <p role="status">Opening your account…</p> : <PublicPages page={route.page} checkingSession />}><ConvexSession publicRoute={!route.private} publicPage={route.page} /></Suspense><FaqAssistant /></>

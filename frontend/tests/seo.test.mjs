@@ -59,3 +59,23 @@ test('keywords combine real services, location and regional languages', () => {
   assert.equal(matchesKeywords(p, 'Kinyarwanda'), false)
   assert.equal(normalizeSearch('Swahili'), normalizeSearch('Kiswahili'))
 })
+
+test('public pages have useful structured data and large share cards without invented reviews or offices', async () => {
+  const { structuredData, jsonForHtml } = await import('../src/lib/seo.js')
+  const page = publicPage('/kenya/')
+  const graph = structuredData(page, live)['@graph']
+  assert.deepEqual(graph.map(node => node['@type']), ['Organization', 'WebSite', 'WebPage', 'BreadcrumbList'])
+  assert.equal(graph[2].url, 'https://example.test/kenya/')
+  assert.equal(graph[3].itemListElement[1].item, graph[2].url)
+  assert.equal(structuredData(null, live), null)
+  assert.equal(structuredData(page, {}), null)
+  assert.equal(structuredData(page, { ...live, VERCEL_ENV: 'preview' }), null)
+  assert.doesNotMatch(JSON.stringify(graph), /aggregateRating|LocalBusiness|streetAddress|SearchAction/)
+  assert.equal(jsonForHtml({ text: '</script>' }).includes('</script>'), false)
+  const html = renderDocument(template, page, '<main>Kenya care guide</main>', { ...live, VITE_GOOGLE_SITE_VERIFICATION: 'public-verification-token' })
+  assert.match(html, /application\/ld\+json/)
+  assert.match(html, /summary_large_image/)
+  assert.match(html, /https:\/\/example.test\/social-card.png/)
+  assert.match(html, /google-site-verification/)
+  assert.doesNotMatch(renderDocument(template, null, '', live), /application\/ld\+json/)
+})

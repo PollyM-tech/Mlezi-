@@ -85,3 +85,56 @@ Official references:
 - [Google JavaScript SEO basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)
 - [Google regional and language versions](https://developers.google.com/search/docs/specialty/international/localized-versions)
 - [Google helpful content guidance](https://developers.google.com/search/docs/fundamentals/creating-helpful-content)
+
+## SEO completion update — 7 November 2026
+
+The public-page renderer now emits Organization, WebSite and WebPage JSON-LD,
+with BreadcrumbList on the guide, support and notice pages. It contains no
+invented locations, ratings, jobs or availability. Private routes and previews
+receive no public structured data. Client navigation refreshes descriptions,
+sharing metadata and canonical URLs and clears public metadata on private views.
+
+Every public page has its own description and uses the new 1200 × 630 branded
+social card. Marketing images use optimized WebP copies; originals are retained.
+Regenerate the assets with `npm run assets:marketing` after changing an original.
+
+Build and verify the indexable release from `frontend`:
+
+```sh
+npm run test:seo
+VITE_APP_ORIGIN=https://mlezicare.com VITE_SITE_INDEXABLE=true npm run build
+```
+
+Set those same two public variables in the Vercel **Production** environment.
+Do not set them globally for previews. Publish the updated source using the
+existing GitHub/Vercel workflow, then run:
+
+```sh
+npm run seo:check:live -- https://mlezicare.com
+```
+
+This checks the deployed public canonicals, indexing, structured data, sharing
+image, sitemap coverage, private-page exclusions and real HTTP 404 responses.
+It will report missing changes until this release is actually deployed.
+
+### Google Search Console ownership and submission
+
+1. Sign in at https://search.google.com/search-console with the Google account
+   that will manage Mlezi's search presence.
+2. Add the **Domain** property `mlezicare.com`. Copy Google's supplied DNS TXT
+   verification record into the domain's DNS zone, then click Verify. The exact
+   verification value must come from Google; do not invent one.
+3. Alternatively, add the **URL prefix** property `https://mlezicare.com/` and
+   select HTML tag verification. Save only the supplied tag's `content` value
+   as `VITE_GOOGLE_SITE_VERIFICATION` in the Vercel Production environment,
+   rebuild/deploy, and click Verify. Keep the value after verification.
+4. Under Sitemaps, submit `https://mlezicare.com/sitemap.xml`.
+5. Use URL Inspection for `/`, `/kenya/` and the regional guides, run the live
+   inspection and request indexing. Inspect any errors rather than repeatedly
+   resubmitting. Individual profiles and account pages are intentionally excluded.
+6. Monitor Pages, Performance, Core Web Vitals and security/manual-action reports.
+
+Bing is optional: add the site in Bing Webmaster Tools and either import the
+verified Search Console property or set the supplied HTML verification token
+as `VITE_BING_SITE_VERIFICATION`, rebuild/deploy and submit the same sitemap.
+No advertising or analytics trackers were added by this SEO work.

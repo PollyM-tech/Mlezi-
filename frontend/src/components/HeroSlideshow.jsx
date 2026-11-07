@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import careBackground from '../assets/bg-image.png'
-import reading from '../assets/Warm Family Reading Nook.png'
-import playtime from '../assets/Caring Playtime with Colorful Blocks.png'
-import building from '../assets/Joyful Block-Building with Mlezi Caregiver.png'
-import caring from '../assets/Warm Mlezi Healthcare Bond.png'
+import careBackground from '../assets/marketing/bg-image.webp'
+import reading from '../assets/marketing/Warm Family Reading Nook.webp'
+import playtime from '../assets/marketing/Caring Playtime with Colorful Blocks.webp'
+import building from '../assets/marketing/Joyful Block-Building with Mlezi Caregiver.webp'
+import caring from '../assets/marketing/Warm Mlezi Healthcare Bond.webp'
 
 const slides = [careBackground, reading, playtime, building, caring]
 const INTERVAL = 30000
