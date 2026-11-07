@@ -31,7 +31,7 @@ it('uses server pricing, isolates accounts, and prevents repeated STK or manual 
  const first=await e.client.action(api.mpesa.start,input),again=await e.client.action(api.mpesa.start,input)
  expect(first.payment).toMatchObject({amount:300,environment:'sandbox',status:'pending',provider:'daraja_stk'});expect(again.payment.id).toBe(first.payment.id)
  expect(fetcher).toHaveBeenCalledTimes(2)
- const request=JSON.parse(fetcher.mock.calls[1][1].body);expect(request).toMatchObject({Amount:300,PartyA:'254712345678',BusinessShortCode:'174379',TransactionType:'CustomerPayBillOnline'})
+ const request=JSON.parse(fetcher.mock.calls[1][1].body);expect(request).toMatchObject({Amount:300,PartyA:'254712345678',BusinessShortCode:'174379',TransactionType:'CustomerPayBillOnline',AccountReference:'mlezicare'})
  await expect(other.client.action(api.mpesa.check,{id:first.payment.id})).rejects.toThrow('not found')
  await expect(e.client.mutation(api.manualPayments.submit,{planCode:input.planCode,phone:input.phone,receipt:'TESTCODE01'})).rejects.toThrow('currently unavailable')
 })

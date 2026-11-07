@@ -42,7 +42,7 @@ async function credentials(settings) {
 export async function initiateProvider(settings, payment) {
   const auth = await credentials(settings)
   const body = { ...auth.body, TransactionType:'CustomerPayBillOnline', Amount:payment.amount, PartyA:payment.phone, PartyB:settings.shortcode,
-    PhoneNumber:payment.phone, CallBackURL:settings.callbackUrl, AccountReference:`MZ${payment._id.slice(-10)}`, TransactionDesc:'Mlezi membership' }
+    PhoneNumber:payment.phone, CallBackURL:settings.callbackUrl, AccountReference:'mlezicare', TransactionDesc:'Mlezi membership' }
   const result = await json(`${settings.host}/mpesa/stkpush/v1/processrequest`, { method:'POST', headers:auth.headers, body:JSON.stringify(body) }, true)
   if (result.ResponseCode === undefined || result.ResponseCode === null) throw new ProviderError(true)
   if (String(result.ResponseCode) !== '0') throw new ProviderError(false)
