@@ -1,9 +1,9 @@
 export const profile = {
   id: "sample1",
-  name: "Example Caregiver With A Longer Profile Name",
+  name: "Example Nanny or babysitter With A Longer Profile Name",
   phone: "+254700000000",
   photo_url: "/src/assets/logo.png",
-  bio: "Experienced caregiver offering warm, reliable childcare and travel support. ".repeat(
+  bio: "Experienced nanny or babysitter offering warm, reliable childcare and travel support. ".repeat(
     4,
   ),
   service_category: "travel_nanny",

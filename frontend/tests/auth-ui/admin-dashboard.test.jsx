@@ -44,7 +44,7 @@ it('exposes failed email recovery even for tickets outside the open queue', asyn
   expect(screen.getByRole('heading', { name: 'Cannot upload' })).toBeTruthy()
 })
 it('shows all three identity images only after opening the private evidence and revokes blobs on close', async () => {
-  state.identity = [{ id: 'review1', caregiver_id: 'caregiver1', name: 'Example Caregiver', submitted_at: '2026-11-01', photo_url: 'https://example.test/photo.jpg' }]
+  state.identity = [{ id: 'review1', caregiver_id: 'caregiver1', name: 'Example Nanny or babysitter', submitted_at: '2026-11-01', photo_url: 'https://example.test/photo.jpg' }]
   render(<AdminIdentity />)
   expect(screen.queryByAltText('National ID')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Open private documents' }))
@@ -57,7 +57,7 @@ it('shows all three identity images only after opening the private evidence and 
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:private-selfie')
 })
 it('requires an explicit approval or correction decision and clears private evidence after approval', async () => {
-  state.identity = [{ id: 'review1', caregiver_id: 'caregiver1', name: 'Example Caregiver', submitted_at: '2026-11-01', photo_url: 'https://example.test/photo.jpg' }]
+  state.identity = [{ id: 'review1', caregiver_id: 'caregiver1', name: 'Example Nanny or babysitter', submitted_at: '2026-11-01', photo_url: 'https://example.test/photo.jpg' }]
   render(<AdminIdentity />)
   fireEvent.click(screen.getByRole('button', { name: 'Open private documents' }))
   await screen.findByAltText('National ID')

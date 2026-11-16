@@ -175,7 +175,7 @@ it.each(['password', 'otp'])('keeps a newly verified %s account on the signed-in
   const user = userEvent.setup()
   render(<ConvexAuthForm initialRegistering />)
   await user.selectOptions(screen.getByLabelText('How would you like to continue?'), method)
-  await user.type(screen.getByLabelText('Your full name'), 'Test Caregiver')
+  await user.type(screen.getByLabelText('Your full name'), 'Test Nanny or babysitter')
   await user.type(screen.getByLabelText('Contact phone'), '0712345678')
   await user.type(screen.getByLabelText('Email address'), 'newcaregiver@example.test')
   if (method === 'password') await user.type(screen.getByLabelText('Password'), 'Testing123!')

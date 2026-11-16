@@ -27,7 +27,7 @@ try {
   }
   for (const path of ['/app', ...Object.keys(APP_PATHS)]) {
     await mkdir(`dist${path}`, { recursive: true })
-    await writeFile(`dist${path}/index.html`, renderDocument(template, null, '<p>Open Mlezi with JavaScript enabled to sign in or browse caregivers.</p>', env))
+    await writeFile(`dist${path}/index.html`, renderDocument(template, null, '<p>Open Mlezi with JavaScript enabled to sign in or browse nannies and babysitters.</p>', env))
   }
   const notFound = renderDocument(template, null, renderToString(createElement(PublicPages, { page: null })), env).replaceAll('Your account | Mlezi', 'Page not found | Mlezi')
   await writeFile('dist/404.html', notFound)

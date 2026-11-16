@@ -12,7 +12,7 @@ Support route: /support/ and /privacy-account
 
 ## 1. Who this notice covers
 
-Mlezi is a marketplace for adult caregivers and employers/parents. The launch focuses on families hiring in Kenya. Families and caregivers are responsible for confirming the right to work and any required permits. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.
+Mlezi is a marketplace for adult nannies and babysitters and employers/parents. The launch focuses on families hiring in Kenya. Families and nannies and babysitters are responsible for confirming the right to work and any required permits. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.
 
 Accounts are for people aged 18 or older. We do not offer children accounts. Describe care needs by general age group; do not publish children’s names, photos, school details, medical records or exact addresses. Report an underage account or inappropriate information through Support.
 
@@ -22,16 +22,16 @@ Accounts are for people aged 18 or older. We do not offer children accounts. Des
 Information comes directly from users, their marketplace interactions, administrators handling a case and the providers operating the service. Earlier Mlezi account records may be carried forward for continuity; account ownership still requires verification. Do not put ID numbers, passwords, private contact details or other people’s sensitive information in public fields.
 
 - Account details: email, phone, account role and name where provided, with verification, credentials and session records needed for authentication.
-- Caregiver profiles: photo, general location, experience, services, languages, skills, age groups cared for, availability, expected pay and bio supplied by the caregiver.
+- Nanny or babysitter profiles: photo, general location, experience, services, languages, skills, age groups cared for, availability, expected pay and bio supplied by the nanny or babysitter.
 - Identity evidence: private national ID image and recent selfie, plus the profile photo, for manual identity and adult-age review. The ID image can contain more information than the fields used in a review.
 - Payment records, if you have made a payment or participated in testing: plan, amount, paying phone, provider request identifiers, status and confirmation records. Historical manual reports may also contain a receipt reference and administrator decision. These are private account records, not public profile content. M-Pesa STK Push is available through Membership; do not send manual Paybill payments.
-- Marketplace records: job listings, pay proposals and messages, offers and acceptance records, shortlists, contact unlocks, membership dates, employer reviews, caregiver replies and reports. Reviews and reports can contain information supplied by another user.
+- Marketplace records: job listings, pay proposals and messages, offers and acceptance records, shortlists, contact unlocks, membership dates, employer reviews, nanny or babysitter replies and reports. Reviews and reports can contain information supplied by another user.
 - Support/privacy cases: issue details, messages, guest contact email and administrator decisions or restriction reasons.
 - Technical information: authentication/session information, security events, provider connection/usage records and cookie choices. Optional search preferences stay in your browser tab.
 
 ## 3. Purposes and intended processing grounds
 
-We use information to provide and secure accounts, publish profiles, run search and contact access, review identity evidence, calculate ratings, moderate misuse, answer support and handle access/correction/deletion requests. Required fields are labelled. Without required account information, registration cannot be completed; without required caregiver evidence, a caregiver cannot be published. Complete available profiles may appear to signed-in employers while identity review is pending, clearly labelled as not yet checked. Contact unlocking requires administrator confirmation of identity and adult age.
+We use information to provide and secure accounts, publish profiles, run search and contact access, review identity evidence, calculate ratings, moderate misuse, answer support and handle access/correction/deletion requests. Required fields are labelled. Without required account information, registration cannot be completed; without required nanny or babysitter evidence, a nanny or babysitter cannot be published. Complete available profiles may appear to signed-in employers while identity review is pending, clearly labelled as not yet checked. Contact unlocking requires administrator confirmation of identity and adult age.
 
 The intended grounds are providing the service requested under the user agreement, proportionate legitimate interests in security and preventing misuse, consent where required for optional processing, and applicable legal obligations. The operator must confirm the appropriate grounds and necessity of mandatory ID/selfie processing before launch. Accepting terms or an upload permission does not waive privacy rights or authorize unrelated uses.
 
@@ -49,12 +49,12 @@ Use Privacy and account or Support to withdraw a review request, question a deci
 
 ## 5. Who sees what
 
-You choose whether your caregiver profile appears in marketplace searches, separately from availability. Accepting a job does not change visibility. Applying explicitly shares your profile and proposal with that job’s employer even when hidden; previously unlocked contacts require an active pass and remain subject to account and safety restrictions.
+You choose whether your nanny or babysitter profile appears in marketplace searches, separately from availability. Accepting a job does not change visibility. Applying explicitly shares your profile and proposal with that job’s employer even when hidden; previously unlocked contacts require an active pass and remain subject to account and safety restrictions.
 
 Shortlists and private identity/support records are not public profiles. Necessary disclosures for valid legal processes or serious safety/security concerns are assessed for lawful basis and scope. Deleting information here cannot always recall copies another person has already downloaded or shared.
 
-- Signed-in employers can see eligible caregiver profiles, including complete profiles clearly labelled as awaiting identity review, profile photos, stated services/experience, availability, expected pay and public reviews/replies. Do not include private information in these fields.
-- Employers with contact access can unlock a caregiver’s phone/email. An active pass is required to view previously unlocked contacts, subject to account deletion and identity/safety restrictions.
+- Signed-in employers can see eligible nanny or babysitter profiles, including complete profiles clearly labelled as awaiting identity review, profile photos, stated services/experience, availability, expected pay and public reviews/replies. Do not include private information in these fields.
+- Employers with contact access can unlock a nanny or babysitter’s phone/email. An active pass is required to view previously unlocked contacts, subject to account deletion and identity/safety restrictions.
 - Authorized administrators access private evidence and case information needed for review, moderation and support. Privileged access requires additional administrator verification.
 - Service providers process information needed for hosting, database/storage, authentication, email and requested anti-spam or optional font features.
 
@@ -73,12 +73,12 @@ Providers and their subprocessors may process data outside Kenya. A European dat
 
 Search applies the employer’s filters before showing labelled matching Premium profiles first, with rotating exposure. Other matching profiles follow. Keyword synonyms match stated information; they do not infer nationality, work eligibility or skills. Premium does not improve identity decisions or ratings.
 
-Ratings are calculated from public employer reviews. Unlocking a contact permits a review but does not prove hiring. Identity decisions and moderation have human review routes through Support. Mlezi does not automatically recruit or hire a caregiver on your behalf.
+Ratings are calculated from public employer reviews. Unlocking a contact permits a review but does not prove hiring. Identity decisions and moderation have human review routes through Support. Mlezi does not automatically recruit or hire a nanny or babysitter on your behalf.
 
 
 ## 8. Retention and deletion
 
-Deletion is scheduled/batched, so removal can finish after a threshold rather than at its exact instant. An account-deletion request hides caregiver availability and restricts ordinary use immediately, followed by a two-hour cancellation period before personal records and associated files are purged. Limited pseudonymous audit/financial references may remain where justified.
+Deletion is scheduled/batched, so removal can finish after a threshold rather than at its exact instant. An account-deletion request hides nanny or babysitter availability and restricts ordinary use immediately, followed by a two-hour cancellation period before personal records and associated files are purged. Limited pseudonymous audit/financial references may remain where justified.
 
 Cloud backups, provider logs and former migration/rollback copies need their own approved retention and secure-disposal schedule. That schedule is not yet finalized. Live-record deletion does not immediately erase every protected backup. Final backup limits, restore safeguards and payment-record retention must be documented before the relevant production use.
 

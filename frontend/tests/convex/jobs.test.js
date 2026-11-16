@@ -35,7 +35,7 @@ it('requires signed-in roles and isolates employer jobs and proposals',async()=>
  await expect(outsider.client.mutation(api.jobs.decide,{id:a.id,decision:'accept'})).rejects.toThrow('not found')
  expect((await outsider.client.query(api.jobs.mine,{})).applications).toHaveLength(0)
 })
-it('allows pending and hidden caregivers to apply, exposes only profile projections and requires verified adulthood before hiring',async()=>{
+it('allows pending and hidden nannies and babysitters to apply, exposes only profile projections and requires verified adulthood before hiring',async()=>{
  const t=make(),e=await person(t,'employer'),c=await nanny(t),{id}=await post(e)
  await c.client.mutation(api.marketplace.write,{path:'/caregivers/profile',method:'PUT',body:{is_visible:'false'}})
  const a=await apply(c,id)

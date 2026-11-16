@@ -18,7 +18,7 @@ import Landing from './components/Landing'
 import CookieConsent from './components/CookieConsent'
 import { EmployerDashboard, EmployerAccount, EmployerContacts } from './components/EmployerWorkspace'
 import { api, clearSession, hasSession } from './lib/api'
-import logo from './assets/logo.png'
+import logo from './assets/logo.svg'
 import './index.css'
 import './landing.css'
 
@@ -96,12 +96,12 @@ export default function App() {
 
   function logout() { void clearSession() }
   function saved(result) {
-    setProfile(result); setUser(current => current ? { ...current, name: result.name, profile: result } : current); setEditing(false); setNotice(profile ? 'Your changes have been saved.' : 'Your caregiver profile is ready. Welcome to Mlezi!'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    setProfile(result); setUser(current => current ? { ...current, name: result.name, profile: result } : current); setEditing(false); setNotice(profile ? 'Your changes have been saved.' : 'Your nanny or babysitter profile is ready. Welcome to Mlezi!'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   return <div className="app-shell">
     <CookieConsent />
     {!landing && <header className="site-header"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a><span className="header-caption">A little care. A brighter beginning.</span><div className="header-actions">{user?.role !== 'caregiver' && <a className="text-button" href="/caregivers">Find care</a>}{user ? <><span className="account-name">{user.profile?.name || user.name || 'My account'}</span><button className="text-button" onClick={logout}>Sign out ↗</button></> : <a className="text-button" href="/signin">Sign in / join</a>}</div></header>}
-    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href={user.role === 'admin' ? '/admin-mlezicareaccess' : '/workspace'}>{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`/caregivers/${profile.id}`}>Preview my profile ↗</a>}{user.role === 'caregiver' && <a href="/identity">Identity check</a>}{user.role === 'employer' && <><a href="/caregivers">Find caregivers</a><a href="/shortlist">My shortlist</a><a href="/contacts">My contacts</a><a href="/account">My account</a></>}{user.role !== 'admin' && <a href="/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Payments'}</a>}<a href="/jobs">{user.role === 'caregiver' ? 'Find jobs & my proposals' : 'Jobs & applications'}</a><a href="/tickets">Support</a><a href="/privacy-account">Privacy and account</a><span>{user.role.toUpperCase()} WORKSPACE</span></nav>}
+    {user && !landing && <nav className="workspace-nav" aria-label="Workspace navigation"><a href={user.role === 'admin' ? '/admin-mlezicareaccess' : '/workspace'}>{user.role === 'caregiver' ? 'My profile' : 'Overview'}</a>{user.role === 'caregiver' && !publicId && profile && !membership && !identity && !browsing && !shortlist && <button className={editing ? 'active' : ''} onClick={() => { setEditing(true); setNotice('') }} disabled={loading}>Edit profile</button>}{user.role === 'caregiver' && profile && !publicId && <a href={`/caregivers/${profile.id}`}>Preview my profile ↗</a>}{user.role === 'caregiver' && <a href="/identity">Identity check</a>}{user.role === 'employer' && <><a href="/caregivers">Find nannies and babysitters</a><a href="/shortlist">My shortlist</a><a href="/contacts">My contacts</a><a href="/account">My account</a></>}{user.role !== 'admin' && <a href="/membership">{user.role === 'caregiver' ? 'Premium membership' : 'Payments'}</a>}<a href="/jobs">{user.role === 'caregiver' ? 'Find jobs & my proposals' : 'Jobs & applications'}</a><a href="/tickets">Support</a><a href="/privacy-account">Privacy and account</a><span>{user.role === 'caregiver' ? 'NANNY / BABYSITTER' : user.role.toUpperCase()} WORKSPACE</span></nav>}
     <main id="main-content" className={landing ? 'landing-main' : undefined}>
       {user && !landing && ['employer','caregiver'].includes(user.role) && <JobsBoundary compact><JobNotifications user={user} /></JobsBoundary>}
       {notice && <div className="alert success" role="status">{notice}<button className="dismiss" aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></div>}
@@ -123,6 +123,6 @@ export default function App() {
         : user.role === 'caregiver' && (editing || !profile) ? <ProfileForm key={profile?.id || 'new'} user={user} profile={profile} onSaved={saved} onCancel={() => setEditing(false)} />
         : user.role === 'caregiver' ? <><CaregiverOverview profile={profile} onUpdated={setProfile} onEdit={() => setEditing(true)} /><ProfileView key={profile.id} profile={profile} user={user} owner onEdit={() => { setEditing(true); setNotice('') }} /></>
         : <AdminPanel />}
-    </main>{!landing && <footer><a className="brand official-brand footer-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi" /></a><p>Care begins with people.</p><p><a href="/support/">Support</a> · <a href="/privacy/">Privacy</a> · <a href="/cookies/">Cookies</a> · <a href="/terms/">Terms</a></p><span>Made for families and caregivers in Kenya</span></footer>}
+    </main>{!landing && <footer><a className="brand official-brand footer-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi" /></a><p>Care begins with people.</p><p><a href="/support/">Support</a> · <a href="/privacy/">Privacy</a> · <a href="/cookies/">Cookies</a> · <a href="/terms/">Terms</a></p><span>Made for families and nannies and babysitters in Kenya</span></footer>}
   </div>
 }

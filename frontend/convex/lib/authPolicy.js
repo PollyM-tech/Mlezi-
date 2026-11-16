@@ -15,7 +15,7 @@ export function validatePassword(password) {
 }
 
 export function registrationDetails({ role, phone, name }) {
-  if (!['caregiver', 'employer'].includes(role)) throw new ConvexError('Choose caregiver or employer.')
+  if (!['caregiver', 'employer'].includes(role)) throw new ConvexError('Choose Nanny / babysitter or Employer / parent.')
   if (typeof phone !== 'string' || !/^\+?[0-9][0-9 ()-]{6,30}$/.test(phone.trim())) throw new ConvexError('Enter a valid contact phone number.')
   if (typeof name !== 'string' || name.trim().length > 120 || role === 'employer' && !name.trim()) throw new ConvexError('Enter your name, using at most 120 characters.')
   return { role, phone: phone.trim(), name: name.trim() }

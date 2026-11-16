@@ -63,7 +63,7 @@ export default function Membership({ user }) {
           </h1>
           <p>
             {user.role === "employer"
-              ? "Unlock new caregiver contacts with a contact-access pass."
+              ? "Unlock new nanny or babysitter contacts with a contact-access pass."
               : "Optional Premium visibility. Identity review remains separate."}
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function Membership({ user }) {
 
               </>
             ) : (
-              <section className="privacy-note" aria-label="M-Pesa payment availability"><h3>Payment temporarily unavailable</h3><p role="status">Checkout is currently unavailable. Browsing, shortlisting and basic caregiver profiles remain free.</p><p>Do not send money manually. Please try again later or contact Support.</p><p>Need help with an existing payment? <a href="/tickets">Contact Support</a>.</p></section>
+              <section className="privacy-note" aria-label="M-Pesa payment availability"><h3>Payment temporarily unavailable</h3><p role="status">Checkout is currently unavailable. Browsing, shortlisting and basic nanny or babysitter profiles remain free.</p><p>Do not send money manually. Please try again later or contact Support.</p><p>Need help with an existing payment? <a href="/tickets">Contact Support</a>.</p></section>
             )}
           </section>
           <aside className="card side-card">

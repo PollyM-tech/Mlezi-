@@ -12,9 +12,9 @@ async function person(t,role='caregiver'){
  return {...ids,client:t.withIdentity({subject:`${ids.userId}|${ids.sessionId}`})}
 }
 async function upload(t,who,purpose){const id=await t.run(ctx=>ctx.storage.store(new Blob(['fixture'],{type:'image/jpeg'})));await t.run(ctx=>ctx.db.insert('uploadedAssets',{accountId:who.accountId,storageId:id,purpose,claimed:false,createdAt:Date.now()}));return id}
-async function profile(t,who){const body={name:'Caregiver',service_category:'nanny',service_types:['live_in'],photo:await upload(t,who,'photo'),national_id:await upload(t,who,'national_id'),selfie:await upload(t,who,'selfie'),consent:'true'};return who.client.mutation(api.marketplace.write,{path:'/caregivers/profile',method:'POST',body})}
+async function profile(t,who){const body={name:'Nanny or babysitter',service_category:'nanny',service_types:['live_in'],photo:await upload(t,who,'photo'),national_id:await upload(t,who,'national_id'),selfie:await upload(t,who,'selfie'),consent:'true'};return who.client.mutation(api.marketplace.write,{path:'/caregivers/profile',method:'POST',body})}
 afterEach(()=>{vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllEnvs()})
-it('blocks caregiver app access until a stored photo exists, and submits all three images together',async()=>{
+it('blocks nanny or babysitter app access until a stored photo exists, and submits all three images together',async()=>{
  const t=make(),who=await person(t)
  expect((await who.client.query(api.accounts.current)).status).toBe('profile_required')
  await expect(who.client.query(api.marketplace.read,{path:'/memberships'})).rejects.toThrow('photo')
@@ -112,7 +112,7 @@ it('checks the exact 18th birthday in Kenya, rejects invalid dates, and does not
  expect(()=>confirmAdult('',now)).toThrow('date of birth')
 })
 
-it('keeps pending and underage caregivers out of employer search and contact access',async()=>{
+it('keeps pending and underage nannies and babysitters out of employer search and contact access',async()=>{
  const t=make(),who=await person(t),result=await profile(t,who),e=await person(t,'employer')
  await t.run(ctx=>ctx.db.insert('employers',{accountId:e.accountId,name:'Parent',accessExpiresAt:Date.now()+86400000}))
  expect((await e.client.query(api.marketplace.read,{path:'/caregivers'})).profiles).toHaveLength(0)

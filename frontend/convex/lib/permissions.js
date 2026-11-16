@@ -49,7 +49,7 @@ export async function adminSessionReady(ctx, account) {
 }
 export async function requireAccount(ctx, ...roles) {
   const account = await accountIdentity(ctx, ...roles)
-  if (!await hasProfilePhoto(ctx, account)) throw new ConvexError({ message: 'Upload your caregiver profile photo before continuing.', status: 403 })
+  if (!await hasProfilePhoto(ctx, account)) throw new ConvexError({ message: 'Upload your nanny or babysitter profile photo before continuing.', status: 403 })
   if (account.role === 'admin' && !await adminSessionReady(ctx, account)) throw new ConvexError({ message: 'Verify your authenticator code to continue.', status: 403 })
   return account
 }

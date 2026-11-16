@@ -79,7 +79,7 @@ export function profileFields(data, old) {
   }
   if (!CATEGORIES.includes(fields.category) || !fields.services.length || !['monthly', 'daily', 'hourly'].includes(fields.payPeriod)) fail('Select a valid category, work arrangement and pay period')
   if (fields.category === 'travel_nanny' && !fields.services.includes('travel')) fields.services.push('travel')
-  if ((fields.category === 'other' || fields.services.includes('other')) && !fields.otherServiceDescription) fail('Please describe the other caregiver service you provide')
+  if ((fields.category === 'other' || fields.services.includes('other')) && !fields.otherServiceDescription) fail('Please describe the other nanny or babysitter service you provide')
   if (fields.services.includes('live_out') && !fields.location) fail('Location is required for live-out services')
   for (const [key, column, max] of [['years_experience', 'yearsExperience', 80], ['expected_pay_min', 'payMin', 2147483647], ['expected_pay_max', 'payMax', 2147483647]]) {
     const raw = read(key, column, column === 'yearsExperience' ? 0 : '')

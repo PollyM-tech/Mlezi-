@@ -36,10 +36,10 @@ it('keeps actual employer care requirements through three minutes, reactive upda
   window.history.replaceState({}, '', '/caregivers')
   let view
   await act(async () => { view = render(<ConvexSession />); await vi.dynamicImportSettled() })
-  fireEvent.click(screen.getByRole('button', { name: 'Filter caregivers' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Filter nannies and babysitters' }))
   const keyword = screen.getByLabelText(/Name or keyword/)
   fireEvent.change(keyword, {target: {value: 'Newborn travel nanny'}})
-  fireEvent.change(screen.getByLabelText('Caregiver category'), {target: {value: 'travel_nanny'}})
+  fireEvent.change(screen.getByLabelText('Nanny or babysitter category'), {target: {value: 'travel_nanny'}})
   fireEvent.change(screen.getByLabelText(/Maximum budget/), {target: {value: '18000'}})
   for (let i = 0; i < 6; i++) {
     await act(async () => { vi.advanceTimersByTime(30000); window.dispatchEvent(new PopStateEvent('popstate')) })
@@ -48,7 +48,7 @@ it('keeps actual employer care requirements through three minutes, reactive upda
   }
   state.session = {...state.session, account: {...state.session.account, name: 'Updated Parent'}}
   await act(async () => view.rerender(<ConvexSession />))
-  expect(screen.getByLabelText('Caregiver category').value).toBe('travel_nanny')
+  expect(screen.getByLabelText('Nanny or babysitter category').value).toBe('travel_nanny')
   expect(screen.getByLabelText(/Maximum budget/).value).toBe('18000')
   expect(new Set(state.queryArgs).size).toBe(1)
   expect(state.signOut).not.toHaveBeenCalled()

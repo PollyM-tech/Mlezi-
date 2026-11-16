@@ -80,7 +80,7 @@ describe('Convex marketplace migration', () => {
     await expect(c.write('/caregivers/profile', { service_types: ['part_time'] })).rejects.toThrow('services')
     expect((await c.read('/caregivers/profile')).profile.service_types).toContain('travel')
   })
-  it('does not let another caregiver publish a stolen private upload', async () => {
+  it('does not let another nanny or babysitter publish a stolen private upload', async () => {
     const t = make(), c = await caregiver(t), other = await caregiver(t, 'other'), privateId = await uploaded(t, c, 'national_id')
     await expect(other.write('/caregivers/profile', { photo: privateId })).rejects.toThrow('belonging')
     await expect(c.write('/caregivers/profile', { photo: privateId })).rejects.toThrow('belonging')
@@ -273,17 +273,17 @@ it('invalidates a pending photo snapshot', async () => {
   await expect(admin.write(`/admin/verification/${submission.id}/approve`,{identity_compared:true,id_legible:true,adult_confirmed:true,birth_date:'1990-01-01'},'POST')).rejects.toThrow('no longer pending')
 })
 
-it('returns a profile name separately from login email and keeps caregiver name changes in sync', async () => {
+it('returns a profile name separately from login email and keeps nanny or babysitter name changes in sync', async () => {
   const t = make(), c = await caregiver(t, 'name-display')
-  await c.write('/caregivers/profile', { name: 'Caregiver Display Name' })
-  expect((await c.read('/auth/me')).user).toMatchObject({ name: 'Caregiver Display Name', role: 'caregiver' })
-  expect((await t.run(ctx => ctx.db.get(c.accountId))).name).toBe('Caregiver Display Name')
+  await c.write('/caregivers/profile', { name: 'Nanny or babysitter Display Name' })
+  expect((await c.read('/auth/me')).user).toMatchObject({ name: 'Nanny or babysitter Display Name', role: 'caregiver' })
+  expect((await t.run(ctx => ctx.db.get(c.accountId))).name).toBe('Nanny or babysitter Display Name')
   const parent = await person(t, 'employer', 'parent-name')
   await parent.write('/employers/profile', { name: 'Parent Display Name', phone: '0712345678' })
   expect((await parent.read('/auth/me')).user).toMatchObject({ name: 'Parent Display Name', role: 'employer' })
 })
 
-it('lists complete pending caregivers with a pending label, but keeps identity-only searches and contact access restricted', async () => {
+it('lists complete pending nannies and babysitters with a pending label, but keeps identity-only searches and contact access restricted', async () => {
   const t = make(), c = await caregiver(t, 'pending-visible'), parent = await person(t, 'employer', 'pending-parent')
   const selfie = await uploaded(t, c, 'selfie')
   await t.run(async ctx => {
@@ -332,7 +332,7 @@ it('requires employer sign-in for listings, profile details and reviews, with on
   await expect(admin.read(`/caregivers/${c.id}`)).rejects.toThrow('authenticator')
 })
 
-it('lets caregivers hide/show their profile without losing verification or previous employer connections',async()=>{
+it('lets nannies and babysitters hide/show their profile without losing verification or previous employer connections',async()=>{
  const t=make(),c=await caregiver(t,'visibility'),e=await person(t,'employer','connected'),other=await person(t,'employer','new-viewer')
  await t.run(async ctx=>{for(const p of await ctx.db.query('employers').collect())await ctx.db.patch(p._id,{accessExpiresAt:Date.now()+DAY})})
  await e.write(`/contact/unlock/${c.id}`,{},'POST')
@@ -364,7 +364,7 @@ it('hides even previously approved profiles missing an ID, and restores them onl
  expect((await e.read('/caregivers')).profiles[0]).toMatchObject({id:c.id,verification_status:'pending',adult_confirmed:false})
  await expect(c.write('/caregivers/profile',{national_id:await uploaded(t,c,'national_id'),selfie:await uploaded(t,c,'selfie'),consent:'true'})).rejects.toThrow('administrator assistance')
 })
-it('lets a legacy caregiver restore a missing photo and ID from profile setup without bypassing required evidence',async()=>{
+it('lets a legacy nanny or babysitter restore a missing photo and ID from profile setup without bypassing required evidence',async()=>{
  const t=make(),c=await caregiver(t,'legacy-missing'),e=await person(t,'employer','legacy-viewer')
  await t.run(async ctx=>{const p=await ctx.db.get(c.id),d=await ctx.db.query('caregiverDocuments').withIndex('by_caregiver',q=>q.eq('caregiverId',c.id)).unique();await ctx.storage.delete(p.photo.storageId);await ctx.db.delete(d._id)})
  const setup=await c.client.query(api.accounts.current,{})
@@ -375,7 +375,7 @@ it('lets a legacy caregiver restore a missing photo and ID from profile setup wi
  expect((await c.client.query(api.accounts.current,{})).status).toBe('ready')
 })
 
-it('keeps caregiver contacts out of unpaid employer responses and rejects direct unlock attempts', async () => {
+it('keeps nanny or babysitter contacts out of unpaid employer responses and rejects direct unlock attempts', async () => {
   const t=make(), c=await caregiver(t,'paywall-target'), e=await person(t,'employer','unpaid-parent')
   const target=await t.run(ctx=>ctx.db.get(c.accountId))
   const assertPrivate=result=>{
@@ -432,7 +432,7 @@ it('blocks contact details in profile edits and redacts existing legacy profile 
  expect(JSON.stringify(result)).not.toContain('0712345678')
 })
 
-it('erases reviewed identity evidence after retention without hiding the approved caregiver', async () => {
+it('erases reviewed identity evidence after retention without hiding the approved nanny or babysitter', async () => {
   const t = make(), c = await caregiver(t, 'retained-receipt'), admin = await person(t, 'admin')
   await t.run(ctx => ctx.db.patch(c.id, { identityStatus: 'unverified', adultConfirmedAt: undefined }))
   const { submission } = await c.write('/verification/submit', { selfie: await uploaded(t, c, 'selfie'), consent: 'true' }, 'POST')

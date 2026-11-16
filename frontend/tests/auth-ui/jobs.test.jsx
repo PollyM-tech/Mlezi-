@@ -29,7 +29,7 @@ it('posts employer care requirements with a validated pay range and selected arr
  fireEvent.click(screen.getByRole('button',{name:'Publish job'}))
  await waitFor(()=>expect(state.mutation).toHaveBeenCalledWith('jobs:create',expect.objectContaining({title:'Care for my infant',location:'Nairobi',payMin:15000,payMax:20000,payPeriod:'monthly',serviceTypes:['live_out']})))
 })
-it('lets a caregiver submit proposed pay and a message without implying identity approval',async()=>{
+it('lets a nanny or babysitter submit proposed pay and a message without implying identity approval',async()=>{
  render(<JobBoard user={{role:'caregiver'}}/>)
  fireEvent.click(screen.getByRole('button',{name:'Weekday care'}))
  fireEvent.change(screen.getByLabelText('Proposed pay (KES)'),{target:{value:'18000'}})
@@ -46,7 +46,7 @@ it('shows unverified identity on a pending application and makes an offer instea
  expect(screen.queryByText('Identity verified')).toBeNull()
  fireEvent.click(screen.getByRole('button',{name:'Offer this job'}))
  await waitFor(()=>expect(state.mutation).toHaveBeenCalledWith('jobs:decide',{id:'app1',decision:'offer'}))
- expect(await screen.findByText(/caregiver must accept before hiring/)).toBeTruthy()
+ expect(await screen.findByText(/nanny or babysitter must accept before hiring/)).toBeTruthy()
 })
 it('keeps an offered application visible when identity approval blocks acceptance',async()=>{
  state.job.ownApplication={id:'app1',status:'offered',message:'My proposal',proposedPay:18000,payPeriod:'monthly'}

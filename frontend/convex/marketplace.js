@@ -23,13 +23,13 @@ function number(value, fallback, min, max, integer = true) {
 async function profileForViewer(ctx, id) {
   const viewer = await requireAccount(ctx)
   const profile = await find(ctx, 'caregivers', id)
-  if (viewer.role !== 'employer' && viewer.role !== 'admin' && viewer._id !== profile.accountId) fail('Caregiver browsing is available to employer accounts', 403)
+  if (viewer.role !== 'employer' && viewer.role !== 'admin' && viewer._id !== profile.accountId) fail('Nanny or babysitter browsing is available to employer accounts', 403)
   const account = await ctx.db.get(profile.accountId)
-  if (!account || account.suspendedAt || account.deletionRequestedAt || !await hasProfilePhoto(ctx, account)) fail('Caregiver not found', 404)
+  if (!account || account.suspendedAt || account.deletionRequestedAt || !await hasProfilePhoto(ctx, account)) fail('Nanny or babysitter not found', 404)
   if (viewer.role !== 'admin' && viewer._id !== profile.accountId && !await canPublish(ctx, profile, account)) {
     const employer = viewer.role === 'employer' ? await ctx.db.query('employers').withIndex('by_account', q => q.eq('accountId', viewer._id)).unique() : null
     const priorContact = employer && profile.isVisible === false && approvedAdult(profile) && await hasNationalId(ctx, account) ? await pair(ctx, 'contactUnlocks', employer._id, profile._id) : null
-    if (!priorContact) fail('Caregiver not found', 404)
+    if (!priorContact) fail('Nanny or babysitter not found', 404)
   }
   return profile
 }
@@ -161,8 +161,8 @@ async function claimAsset(ctx, id, accountId, purpose) {
 async function saveProfile(ctx, data, creating, requestedId) {
   const a = await accountIdentity(ctx, 'caregiver')
   const old = await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', a._id)).unique()
-  if (creating && old) fail('Caregiver profile already exists', 409)
-  if (!creating && !old) fail('Caregiver profile not found', 404)
+  if (creating && old) fail('Nanny or babysitter profile already exists', 409)
+  if (!creating && !old) fail('Nanny or babysitter profile not found', 404)
   if (requestedId && (await find(ctx, 'caregivers', requestedId))._id !== old?._id) fail('You can only edit your own profile', 403)
   const fields = profileFields(data, old), contactPhone = data.phone === undefined ? a.phone : phone(data.phone)
   assertNoContact(PROFILE_TEXT_FIELDS.map(key => fields[key]))
@@ -223,12 +223,12 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   if ((match = path.match(/^\/contact\/unlock\/([^/]+)$/)) && method === 'POST') {
     const { profile: e } = await owned(ctx, 'employers', 'employer'), p = await find(ctx, 'caregivers', match[1])
     const target = await ctx.db.get(p.accountId)
-    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target) || !await hasNationalId(ctx,target)) fail('This caregiver is unavailable',403)
-    if (!approvedAdult(p)) fail('This caregiver must complete the 18+ identity check before contact access is available', 403)
-    if (p.isVisible === false && !await pair(ctx, 'contactUnlocks', e._id, p._id)) fail('This caregiver is hidden from the marketplace', 403)
+    if (!target || target.suspendedAt || target.deletionRequestedAt || !await hasProfilePhoto(ctx,target) || !await hasNationalId(ctx,target)) fail('This nanny or babysitter is unavailable',403)
+    if (!approvedAdult(p)) fail('This nanny or babysitter must complete the 18+ identity check before contact access is available', 403)
+    if (p.isVisible === false && !await pair(ctx, 'contactUnlocks', e._id, p._id)) fail('This nanny or babysitter is hidden from the marketplace', 403)
     if (!active(e.accessExpiresAt)) fail('Renew your contact-access pass to view contacts', 402)
     if (!await pair(ctx, 'contactUnlocks', e._id, p._id)) {
-      if (!p.isAvailable) fail('This caregiver is not accepting new requests right now', 409)
+      if (!p.isAvailable) fail('This nanny or babysitter is not accepting new requests right now', 409)
       if (!active(e.accessExpiresAt)) fail('Renew your contact-access pass to unlock new contacts', 402)
       await consume(ctx, `contact-unlocks-day:${actor._id}`, 30, DAY)
       await ctx.db.insert('contactUnlocks', { employerId: e._id, caregiverId: p._id, unlockedAt: Date.now() })
@@ -243,7 +243,7 @@ export const write = mutation({ args: { ...args, method: v.string(), body: v.opt
   }
   if ((match = path.match(/^\/caregivers\/([^/]+)\/review$/)) && method === 'PUT') {
     const { account, profile: e } = await owned(ctx, 'employers', 'employer'), p = await find(ctx, 'caregivers', match[1])
-    if (!await pair(ctx, 'contactUnlocks', e._id, p._id)) fail('Unlock this caregiver’s contact before reviewing', 403)
+    if (!await pair(ctx, 'contactUnlocks', e._id, p._id)) fail('Unlock this nanny or babysitter’s contact before reviewing', 403)
     if (!Number.isInteger(data.rating) || data.rating < 1 || data.rating > 5) fail('Choose a rating from 1 to 5')
     const comment = text(data.comment, 'a review', 2000, true), authorName = text(data.author_name, 'your first name', 80, true).split(/\s+/)[0]
     const old = await ctx.db.query('reviews').withIndex('by_pair', q => q.eq('employerAccountId', account._id).eq('caregiverId', p._id)).unique()

@@ -78,7 +78,7 @@ export default function AdminManualPayments() {
               KES {p.amount} · {p.plan_code?.replaceAll("_", " ")}
             </h3>
             <p>
-              {p.account.name || p.account.role} · {p.account.email}
+              {p.account.name || (p.account.role === 'caregiver' ? 'Nanny / babysitter' : p.account.role)} · {p.account.email}
             </p>
             <p>
               Receipt: <strong>{p.receipt}</strong> · Paying phone: {p.phone}

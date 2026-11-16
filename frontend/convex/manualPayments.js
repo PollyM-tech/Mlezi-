@@ -157,7 +157,7 @@ export const review = mutation({
         fail("This receipt has already activated a membership", 409);
       if (!(await hasProfilePhoto(ctx, a)))
         fail(
-          "A caregiver profile photo is required before activating Premium",
+          "A nanny or babysitter profile photo is required before activating Premium",
           409,
         );
       const table = a.role === "employer" ? "employers" : "caregivers";

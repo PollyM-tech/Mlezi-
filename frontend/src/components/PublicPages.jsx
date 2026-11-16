@@ -2,7 +2,7 @@ import Landing from './Landing.jsx'
 import LegalPage from './LegalPage.jsx'
 import PublicSupport from './PublicSupport.jsx'
 import { PUBLIC_PAGES } from '../lib/public-pages.js'
-import logo from '../assets/logo.png'
+import logo from '../assets/logo.svg'
 
 export default function PublicPages({ page, user, onSignOut, checkingSession = false }) {
   if (page?.path === '/') return <Landing user={user} onSignOut={onSignOut} checkingSession={checkingSession} />
@@ -12,7 +12,7 @@ export default function PublicPages({ page, user, onSignOut, checkingSession = f
     <main className="landing-section landing-container regional-page"><a href="/">Mlezi home</a><span className="landing-kicker">FAMILY CARE · EAST AFRICA</span><h1>{page?.heading || 'This page could not be found.'}</h1><p className="landing-section-intro">{page?.intro || 'Return to Mlezi to explore care or sign in to your account.'}</p>
       {page?.sections?.map(([title, body]) => <section key={title}><h2>{title}</h2><p>{body}</p></section>)}
       {page?.resources && <nav className="regional-links" aria-label="Further reading">{page.resources.map(link => <a key={link.href} href={link.href}>{link.label}</a>)}</nav>}
-      <div className="landing-hero-actions"><a className="button primary" href={user?.role === "caregiver" ? "/jobs" : "/caregivers"}>{user?.role === "caregiver" ? "Find jobs" : "Explore caregivers"}</a><a className="button secondary" href="/caregiver">Join as a caregiver</a></div>
+      <div className="landing-hero-actions"><a className="button primary" href={user?.role === "caregiver" ? "/jobs" : "/caregivers"}>{user?.role === "caregiver" ? "Find jobs" : "Explore nannies and babysitters"}</a><a className="button secondary" href="/caregiver">Join as a nanny or babysitter</a></div>
       <nav className="regional-links" aria-label="Regional care guides">{PUBLIC_PAGES.filter(p => p.sections).map(p => <a key={p.path} href={p.path} aria-current={page?.path === p.path ? 'page' : undefined}>{p.navLabel || p.heading || (p.path === '/east-africa/' ? 'East Africa' : p.path.slice(1, -1).replace(/^./, c => c.toUpperCase()))}</a>)}</nav>
-    </main><footer className="landing-footer landing-container"><p>Mlezi connects families and adult caregivers. Availability depends on actual listings.</p><nav aria-label="Legal"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/cookies/">Cookies</a><a href="/terms/">Terms</a></nav></footer></div>
+    </main><footer className="landing-footer landing-container"><p>Mlezi connects families and adult nannies and babysitters. Availability depends on actual listings.</p><nav aria-label="Legal"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/cookies/">Cookies</a><a href="/terms/">Terms</a></nav></footer></div>
 }

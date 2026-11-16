@@ -60,7 +60,7 @@ const confirm = (who, id, extra = {}) =>
 async function caregiver(t) {
   const who = await person(t, "caregiver");
   const body = {
-    name: "Caregiver",
+    name: "Nanny or babysitter",
     service_category: "nanny",
     service_types: ["live_in"],
     consent: "true",
@@ -177,7 +177,7 @@ it("extends early renewals by 90 days and starts expired renewals at approval ti
     confirmed.reviewedAt + 30 * DAY,
   );
 });
-it("activates caregiver Premium for 365 days without granting identity approval or changing ratings", async () => {
+it("activates nanny or babysitter Premium for 365 days without granting identity approval or changing ratings", async () => {
   const t = make(),
     c = await caregiver(t),
     a = await person(t, "admin"),
@@ -231,7 +231,7 @@ it("requires rejection reasons, allows corrected reports and protects the queue 
     "authenticator",
   );
 });
-it("does not activate restricted accounts or missing-profile caregivers", async () => {
+it("does not activate restricted accounts or missing-profile nannies and babysitters", async () => {
   const t = make(),
     e = await person(t),
     a = await person(t, "admin"),

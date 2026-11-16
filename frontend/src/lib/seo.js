@@ -9,7 +9,7 @@ export function structuredData(page, env) {
   if (!origin || !indexable || !page) return null
   const website = `${origin}/#website`, organization = `${origin}/#organization`, url = origin + page.path
   const graph = [
-    { '@type': 'Organization', '@id': organization, name: 'Mlezi', url: `${origin}/`, logo: { '@type': 'ImageObject', url: `${origin}/apple-touch-icon.png` }, description: 'A marketplace connecting families and adult caregivers in Kenya.' },
+    { '@type': 'Organization', '@id': organization, name: 'Mlezi', url: `${origin}/`, logo: { '@type': 'ImageObject', url: `${origin}/apple-touch-icon.png` }, description: 'A marketplace connecting families and adult nannies and babysitters in Kenya.' },
     { '@type': 'WebSite', '@id': website, url: `${origin}/`, name: 'Mlezi', inLanguage: 'en', publisher: { '@id': organization } },
     { '@type': 'WebPage', '@id': `${url}#webpage`, url, name: page.title, description: page.description, inLanguage: 'en', isPartOf: { '@id': website }, about: { '@id': organization }, ...(page.path !== '/' ? { breadcrumb: { '@id': `${url}#breadcrumbs` } } : {}) },
   ]

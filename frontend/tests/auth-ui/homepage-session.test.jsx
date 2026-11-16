@@ -58,14 +58,14 @@ it('recognizes an existing session on a direct homepage visit', async () => {
   expect(screen.queryByRole('link', { name: 'Log in' })).toBeNull()
   expect(state.revoke).not.toHaveBeenCalled()
 })
-it('allows a signed-in caregiver to visit home while their photo setup is incomplete', async () => {
+it('allows a signed-in nanny or babysitter to visit home while their photo setup is incomplete', async () => {
   state.role = 'caregiver'; state.status = 'profile_required'
   window.history.replaceState({}, '', '/')
   await open()
   expect(await screen.findByRole('link', { name: 'My workspace' })).toBeTruthy()
   expect(screen.queryByRole('heading', { name: 'Your profile photo is required' })).toBeNull()
-  expect(screen.queryByRole('link', { name: 'Find your caregiver' })).toBeNull()
-  expect(screen.queryByRole('link', { name: 'Find a caregiver', exact: true })).toBeNull()
+  expect(screen.queryByRole('link', { name: 'Find your nanny or babysitter' })).toBeNull()
+  expect(screen.queryByRole('link', { name: 'Find a nanny or babysitter', exact: true })).toBeNull()
   expect(screen.queryByLabelText('I’m looking for')).toBeNull()
   expect(screen.getAllByRole('link', { name: 'Find jobs', exact: true }).length).toBeGreaterThan(0)
   await act(async () => fireEvent.click(screen.getByRole('link', { name: 'My workspace' })))

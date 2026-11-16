@@ -7,7 +7,7 @@ export const CATEGORIES = {
   special_needs_nanny: 'Special needs nanny',
   newborn_maternity_nanny: 'Newborn & maternity / night nanny',
   early_years_educator: 'Early-years educator',
-  other: 'Other caregiver',
+  other: 'Other nanny or babysitter',
 }
 export const CATEGORY_DESCRIPTIONS = {
   travel_nanny: 'Accompanies families on trips and holidays to help with children during travel, outings, and parents’ work time. Agree duties, travel costs, accommodation, and working hours together.',

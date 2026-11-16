@@ -14,7 +14,7 @@ it('public regional guides work without loading the authenticated application', 
   expect(screen.getByRole('heading', { level: 1 }).textContent).toContain('Kenya')
   expect(screen.getByText(/A nanny, a maid or a househelp/)).toBeTruthy()
   expect(screen.queryByText('Private account application')).toBeNull()
-  expect(screen.getByRole('link', { name: 'Explore caregivers' }).getAttribute('href')).toBe('/caregivers')
+  expect(screen.getByRole('link', { name: 'Explore nannies and babysitters' }).getAttribute('href')).toBe('/caregivers')
 })
 it('the separate application entry keeps private workspace pages out of indexing', async () => {
   window.history.replaceState({}, '', '/signin')
@@ -28,7 +28,7 @@ it('the separate application entry keeps private workspace pages out of indexing
 it('opens clean signup links without reloading and handles browser Back navigation', async () => {
   window.history.replaceState({}, '', '/')
   render(<Website />)
-  const link=screen.getAllByRole('link',{name:/I’m a caregiver/})[0]
+  const link=screen.getAllByRole('link',{name:/I’m a nanny or babysitter/})[0]
   expect(link.getAttribute('href')).toBe('/caregiver')
   fireEvent.click(link)
   expect(await screen.findByText('Private account application')).toBeTruthy()

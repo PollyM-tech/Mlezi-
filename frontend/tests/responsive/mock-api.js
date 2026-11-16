@@ -37,7 +37,7 @@ export async function api(path, { method = "GET" } = {}) {
     return {
       profiles: [
         profile,
-        { ...profile, id: "sample2", name: "Another Example Caregiver" },
+        { ...profile, id: "sample2", name: "Another Example Nanny or babysitter" },
         { ...profile, id: "sample3" },
       ],
       total: 3,

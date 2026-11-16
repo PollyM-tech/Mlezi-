@@ -39,7 +39,7 @@ it('isolates ticket lists, reads, replies and status changes between accounts', 
   expect(ticket.status).toBe('open')
   expect((await admin.client.query(api.support.list, { admin: true, status: 'open' })).tickets[0].id).toBe(id)
 })
-it('keeps support available without a caregiver photo and during restrictions, but requires admin MFA', async () => {
+it('keeps support available without a nanny or babysitter photo and during restrictions, but requires admin MFA', async () => {
   const t = make(), a = await person(t), admin = await person(t, 'admin', 'unverifiedAdmin', false)
   await t.run(ctx => ctx.db.patch(a.accountId, { suspendedAt: Date.now() }))
   const { id } = await a.client.mutation(api.support.create, issue)

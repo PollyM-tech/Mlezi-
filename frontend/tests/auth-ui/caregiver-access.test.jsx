@@ -9,13 +9,13 @@ afterEach(cleanup)
 it.each(['/caregivers', '/caregivers/example123'])('shows an employer sign-in gate without fetching profiles on %s', async path => {
   window.history.replaceState({}, '', path)
   render(<App />)
-  expect(await screen.findByRole('heading', {name:'Sign in to meet the caregivers'})).toBeTruthy()
+  expect(await screen.findByRole('heading', {name:'Sign in to meet the nannies and babysitters'})).toBeTruthy()
   expect(screen.getByRole('link', {name:'Sign in as an employer'}).getAttribute('href')).toBe('/signin')
   expect(screen.getByRole('link', {name:'Create an employer account'}).getAttribute('href')).toBe('/employer')
   expect(state.api).not.toHaveBeenCalled()
 })
-it('does not let a signed-in caregiver retrieve the employer listing feed', () => {
+it('does not let a signed-in nanny or babysitter retrieve the employer listing feed', () => {
   render(<Discovery user={{id:'caregiver1',role:'caregiver'}} />)
-  expect(screen.getByRole('heading', {name:'Caregiver browsing is for employers'})).toBeTruthy()
+  expect(screen.getByRole('heading', {name:'Nanny or babysitter browsing is for employers'})).toBeTruthy()
   expect(state.api).not.toHaveBeenCalled()
 })
