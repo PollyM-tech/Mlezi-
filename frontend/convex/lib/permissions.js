@@ -32,6 +32,8 @@ export async function hasNationalId(ctx, account) {
   const profile = await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', account._id)).unique()
   if (!profile) return false
   const documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', profile._id)).unique()
+  // A retained review receipt keeps approved profiles usable after evidence erasure.
+  if (documents?.purgedAt && profile.identityStatus === 'verified' && typeof profile.adultConfirmedAt === 'number') return true
   const asset = documents?.nationalId
   return !!asset && (asset.provider === 'convex' ? !!await ctx.db.system.get(asset.storageId) : !!asset.publicId)
 }

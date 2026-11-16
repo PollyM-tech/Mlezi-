@@ -26,7 +26,7 @@ export const evidence = internalQuery({ args: { submissionId: v.string(), kind: 
 } })
 function cors(request) {
   const origin = request.headers.get('Origin')
-  return { ...(trustedWebOrigins(process.env.SITE_URL, process.env.APP_ALLOWED_ORIGINS).has(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {}), 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Upload-Purpose', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' }
+  return { ...(trustedWebOrigins(process.env.SITE_URL, process.env.APP_ALLOWED_ORIGINS).has(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {}), 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Upload-Purpose, X-Identity-Consent', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' }
 }
 export const options = httpAction(async (_ctx, request) => new Response(null, { status: 204, headers: cors(request) }))
 function errorResponse(error, headers) {
@@ -47,6 +47,7 @@ export const upload = httpAction(async (ctx, request) => {
     const purpose = request.headers.get('X-Upload-Purpose'), type = request.headers.get('Content-Type')
     if (!['photo', 'national_id', 'selfie'].includes(purpose)) fail('Select a valid upload purpose')
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(type)) fail('Upload a JPEG, PNG or WebP image')
+    if (['national_id', 'selfie'].includes(purpose) && request.headers.get('X-Identity-Consent') !== 'true') fail('Confirm permission before uploading identity evidence')
     const max = 5 * 1024 * 1024
     if (Number(request.headers.get('Content-Length')) > max) fail('Images must be at most 5 MB')
     // Bound streamed bytes too; Content-Length is optional and untrusted.

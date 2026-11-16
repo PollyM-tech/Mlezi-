@@ -85,7 +85,7 @@ describe('Convex marketplace migration', () => {
     await expect(other.write('/caregivers/profile', { photo: privateId })).rejects.toThrow('belonging')
     await expect(c.write('/caregivers/profile', { photo: privateId })).rejects.toThrow('belonging')
   })
-  it('preserves old contacts after expiry and pausing while blocking new unlocks', async () => {
+  it('requires an active pass even for previously unlocked contacts', async () => {
     const t = make(), c = await caregiver(t), second = await caregiver(t, 'second'), e = await person(t, 'employer')
     await expect(e.write(`/contact/unlock/${c.id}`, {}, 'POST')).rejects.toThrow('Renew')
     const employerId = await t.run(async ctx => (await ctx.db.query('employers').first())._id)
@@ -95,8 +95,8 @@ describe('Convex marketplace migration', () => {
     expect(await t.run(ctx => ctx.db.query('contactUnlocks').collect())).toHaveLength(1)
     await t.run(ctx => ctx.db.patch(employerId, { accessExpiresAt: Date.now() - 1 }))
     await c.write('/caregivers/profile', { is_available: 'false' })
-    expect((await e.read(`/contact/unlock/${c.id}`)).contact.email).toBe('caregiver@example.test')
-    expect((await e.read('/employers/contacts')).total).toBe(1)
+    expect((await e.read(`/contact/unlock/${c.id}`)).contact).toBeUndefined()
+    expect((await e.read('/employers/contacts')).total).toBe(0)
     await expect(e.write(`/contact/unlock/${second.id}`, {}, 'POST')).rejects.toThrow('Renew')
     expect((await employerRead(t, '/caregivers')).profiles.map(p => p.id)).not.toContain(c.id)
   })
@@ -138,12 +138,15 @@ describe('Convex marketplace migration', () => {
     await admin.write(`/admin/verification/${submission.id}/approve`, { identity_compared: true, id_legible: true, adult_confirmed: true, birth_date: '1990-01-01' }, 'POST')
     expect((await c.read('/verification/status')).verification_status).toBe('verified')
     await c.write('/caregivers/profile', { name: 'Changed Name' })
-    expect((await c.read('/verification/status')).verification_status).toBe('verified')
+    expect((await c.read('/verification/status')).verification_status).toBe('unverified')
+    await c.write('/verification/submit', { selfie: await uploaded(t, c, 'selfie'), consent: 'true' }, 'POST')
+    const next = (await c.read('/verification/status')).submission
+    await admin.write(`/admin/verification/${next.id}/approve`, { identity_compared: true, id_legible: true, adult_confirmed: true, birth_date: '1990-01-01' }, 'POST')
     const approved = await t.run(ctx => ctx.db.get(c.id))
     await c.write('/caregivers/profile', { photo: await uploaded(t, c, 'photo') })
-    expect((await c.read('/verification/status')).verification_status).toBe('verified')
-    expect((await t.run(ctx => ctx.db.get(c.id))).adultConfirmedAt).toBe(approved.adultConfirmedAt)
-    await expect(c.write('/verification/submit', {}, 'POST')).rejects.toThrow('already approved')
+    expect((await c.read('/verification/status')).verification_status).toBe('unverified')
+    expect(approved.adultConfirmedAt).toBeTypeOf('number')
+    expect((await t.run(ctx => ctx.db.get(c.id))).adultConfirmedAt).toBeUndefined()
     await expect(c.client.query(internal.files.evidence, { submissionId: submission.id, kind: 'national_id' })).rejects.toThrow('permission')
     const storageId = await admin.client.query(internal.files.evidence, { submissionId: submission.id, kind: 'national_id' })
     expect(storageId).toBeTruthy()
@@ -229,7 +232,7 @@ it('authenticates every private document request and validates upload bytes', as
   expect(allowed.status).toBe(200); expect(allowed.headers.get('Cache-Control')).toBe('no-store')
   const invalid = await c.client.fetch('/files/upload', { method: 'POST', headers: { 'Content-Type': 'image/png', 'X-Upload-Purpose': 'photo' }, body: 'not an image' })
   expect(invalid.status).toBe(400)
-  const valid = await c.client.fetch('/files/upload', { method: 'POST', headers: { 'Content-Type': 'image/png', 'X-Upload-Purpose': 'selfie' }, body: new Uint8Array(await sharp({ create: { width: 2, height: 2, channels: 3, background: '#ffffff' } }).png().toBuffer()) })
+  const valid = await c.client.fetch('/files/upload', { method: 'POST', headers: { 'Content-Type': 'image/png', 'X-Upload-Purpose': 'selfie', 'X-Identity-Consent': 'true' }, body: new Uint8Array(await sharp({ create: { width: 2, height: 2, channels: 3, background: '#ffffff' } }).png().toBuffer()) })
   expect(valid.status).toBe(200)
 })
 
@@ -240,9 +243,9 @@ it('allows a missing ID to be uploaded with a selfie, without permitting replace
   const national_id = await uploaded(t,c,'national_id'), selfie = await uploaded(t,c,'selfie')
   await c.write('/verification/submit',{national_id,selfie,consent:'true'},'POST')
   expect((await c.read('/caregivers/profile')).profile.national_id_uploaded).toBe(true)
-  // A display-name edit does not invalidate a pending comparison.
   await c.write('/caregivers/profile',{name:'New display name'})
-  expect((await c.read('/verification/status')).verification_status).toBe('pending')
+  expect((await c.read('/verification/status')).verification_status).toBe('unverified')
+  await c.write('/verification/submit',{selfie:await uploaded(t,c,'selfie'),consent:'true'},'POST')
   const admin=await person(t,'admin'), submission=(await c.read('/verification/status')).submission
   await admin.write(`/admin/verification/${submission.id}/approve`,{identity_compared:true,id_legible:true,adult_confirmed:true,birth_date:'1990-01-01'},'POST')
   expect((await c.read('/verification/status')).verification_status).toBe('verified')
@@ -261,7 +264,7 @@ it('permits exact configured upload origins and loopback aliases, but not unrela
   expect((await options('http://localhost:5173')).headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173')
 })
 
-it('invalidates a pending photo snapshot while preserving pending display-name changes', async () => {
+it('invalidates a pending photo snapshot', async () => {
   const t=make(), c=await caregiver(t), admin=await person(t,'admin')
   await t.run(ctx=>ctx.db.patch(c.id,{identityStatus:'unverified',adultConfirmedAt:undefined}))
   const {submission}=await c.write('/verification/submit',{selfie:await uploaded(t,c,'selfie'),consent:'true'},'POST')
@@ -397,7 +400,7 @@ it('keeps caregiver contacts out of unpaid employer responses and rejects direct
   expect(await t.run(ctx=>ctx.db.query('contactUnlocks').collect())).toHaveLength(0)
 })
 
-it('isolates paid unlocks between employers and retains only previously unlocked contacts after expiry', async () => {
+it('isolates paid unlocks between employers and requires renewal for contact reads', async () => {
   const t=make(), c=await caregiver(t,'first-paid-target'), second=await caregiver(t,'second-paid-target')
   const payer=await person(t,'employer','payer'), other=await person(t,'employer','nonpayer')
   const employerId=await t.run(async ctx=>{
@@ -409,8 +412,9 @@ it('isolates paid unlocks between employers and retains only previously unlocked
   expect((await other.read('/employers/contacts')).contacts).toEqual([])
   await expect(other.write(`/contact/unlock/${c.id}`,{},'POST')).rejects.toThrow('contact-access pass')
   await t.run(ctx=>ctx.db.patch(employerId,{accessExpiresAt:Date.now()-1}))
-  expect((await payer.read(`/contact/unlock/${c.id}`)).unlocked).toBe(true)
-  expect((await payer.read('/employers/contacts')).contacts).toHaveLength(1)
+  expect(await payer.read(`/contact/unlock/${c.id}`)).toMatchObject({unlocked:false,pass_expired:true})
+  expect((await payer.read('/employers/contacts')).contacts).toHaveLength(0)
+  await expect(payer.write(`/contact/unlock/${c.id}`,{},'POST')).rejects.toThrow('contact-access pass')
   expect((await payer.read(`/contact/unlock/${second.id}`)).can_unlock).toBe(false)
   await expect(payer.write(`/contact/unlock/${second.id}`,{},'POST')).rejects.toThrow('contact-access pass')
 })
@@ -426,4 +430,41 @@ it('blocks contact details in profile edits and redacts existing legacy profile 
  expect(detail.profile.travel_notes).toBe('[Contact details removed]')
  const result=await e.read('/caregivers')
  expect(JSON.stringify(result)).not.toContain('0712345678')
+})
+
+it('erases reviewed identity evidence after retention without hiding the approved caregiver', async () => {
+  const t = make(), c = await caregiver(t, 'retained-receipt'), admin = await person(t, 'admin')
+  await t.run(ctx => ctx.db.patch(c.id, { identityStatus: 'unverified', adultConfirmedAt: undefined }))
+  const { submission } = await c.write('/verification/submit', { selfie: await uploaded(t, c, 'selfie'), consent: 'true' }, 'POST')
+  await admin.write(`/admin/verification/${submission.id}/approve`, { identity_compared: true, id_legible: true, adult_confirmed: true, birth_date: '1990-01-01' }, 'POST')
+  const doc = await t.run(ctx => ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', c.id)).unique())
+  await t.run(ctx => ctx.db.patch(submission.id, { reviewedAt: Date.now() - 31 * DAY }))
+  await t.mutation(internal.retention.sweep, {})
+  expect(await t.run(ctx => ctx.db.system.get(doc.nationalId.storageId))).toBeNull()
+  expect((await employerRead(t, `/caregivers/${c.id}`)).profile.verification_status).toBe('verified')
+  expect((await c.read('/caregivers/profile')).profile).toMatchObject({ national_id_uploaded: true, identity_evidence_purged: true })
+  await c.write('/caregivers/profile', { name: 'Updated identity' })
+  expect((await c.read('/caregivers/profile')).profile.national_id_uploaded).toBe(false)
+  await c.write('/verification/submit', { national_id: await uploaded(t, c, 'national_id'), selfie: await uploaded(t, c, 'selfie'), consent: 'true' }, 'POST')
+  expect((await c.read('/verification/status')).verification_status).toBe('pending')
+  expect((await t.run(ctx => ctx.db.get(doc._id))).purgedAt).toBeUndefined()
+})
+
+it('rejects an identity image upload before consent', async () => {
+  vi.stubEnv('SITE_URL', 'http://localhost:5173')
+  const t = make(), c = await caregiver(t, 'upload-consent')
+  const response = await c.client.fetch('/files/upload', { method: 'POST', headers: { 'Content-Type': 'image/png', 'X-Upload-Purpose': 'national_id' }, body: new Uint8Array([137,80,78,71,13,10,26,10]) })
+  expect(response.status).toBe(400)
+  expect(await response.text()).toContain('permission before uploading')
+})
+
+it('limits new contact unlocks with a persistent daily account budget', async () => {
+  const t = make(), c = await caregiver(t, 'budget-target'), e = await person(t, 'employer', 'budget-employer')
+  await t.run(async ctx => {
+    const profile = await ctx.db.query('employers').withIndex('by_account', q => q.eq('accountId', e.accountId)).unique()
+    await ctx.db.patch(profile._id, { accessExpiresAt: Date.now() + DAY })
+    await ctx.db.insert('rateLimits', { key: `contact-unlocks-day:${e.accountId}`, count: 30, resetAt: Date.now() + DAY })
+  })
+  await expect(e.write(`/contact/unlock/${c.id}`, {}, 'POST')).rejects.toThrow('Too many requests')
+  expect(await t.run(ctx => ctx.db.query('contactUnlocks').collect())).toHaveLength(0)
 })

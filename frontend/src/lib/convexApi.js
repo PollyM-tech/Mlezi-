@@ -6,7 +6,7 @@ export function convexSiteUrl(env = import.meta.env) {
   const value = env.VITE_CONVEX_SITE_URL || env.VITE_CONVEX_URL?.replace(/\.convex\.cloud\/?$/, '.convex.site')
   if (!value) throw new Error('File storage is not configured. Set VITE_CONVEX_URL or VITE_CONVEX_SITE_URL and rebuild the website.')
   const url = new URL(value)
-  if (url.protocol !== 'https:' || !url.hostname.endsWith('.convex.site') || url.pathname !== '/' || url.search || url.hash || url.username || url.password) throw new Error('File storage needs the Convex HTTP Actions URL ending in .convex.site.')
+  if (url.protocol !== 'https:' || (!url.hostname.endsWith('.convex.site') && (!env.VITE_CONVEX_SITE_URL || url.hostname.endsWith('.convex.cloud') || url.hostname.includes('.convex.site.'))) || url.pathname !== '/' || url.search || url.hash || url.username || url.password) throw new Error('File storage needs a valid HTTPS Convex HTTP Actions origin or explicitly configured custom domain.')
   return url.origin
 }
 async function fileRequest(session, path, options = {}) {
@@ -56,7 +56,7 @@ export async function nativeConvexApi(path, { method = 'GET', body } = {}, sessi
         if (value instanceof Blob) {
           if (!value.size) continue
           const image = await prepareUploadImage(value)
-          const response = await fileRequest(session, '/files/upload', { method: 'POST', headers: { 'Content-Type': image.type, 'X-Upload-Purpose': key }, body: image })
+          const response = await fileRequest(session, '/files/upload', { method: 'POST', headers: { 'Content-Type': image.type, 'X-Upload-Purpose': key, ...(['national_id', 'selfie'].includes(key) ? { 'X-Identity-Consent': body.get('consent') === 'true' ? 'true' : 'false' } : {}) }, body: image })
           fields[key] = (await response.json()).storageId
         } else fields[key] = value
       }

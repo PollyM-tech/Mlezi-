@@ -51,20 +51,20 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 it("removes manual instructions and receipt submission even if an old backend advertises them", async () => {
   render(<Membership user={{role:'employer'}} />);
-  expect(await screen.findByText(/STK payments are currently unavailable/)).toBeTruthy();
+  expect(await screen.findByText(/Checkout is currently unavailable/)).toBeTruthy();
   expect(screen.queryByText('Pay manually with M-Pesa')).toBeNull();
   expect(screen.queryByLabelText('M-Pesa receipt code')).toBeNull();
   expect(state.submit).not.toHaveBeenCalled();
 });
-it('shows plans and prices while checkout is unavailable without accepting a payment', async () => {
-  const user = userEvent.setup();
+it('shows a temporary outage and hides purchase controls when backend checkout is unavailable', async () => {
   render(<Membership user={{role:'employer'}} />);
-  const selector = await screen.findByLabelText('Choose your plan');
-  expect(screen.getByRole('heading', {name:'Payment options'})).toBeTruthy();
-  expect(screen.getByRole('heading', {name:'Pay with M-Pesa'})).toBeTruthy();
-  await user.selectOptions(selector, 'employer_90_days');
-  expect(screen.getByText('KES 500 · 90 days', {selector:'p'})).toBeTruthy();
-  expect(screen.getByRole('button', {name:'Payment temporarily unavailable'}).disabled).toBe(true);
+  expect(await screen.findByRole('heading', {name:'Payment temporarily unavailable'})).toBeTruthy();
+  expect(screen.queryByLabelText('Choose your plan')).toBeNull();
+  expect(screen.queryByRole('heading', {name:'Payment options'})).toBeNull();
+  expect(screen.queryByText(/KES 300|KES 500/)).toBeNull();
+  expect(screen.queryByLabelText('M-Pesa phone number')).toBeNull();
+  expect(screen.queryByRole('button', {name:'Send payment request'})).toBeNull();
+  expect(screen.getByText(/Do not send money manually/)).toBeTruthy();
   expect(state.read.mock.calls.every(([path]) => ['/memberships', '/payments'].includes(path))).toBe(true);
   expect(state.submit).not.toHaveBeenCalled();
 });

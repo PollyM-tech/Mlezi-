@@ -89,7 +89,7 @@ export default function Membership({ user }) {
             {membership.expires_at && (
               <p>Expiry: {new Date(membership.expires_at).toLocaleString()}</p>
             )}
-            {plan ? (
+            {plan && membership.payments_enabled ? (
               <>
                 <h3>Payment options</h3>
                 <label>
@@ -106,23 +106,17 @@ export default function Membership({ user }) {
                     ))}
                   </select>
                 </label>
-                {membership.payments_enabled ? <StkPayment plan={{...plan, amount: plan.stk_amount ?? plan.amount}} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} /> : <section className="privacy-note" aria-label="M-Pesa payment availability">
-                  <h3>Pay with M-Pesa</h3>
-                  <p>KES {plan.amount} · {plan.days} days</p>
-                  <p role="status">M-Pesa STK payments are currently unavailable. Please try again later.</p>
-                  <button type="button" className="button primary" disabled>Payment temporarily unavailable</button>
-                  <p>Need help with a payment? <a href="/tickets">Contact Support</a>.</p>
-                </section>}
+                <StkPayment plan={{...plan, amount: plan.stk_amount ?? plan.amount}} pending={pending} environment={membership.payment_environment} user={user} onRefresh={refreshPayments} />
 
               </>
             ) : (
-              <p>No membership plans are available right now. <a href="/tickets">Contact Support</a>.</p>
+              <section className="privacy-note" aria-label="M-Pesa payment availability"><h3>Payment temporarily unavailable</h3><p role="status">Checkout is currently unavailable. Browsing, shortlisting and basic caregiver profiles remain free.</p><p>Do not send money manually. Please try again later or contact Support.</p><p>Need help with an existing payment? <a href="/tickets">Contact Support</a>.</p></section>
             )}
           </section>
           <aside className="card side-card">
             <p>
               {user.role === "employer"
-                ? "Previously unlocked contacts remain accessible after ordinary pass expiry. Renew to unlock new contacts."
+                ? "An active pass is required to view or unlock contacts. Renew to restore access."
                 : "Premium gives rotating priority among matching profiles. It does not grant identity approval, ratings or guaranteed work."}
             </p>
             <p>

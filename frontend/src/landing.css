@@ -18,13 +18,6 @@
 .regional-links a[aria-current=page] { font-weight: 700; }
 
 /* Compact partner acknowledgement, separate from family-care calls to action. */
-.landing-partners { padding-top: 48px; padding-bottom: 48px; border-top: 1px solid #e3e7db; }
-.landing-partners-heading h2 { margin: 10px 0 0; font-size: clamp(1.5rem, 2.5vw, 2rem); line-height: 1.2; }
-.landing-partner-list { display: flex; flex-wrap: wrap; gap: 20px; margin: 24px 0 0; padding: 0; list-style: none; }
-.landing-partner-item { display: flex; justify-content: center; align-items: center; width: 240px; max-width: 100%; padding: 0; background: transparent; border: 0; box-shadow: none; }
-.landing-partner-logo { display: block; width: 100%; max-width: 240px; height: 100px; object-fit: contain; }
-.landing-partner-name { color: #071b45; font-size: 1.75rem; font-weight: 700; letter-spacing: -.03em; }
-@media(max-width:600px) { .landing-partners { padding-top: 32px; padding-bottom: 32px; } .landing-partner-item { width: 100%; } }
 
 /* Full-width hero photos keep the family-care message readable above the image. */
 .landing .landing-hero { display: block; position: relative; isolation: isolate; overflow: hidden; max-width: none; padding: 0; background: #f1e9dc; }
@@ -121,3 +114,8 @@
 @media(max-width:360px){.landing-hero-actions{flex-direction:column}.landing-quick-steps{gap:8px}.landing-quick-steps li{font-size:.69rem}}
 
 @media(min-width:801px){.landing-plans.landing-plans-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.landing-testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px; }
+.landing-testimonials figure { margin: 0; padding: 28px; background: #fffaf5; border: 1px solid #e9ded1; border-radius: 20px; }
+.landing-testimonials blockquote { margin: 0 0 24px; line-height: 1.7; }
+.landing-testimonials figcaption { display: grid; gap: 6px; }

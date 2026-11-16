@@ -1,6 +1,8 @@
+import { LAUNCH_GUIDES, CITY_GUIDES } from './launch-guides.js'
 import { appRoute, appHref } from './routes.js'
 // Public editorial pages only. Never add accounts, contacts or identity evidence here.
 export const PUBLIC_PAGES = [
+  ...LAUNCH_GUIDES, ...CITY_GUIDES,
   { path: '/support/', title: 'Support & private help tickets | Mlezi', description: 'Get help with your Mlezi account, profile or technical issue. Open a private support ticket or check replies without sharing the operator’s personal contact details.' },
   { path: '/', title: 'Mlezi | Nannies, babysitters & family care in Kenya', description: 'Find childcare that fits your family in Kenya. Mlezi is a caregiver marketplace, not a recruitment agency. Connect with nannies and babysitters, interview and hire directly.' },
   { path: '/east-africa/', title: 'Caregiver connections in East Africa | Mlezi', description: 'A guide for families in Kenya and caregivers from Kenya, Uganda, Burundi and Rwanda: care arrangements, languages, identity review and joining Mlezi.', heading: 'Care connects us across East Africa.', intro: 'Mlezi starts with families hiring in Kenya and welcomes adult caregivers to describe their experience. This guide helps people from Kenya, Uganda, Burundi and Rwanda understand the marketplace.', sections: [
@@ -11,7 +13,7 @@ export const PUBLIC_PAGES = [
   { path: '/kenya/', title: 'Nannies, babysitters & househelp searches in Kenya | Mlezi', description: 'Looking for a nanny, babysitter or househelp in Kenya? Understand childcare duties, live-in and day nanny arrangements, identity review and how Mlezi works.', heading: 'Find the right care for your family in Kenya.', intro: 'Families in Kenya use words such as nanny, househelp, house help and maid when looking for help at home. On Mlezi, start with the actual duties you need, then compare each caregiver’s stated services.', sections: [
     ['A nanny, a maid or a househelp?', 'These words can describe different jobs. Mlezi currently focuses on childcare caregivers. Childcare experience does not automatically include general cleaning, laundry or cooking for the whole household. Confirm household duties separately with the person you are considering.'],
     ['Live-in or live-out care', 'A live-in arrangement includes living at the family’s home. A live-out or day nanny commutes to work. For live-out care, use the location filter to look for an area such as Nairobi, Mombasa or Kisumu; results depend on the caregivers actually listed.'],
-    ['Compare care, not just a label', 'Choose newborn and maternity care, occasional babysitting, special needs care or travel childcare according to your family’s needs. Browse for free, review experience and public employer feedback, and interview before making an agreement.'],
+    ['Compare care, not just a label', 'Choose newborn and maternity care, occasional babysitting, special needs care or travel childcare according to your family’s needs. Create a free employer account to browse, review experience and public employer feedback, and interview before making an agreement.'],
   ] },
   { path: '/uganda/', title: 'Ugandan caregivers joining Mlezi | Care connections with Kenya', description: 'Information for caregivers from Uganda considering Mlezi: describe your childcare experience, languages, availability and work arrangements for families hiring in Kenya.', heading: 'For caregivers joining from Uganda.', intro: 'If you are in Uganda and considering childcare work with a family in Kenya, use Mlezi to describe what you actually offer. This is a joining guide, not a promise of available jobs or a local recruitment office.', sections: [
     ['Make your languages and experience clear', 'List the languages you speak, such as Luganda, English or Kiswahili, and explain your experience with infants, toddlers or older children. Families can use language and care filters when browsing.'],
@@ -30,6 +32,13 @@ export const PUBLIC_PAGES = [
   ] },
   ...['privacy', 'cookies', 'terms'].map(type => ({ path: `/${type}/`, type, title: `${({ privacy: 'Privacy notice', cookies: 'Cookie policy', terms: 'Terms of use' })[type]} | Mlezi`, description: ({ privacy: 'Read how Mlezi handles account information, private identity evidence, support requests and your privacy rights on its caregiver marketplace.', cookies: 'Understand Mlezi’s essential sign-in storage, optional fonts and search preferences, and how to manage your cookie choices.', terms: 'Read Mlezi’s marketplace terms for families and caregivers, including account eligibility, identity review, membership payments and responsibility.' })[type] })),
 ]
+
+for (const page of PUBLIC_PAGES.filter(p => ['/east-africa/', '/uganda/', '/burundi/', '/rwanda/'].includes(p.path))) {
+  page.sections.push(['Work permission is your responsibility', 'Our launch focuses on families hiring in Kenya. The family and caregiver must confirm the right to work and obtain any required permits before work begins. Joining Mlezi does not grant work permission. We do not organise relocation, immigration or cross-border placements.'])
+}
+const kenya = PUBLIC_PAGES.find(page => page.path === '/kenya/')
+kenya.sections.push(...LAUNCH_GUIDES[0].sections.slice(1, 5))
+kenya.resources = [{ label: 'Safe hiring checklist', href: '/safe-hiring/' }, ...CITY_GUIDES.map(page => ({ label: page.navLabel, href: page.path }))]
 
 export function publicPage(pathname) {
   const path = pathname === '/' ? '/' : `/${pathname.replace(/^\/+|\/+$/g, '')}/`

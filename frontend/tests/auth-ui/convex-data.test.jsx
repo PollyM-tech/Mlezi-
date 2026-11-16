@@ -29,6 +29,7 @@ it('preserves server validation and permission error status for the UI', async (
 })
 
 it('derives the HTTP upload origin when only the cloud URL is configured, and rejects incorrect URLs', () => {
+  expect(convexSiteUrl({ VITE_CONVEX_SITE_URL: 'https://auth.mlezicare.com' })).toBe('https://auth.mlezicare.com')
   expect(convexSiteUrl({ VITE_CONVEX_URL: 'https://example.convex.cloud' })).toBe('https://example.convex.site')
   expect(() => convexSiteUrl({})).toThrow('not configured')
   expect(() => convexSiteUrl({ VITE_CONVEX_SITE_URL: 'https://example.convex.cloud' })).toThrow('HTTP Actions')

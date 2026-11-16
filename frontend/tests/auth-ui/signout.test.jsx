@@ -19,7 +19,7 @@ it('returns home immediately with a slow server and does not expose the account 
  render(<Website/> )
  await userEvent.click(await screen.findByRole('button',{name:'Sign out'}, {timeout:5000}))
  expect(window.location.pathname).toBe('/')
- expect(await screen.findByRole('heading',{level:1})).toHaveProperty('textContent',expect.stringContaining('A little care.'))
+ expect(await screen.findByRole('heading',{level:1})).toHaveProperty('textContent',expect.stringContaining('Find a nanny or'))
  expect(sessionStorage.getItem('__convexAuthJWT_mleziconvexauth')).toBeNull()
  expect(sessionStorage.getItem('__convexAuthRefreshToken_mleziconvexauth')).toBeNull()
  expect(sessionStorage.getItem('cookie-preference')).toBe('declined')

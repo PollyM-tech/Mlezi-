@@ -53,7 +53,7 @@ export default defineSchema({
     .index('by_published_category', ['identityStatus', 'isAvailable', 'category'])
     .index('by_legacy_id', ['legacyId']),
   caregiverDocuments: defineTable({
-    caregiverId: v.id('caregivers'), nationalId: privateAsset,
+    caregiverId: v.id('caregivers'), nationalId: privateAsset, purgedAt: optionalNumber,
   }).index('by_caregiver', ['caregiverId']),
   employers: defineTable({
     ...legacy, accountId: v.id('accounts'), name: optionalText, accessExpiresAt: optionalNumber,
@@ -75,7 +75,7 @@ export default defineSchema({
     legacyGoodConduct: v.optional(privateAsset), profileName: optionalText, profilePhoto: v.optional(privateAsset),
     status: v.union(v.literal('pending'), v.literal('approved'), v.literal('rejected')),
     reviewedBy: v.optional(v.id('accounts')), rejectionReason: optionalText,
-    submittedAt: v.number(), reviewedAt: optionalNumber, adultConfirmedAt: optionalNumber,
+    submittedAt: v.number(), consentAt: optionalNumber, reviewedAt: optionalNumber, adultConfirmedAt: optionalNumber,
   }).index('by_status', ['status']).index('by_caregiver', ['caregiverId']).index('by_legacy_id', ['legacyId']),
   reports: defineTable({
     ...legacy, reporterId: v.id('accounts'), reportedAccountId: v.id('accounts'),

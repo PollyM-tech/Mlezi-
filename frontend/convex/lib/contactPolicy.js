@@ -11,6 +11,8 @@ export function containsContact(value) {
   const s = normalized(value)
   if (/[\w.+-]+\s*(?:@|\[at\]|\(at\)|\s+at\s+)\s*[\w.-]+\s*(?:\.|\[dot\]|\(dot\)|\s+dot\s+)\s*[a-z]{2,}/i.test(s)) return true
   if (/(?:https?:\/\/|www\.|mailto:|tel:|wa\.me\b|t\.me\b|whatsapp|telegram|instagram|facebook|snapchat|tiktok|signal\.me|@[a-z0-9_])/i.test(s)) return true
+  // Kenyan identity numbers are sensitive even when they are not phone numbers.
+  if (/(?<!\d)\d{7,8}(?!\d)/.test(s)) return true
   // Catch phone numbers separated by spaces, punctuation, or common obfuscation.
   if (/(?:\d[\s().+_\-/]*){9,}/.test(s)) return true
   const words=s.toLowerCase().replace(/\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)\b/g, w => String(['zero','one','two','three','four','five','six','seven','eight','nine'].indexOf(w === 'oh' ? 'zero' : w)))
@@ -19,7 +21,7 @@ export function containsContact(value) {
   return /\b[a-z0-9][a-z0-9-]*\.(?:com|org|net|io|me|co\.ke|co\.ug|co\.tz|rw|bi|ke|ug|tz)\b/i.test(s)
 }
 export function assertNoContact(values) {
-  if (values.some(containsContact)) throw new ConvexError({message:'Remove phone numbers, email addresses, social handles and contact links from public text. Use the private contact fields; contacts are shared through paid contact access.',status:400})
+  if (values.some(containsContact)) throw new ConvexError({message:'Remove phone numbers, ID numbers, email addresses, social handles and contact links from public text. Use the private contact fields; contacts are shared through paid contact access.',status:400})
 }
 export function safePublicText(value) {
   if (Array.isArray(value)) return containsContact(value) ? ['[Contact details removed]'] : value.map(safePublicText)

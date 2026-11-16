@@ -1,5 +1,6 @@
 import { ACCOUNT_DELETION_GRACE_MS } from './lib/privacyPolicy.js'
 import { internalMutation } from './_generated/server.js'
+import { audit } from './lib/security.js'
 import { internal } from './_generated/api.js'
 const DAY = 86400000
 export const sweep = internalMutation({ args: {}, handler: async ctx => {
@@ -15,6 +16,18 @@ export const sweep = internalMutation({ args: {}, handler: async ctx => {
   for (const r of await ctx.db.query('securityAudit').withIndex('by_created', q => q.lt('createdAt', Date.now() - 90 * DAY)).take(500)) await ctx.db.delete(r._id)
   for (const r of await ctx.db.query('adminSessions').collect()) if (r.expiresAt < Date.now()) await ctx.db.delete(r._id)
   for (const r of await ctx.db.query('accounts').collect()) if (r.deletionRequestedAt && r.deletionRequestedAt + ACCOUNT_DELETION_GRACE_MS <= Date.now() && r.authSubject) await ctx.scheduler.runAfter(0, internal.privacy.purge, { accountId: r._id })
+  for (const documents of await ctx.db.query('caregiverDocuments').collect()) {
+    if (documents.purgedAt) continue
+    const submissions = await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', documents.caregiverId)).collect()
+    const latest = submissions.sort((a, b) => b.submittedAt - a.submittedAt)[0]
+    // Never erase evidence supporting a recent or active review.
+    const completedAt = latest?.status === 'pending' ? latest.submittedAt : latest?.reviewedAt
+    if (!completedAt || completedAt > Date.now() - 30 * DAY) continue
+    if (documents.nationalId.provider !== 'convex') continue // Legacy provider deletion needs operator migration.
+    await ctx.storage.delete(documents.nationalId.storageId)
+    await ctx.db.patch(documents._id, { purgedAt: Date.now() })
+    await audit(ctx, undefined, 'identity_evidence_purged', documents.caregiverId)
+  }
   for (const s of await ctx.db.query('verificationSubmissions').collect()) {
     if (s.status === 'pending' && s.submittedAt < Date.now() - 30 * DAY) {
       if (s.selfie?.provider === 'convex') await ctx.storage.delete(s.selfie.storageId)

@@ -4,11 +4,11 @@ import { readFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { legalConfiguration } from '../src/lib/legal.js'
 const failures=[]
-const required=['VITE_APP_ORIGIN','VITE_TURNSTILE_SITE_KEY','VITE_LEGAL_ENTITY','VITE_CONVEX_URL','VITE_CONVEX_SITE_URL']
+const required=['VITE_APP_ORIGIN','VITE_TURNSTILE_SITE_KEY','VITE_LEGAL_PROPRIETOR','VITE_CONVEX_URL','VITE_CONVEX_SITE_URL']
 for(const key of required)if(!process.env[key])failures.push(`Set ${key}.`)
 const legal=legalConfiguration(process.env)
 for(const key of legal.missing)if(!required.includes(key))failures.push(`Set ${key} using the actual operator's public service details.`)
-if(!legal.reviewed)failures.push('Keep notices as drafts until operator particulars and qualified review are complete; then set VITE_LEGAL_REVIEWED=true for the reviewed release.')
+if(!legal.reviewed)failures.push('Complete proprietor identity, public service address and qualified notice review; then set VITE_LEGAL_REVIEWED=true for the reviewed release.')
 try{const url=new URL(process.env.VITE_APP_ORIGIN);if(url.protocol!=='https:'||['localhost','127.0.0.1'].includes(url.hostname))throw Error()}catch{failures.push('Use the actual public HTTPS frontend origin.')}
 if((process.env.CONVEX_DEPLOYMENT||'').startsWith('dev:'))failures.push('A development deployment must not be used for a production release.')
 for(const flag of ['LEGAL_REVIEW_COMPLETE','BACKUP_RESTORE_TESTED','ALERTS_CONFIGURED','LIVE_AUTH_TESTED','LEGACY_ASSET_RETENTION_CONFIRMED','SUPPORT_FLOW_TESTED'])if(process.env[flag]!=='true')failures.push(`Complete and attest ${flag}.`)

@@ -1,18 +1,18 @@
 # Mlezi Privacy notice
 
-Prepared 1 November 2026 · Version 2026-11-04
+Updated 14 November 2026 · Version 2026-11-04
 
-**Pre-launch review copy. Not a legal approval or publication authorization.**
+**Internal legal review copy. Not a legal approval or publication authorization.**
 
-Operator name supplied: Lintech Telecom
-Business structure: To be confirmed before launch
+Operator name supplied: Mlezi
+Business structure: Sole proprietorship
 Registration: Confirm if applicable
-Service address: Service address to be confirmed before launch
+Service address: Not supplied — proprietor must provide before release
 Support route: /support/ and /privacy-account
 
 ## 1. Who this notice covers
 
-Lintech Telecom operates Mlezi, a marketplace for adult caregivers and employers/parents. The initial service connects families hiring in Kenya with caregivers, including people joining from Uganda, Burundi and Rwanda. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.
+Mlezi is a marketplace for adult caregivers and employers/parents. The launch focuses on families hiring in Kenya. Families and caregivers are responsible for confirming the right to work and any required permits. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.
 
 Accounts are for people aged 18 or older. We do not offer children accounts. Describe care needs by general age group; do not publish children’s names, photos, school details, medical records or exact addresses. Report an underage account or inappropriate information through Support.
 
@@ -24,7 +24,7 @@ Information comes directly from users, their marketplace interactions, administr
 - Account details: email, phone, account role and name where provided, with verification, credentials and session records needed for authentication.
 - Caregiver profiles: photo, general location, experience, services, languages, skills, age groups cared for, availability, expected pay and bio supplied by the caregiver.
 - Identity evidence: private national ID image and recent selfie, plus the profile photo, for manual identity and adult-age review. The ID image can contain more information than the fields used in a review.
-- Manual payment reports: plan, expected amount, M-Pesa receipt reference, paying phone, status and administrator confirmation/rejection records. These are private account records, not public profile content.
+- Payment records, if you have made a payment or participated in testing: plan, amount, paying phone, provider request identifiers, status and confirmation records. Historical manual reports may also contain a receipt reference and administrator decision. These are private account records, not public profile content. M-Pesa STK Push is available through Membership; do not send manual Paybill payments.
 - Marketplace records: job listings, pay proposals and messages, offers and acceptance records, shortlists, contact unlocks, membership dates, employer reviews, caregiver replies and reports. Reviews and reports can contain information supplied by another user.
 - Support/privacy cases: issue details, messages, guest contact email and administrator decisions or restriction reasons.
 - Technical information: authentication/session information, security events, provider connection/usage records and cookie choices. Optional search preferences stay in your browser tab.
@@ -40,21 +40,21 @@ Optional font loading and remembered search filters require your cookie choice. 
 
 ## 4. Identity and age review
 
-An authorized administrator compares the ID, selfie and profile photo and checks that the ID birth date indicates an age of at least 18. The full birth date entered for that calculation is not saved in the review record; the result, reviewer and time are recorded. The retained ID image can still contain the birth date and ID number.
+An authorized administrator compares the ID, selfie and profile photo and checks that the ID birth date indicates an age of at least 18. The full birth date entered for that calculation is not saved in the review record; the result, reviewer and time are recorded. During the review and retention window, the ID image can contain the birth date and ID number. We do not extract or save the ID number as a text field. Raw Convex ID images are scheduled for deletion 30 days after the latest review decision; the review result, reviewer and date remain.
 
 Identity checked records this manual review. It is not an issuer-backed identity validation, criminal/background check, or guarantee of authenticity, suitability or conduct. Uploads, reviews and Premium do not grant this badge automatically. Identity/profile-photo changes can require a fresh review.
 
-Use Privacy and account or Support to withdraw a review request, question a decision or request evidence deletion. We will assess the request and explain effects on publication and any justified retention. A publicly listed caregiver must still have the required evidence. Pending listings are clearly labelled; identity approval is required for contact unlocking.
+Use Privacy and account or Support to withdraw a review request, question a decision or request evidence deletion. We will assess the request and explain effects on publication and any justified retention. Approved profiles may remain listed after scheduled evidence deletion using the retained verification result. A later identity change requires fresh review and evidence. Pending listings are clearly labelled; identity approval is required for contact unlocking.
 
 
 ## 5. Who sees what
 
-You choose whether your caregiver profile appears in marketplace searches, separately from availability. Accepting a job does not change visibility. Applying explicitly shares your profile and proposal with that job’s employer even when hidden; previously unlocked contacts remain accessible subject to account and safety restrictions.
+You choose whether your caregiver profile appears in marketplace searches, separately from availability. Accepting a job does not change visibility. Applying explicitly shares your profile and proposal with that job’s employer even when hidden; previously unlocked contacts require an active pass and remain subject to account and safety restrictions.
 
 Shortlists and private identity/support records are not public profiles. Necessary disclosures for valid legal processes or serious safety/security concerns are assessed for lawful basis and scope. Deleting information here cannot always recall copies another person has already downloaded or shared.
 
 - Signed-in employers can see eligible caregiver profiles, including complete profiles clearly labelled as awaiting identity review, profile photos, stated services/experience, availability, expected pay and public reviews/replies. Do not include private information in these fields.
-- Employers with contact access can unlock a caregiver’s phone/email. Previously unlocked contacts remain accessible after ordinary pass expiry, subject to account deletion and identity/safety restrictions.
+- Employers with contact access can unlock a caregiver’s phone/email. An active pass is required to view previously unlocked contacts, subject to account deletion and identity/safety restrictions.
 - Authorized administrators access private evidence and case information needed for review, moderation and support. Privileged access requires additional administrator verification.
 - Service providers process information needed for hosting, database/storage, authentication, email and requested anti-spam or optional font features.
 
@@ -63,6 +63,7 @@ Shortlists and private identity/support records are not public profiles. Necessa
 Providers and their subprocessors may process data outside Kenya. A European database location does not establish that every provider processes all information only there. Actual deployments, processor agreements, destinations and lawful transfer safeguards must be confirmed before launch; this notice remains a draft until that review is complete. Ask through Support for applicable arrangements. Website use is not blanket consent to international transfers.
 
 - Convex: authentication, database functions, file storage, sessions and operational records.
+- Google sign-in: if you choose Continue with Google, Google authenticates your account and shares an account identifier, email address and email verification status with Mlezi. Your Google password is not shared with Mlezi.
 - Resend: account email and support acknowledgements/replies, including recipient address and email content.
 - Website hosting: frontend delivery and connection information. Vercel is the planned host; the final deployment must be confirmed.
 - Cloudflare Turnstile: browser/network information and challenge results when the visitor chooses to load the guest-support anti-spam check.
@@ -82,8 +83,8 @@ Deletion is scheduled/batched, so removal can finish after a threshold rather th
 Cloud backups, provider logs and former migration/rollback copies need their own approved retention and secure-disposal schedule. That schedule is not yet finalized. Live-record deletion does not immediately erase every protected backup. Final backup limits, restore safeguards and payment-record retention must be documented before the relevant production use.
 
 - Active accounts and profiles: retained while the account is active, subject to correction, deletion and justified obligations.
-- Current ID image: retained for review while the caregiver account remains; necessity and duration require approval before launch.
-- Reviewed selfies and obsolete identity evidence: scheduled for removal 30 days after the review decision. The current profile photo and ID remain separately.
+- National ID images in Convex storage: scheduled for deletion 30 days after the latest review decision, or expiry of an unanswered review. A minimal review receipt is retained; a new review after evidence deletion requires a new upload. Legacy provider evidence requires operator migration and deletion.
+- Reviewed selfies and obsolete identity evidence: scheduled for removal 30 days after the review decision. The current profile photo remains separately.
 - Pending identity requests: expire after 30 days; the expired selfie is removed and a fresh submission is needed.
 - Unclaimed uploads: expire after approximately one hour. Security audit events: scheduled for removal after 90 days.
 - Support conversations and associated email jobs: resolved tickets after 90 days without updates; other tickets after 180 days without activity. Account-linked tickets are also removed with account deletion.

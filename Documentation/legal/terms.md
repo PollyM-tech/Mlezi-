@@ -1,18 +1,18 @@
 # Mlezi Terms of use
 
-Prepared 1 November 2026 · Version 2026-11-04
+Updated 14 November 2026 · Version 2026-11-04
 
-**Pre-launch review copy. Not a legal approval or publication authorization.**
+**Internal legal review copy. Not a legal approval or publication authorization.**
 
-Operator name supplied: Lintech Telecom
-Business structure: To be confirmed before launch
+Operator name supplied: Mlezi
+Business structure: Sole proprietorship
 Registration: Confirm if applicable
-Service address: Service address to be confirmed before launch
+Service address: Not supplied — proprietor must provide before release
 Support route: /support/ and /privacy-account
 
 ## 1. The marketplace and eligibility
 
-Mlezi is operated by Lintech Telecom for adult caregivers and employers/parents. Its current service provides listings, search, shortlists, reviews and introductions. Families hire and pay caregivers directly. Mlezi does not currently recruit or place workers, employ/supervise caregivers, provide immigration services, or become a party to a family’s care/employment agreement.
+Mlezi is a sole-proprietor marketplace service for adult caregivers and employers/parents. Its current service provides listings, search, shortlists, reviews and introductions. Families hire and pay caregivers directly. Mlezi does not currently recruit or place workers, employ/supervise caregivers, provide immigration services, or become a party to a family’s care/employment agreement.
 
 You must be at least 18, provide accurate information and control the account you use. Do not impersonate someone or share login codes. Keep profile/contact information current. Verification does not authorize you to act for another person.
 
@@ -42,13 +42,13 @@ Reviews must honestly describe an employer’s own experience. Contact unlocking
 Premium is optional paid priority among matching profiles, with rotating exposure. It does not buy an identity badge, better ratings, employment or guaranteed contacts. Search is not a hiring decision by Mlezi.
 
 
-## 5. Platform plans and manual payments
+## 5. Platform plans and payment availability
 
-Browsing, shortlisting and a basic caregiver profile are free. Employer contact access is KES 300 for 30 days or KES 500 for 90 days; optional caregiver Premium is KES 500 for 365 days. These are platform access/visibility charges, separate from caregiver wages.
+Browsing, shortlisting and a basic caregiver profile are free. Employer contact access costs KES 300 for 30 days or KES 500 for 90 days; optional caregiver Premium costs KES 500 for 365 days. Pay using M-Pesa STK Push in Membership. The amount and duration are displayed before you authorize payment. Platform charges are separate from caregiver wages.
 
-Renewal is manual. No automatic recurring charge is authorized here. Early renewal extends the existing unexpired term; otherwise a term starts on confirmed activation. Previously unlocked contacts remain after ordinary expiry, while new unlocks require active access. Deletion and identity/safety restrictions can still affect access.
+Renewal is manual. No automatic recurring charge is authorized here. Early renewal extends the existing unexpired term; otherwise a term starts on confirmed activation. Viewing contacts and unlocking new contacts require an active pass. Deletion and identity/safety restrictions can still affect access.
 
-Where enabled, M-Pesa STK Push sends a one-off payment request to your phone. Confirm the amount and business on your phone; never enter your M-Pesa PIN on Mlezi. Membership activates after server confirmation, not merely after requesting a prompt. Sandbox confirmations are tests and do not activate membership. Manual Paybill receipt submissions are currently unavailable. Automated Paystack checkout is not enabled. For incorrect, duplicate, failed or unrecognized payments, contact Support for investigation and any applicable correction or refund; do not pay again while a report is pending. Rejection of a report does not reverse or refund an M-Pesa transfer automatically. Confirmed platform membership payments are non-refundable for a change of mind, unused access, account deletion or dissatisfaction with a caregiver. This policy does not exclude refunds, payment corrections or other remedies required by applicable law. Mlezi does not collect caregiver wages.
+Do not send money manually or follow payment instructions outside the available Membership checkout. Manual Paybill receipt submissions and Paystack checkout are unavailable. M-Pesa STK Push checkout sends a one-off payment request to your phone. Confirm the amount and business on your phone; never enter your M-Pesa PIN on Mlezi. Membership activates after server confirmation, not merely after requesting a prompt. Sandbox confirmations are tests and do not activate membership. For incorrect, duplicate, failed or unrecognized payments, contact Support for investigation and any applicable correction or refund; do not pay again while a report is pending. Rejection of a report does not reverse or refund an M-Pesa transfer automatically. Confirmed platform membership payments are non-refundable for a change of mind, unused access, account deletion or dissatisfaction with a caregiver. This policy does not exclude refunds, payment corrections or other remedies required by applicable law. Mlezi does not collect caregiver wages.
 
 
 ## 6. Content and conduct
@@ -65,16 +65,23 @@ We may remove content, pause publication, restrict contacts or suspend an accoun
 You can stop using the service and request deletion through Privacy and account. The Privacy notice explains the two-hour cancellation period, file removal and justified retention. Previously shared information cannot always be recalled. Use Support to request review of cancellation/refund concerns. Any refund must be investigated and processed separately; withdrawing access or rejecting a report does not itself reverse a payment.
 
 
-## 8. Support and responsibility
+## 8. Marketplace role and caregiver misconduct
+
+Mlezi is a marketplace, not a recruitment agency or the employer or supervisor of caregivers. Families select, hire, supervise and pay caregivers directly.
+
+To the extent permitted by applicable law, Mlezi is not responsible for a caregiver’s independent acts, omissions or misconduct, or disputes arising from the family’s employment or care arrangement. Identity checking and Premium membership do not guarantee conduct, suitability or safety.
+
+We remain responsible for our own platform obligations. Report interruptions, inaccurate information and misconduct for assessment. Nothing here excludes liability or removes consumer, employment, data-protection or other rights that applicable law does not allow us to exclude.
+
+
+## 9. Support and disputes
 
 Use Support for account, technical, identity, privacy and safety concerns. Signed-out users can submit an issue with their email once delivery/spam protection is configured. Acknowledgements and staff replies are emailed. Our support commitment is to address an issue within 48 hours; it is not emergency response.
-
-Mlezi is a marketplace, not a recruitment agency or the employer or supervisor of caregivers. Families select, hire, supervise and pay caregivers directly. To the extent permitted by applicable law, Lintech Telecom and Mlezi are not responsible for a caregiver’s independent acts, omissions or misconduct, or disputes arising from the family’s employment or care arrangement. Identity checking and Premium membership do not guarantee conduct, suitability or safety. We remain responsible for our own platform obligations. Report interruptions, inaccurate information and misconduct for assessment. Nothing here excludes liability or removes consumer, employment, data-protection or other rights that applicable law does not allow us to exclude.
 
 These terms are prepared for a Kenya-focused marketplace under applicable Kenyan law. Cross-border arrangements may also involve other local requirements. Support can help seek a practical resolution without waiving access to competent courts, regulators or other lawful remedies. This draft imposes no compulsory private arbitration or blanket release of claims.
 
 
-## 9. Acceptance and updates
+## 10. Acceptance and updates
 
 Read the terms and Privacy notice before completing a new account. We record the version accepted at account creation. Imported accounts are not treated as having accepted a version merely because records were migrated. Material changes will be explained and renewed acceptance requested where appropriate before they affect existing users.
 

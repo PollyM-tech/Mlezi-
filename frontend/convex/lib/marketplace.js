@@ -45,7 +45,8 @@ export async function publicProfile(ctx, p, account) {
   if (account) {
     result.phone = account.phone || null; result.premium_expires_at = iso(p.premiumExpiresAt)
     const documents = await ctx.db.query('caregiverDocuments').withIndex('by_caregiver', q => q.eq('caregiverId', p._id)).unique()
-    result.national_id_uploaded = !!documents?.nationalId && (documents.nationalId.provider !== 'convex' || !!await ctx.db.system.get(documents.nationalId.storageId))
+    result.identity_evidence_purged = !!documents?.purgedAt
+    result.national_id_uploaded = !!(documents?.purgedAt && p.identityStatus === 'verified' && typeof p.adultConfirmedAt === 'number') || !!documents?.nationalId && (documents.nationalId.provider !== 'convex' || !!await ctx.db.system.get(documents.nationalId.storageId))
   }
   return result
 }

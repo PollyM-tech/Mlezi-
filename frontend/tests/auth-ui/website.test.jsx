@@ -35,7 +35,7 @@ it('opens clean signup links without reloading and handles browser Back navigati
   expect(window.location.pathname).toBe('/caregiver')
   expect(window.location.hash).toBe('')
   window.history.back()
-  await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toContain('A little care.'))
+  await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toContain('Find a nanny or'))
 })
 it('applies the laptop review to homepage choices and decorative icons', () => {
   window.history.replaceState({}, '', '/')
@@ -45,4 +45,8 @@ it('applies the laptop review to homepage choices and decorative icons', () => {
   expect(screen.getByRole('option',{name:'Select work arrangement'})).toBeTruthy()
   expect(container.querySelectorAll('#care-categories svg, #care-categories .care-type-icon')).toHaveLength(0)
   expect(container.querySelector('.landing-trust-signals').textContent).not.toMatch(/[☆✦]/)
+  expect(screen.queryByText('Sponsors & Partners')).toBeNull()
+  for (const link of screen.getAllByRole('link', {name:'How it works'})) expect(link.getAttribute('href')).toBe('#how-mlezi-works')
+  for (const link of screen.getAllByRole('link', {name:'FAQs'})) expect(link.getAttribute('href')).toBe('#mlezi-questions')
+  expect(screen.getByRole('link', {name:'Safe hiring checklist'}).getAttribute('href')).toBe('/safe-hiring/')
 })

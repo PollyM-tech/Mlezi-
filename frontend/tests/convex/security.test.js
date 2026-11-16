@@ -128,7 +128,7 @@ it('keeps pending and underage caregivers out of employer search and contact acc
  expect(await t.run(async ctx=>JSON.stringify(await ctx.db.get(submission._id)))).not.toContain('1990-01-01')
 })
 
-it('expires abandoned identity reviews while retaining the active profile photo and ID',async()=>{
+it('expires abandoned identity reviews and erases ID evidence while retaining the profile photo',async()=>{
  const t=make(),who=await person(t),result=await profile(t,who)
  const s=await t.run(ctx=>ctx.db.query('verificationSubmissions').first())
  const p=await t.run(ctx=>ctx.db.get(result.profile.id))
@@ -138,6 +138,6 @@ it('expires abandoned identity reviews while retaining the active profile photo 
  expect((await t.run(ctx=>ctx.db.get(s._id))).status).toBe('rejected')
  expect(await t.run(ctx=>ctx.db.system.get(s.selfie.storageId))).toBeNull()
  expect(await t.run(ctx=>ctx.db.system.get(p.photo.storageId))).toBeTruthy()
- expect(await t.run(ctx=>ctx.db.system.get(doc.nationalId.storageId))).toBeTruthy()
+ expect(await t.run(ctx=>ctx.db.system.get(doc.nationalId.storageId))).toBeNull()
  expect((await t.run(ctx=>ctx.db.get(p._id))).identityStatus).toBe('unverified')
 })

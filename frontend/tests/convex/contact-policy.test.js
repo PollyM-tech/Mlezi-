@@ -1,7 +1,7 @@
 import { it, expect } from 'vitest'
 import { containsContact, assertNoContact, safePublicText } from '../../convex/lib/contactPolicy.js'
 it.each([
- 'Call 0712345678', 'Call +254 712 345 678', '07-12-34-56-78',
+ 'ID 12345678', '1234567', 'Call 0112345678', 'Call 0712345678', 'Call +254 712 345 678', '07-12-34-56-78',
  'care@example.com', 'care [at] example [dot] com', 'care at example dot com',
  'https://example.com', 'wa.me/254712345678', 'Telegram @myname',
  'zero seven one two three four five six seven eight',

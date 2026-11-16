@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { PUBLIC_PAGES, entryRoute, publicPage, siteConfig } from '../src/lib/public-pages.js'
+import { structuredData } from '../src/lib/seo.js'
 import { crawlerFiles, renderDocument } from '../scripts/seo-output.mjs'
 import { matchesKeywords, normalizeSearch } from '../convex/lib/discoverySearch.js'
 
@@ -28,7 +29,7 @@ test('sitemap and public canonical metadata never expose private routes or evide
     assert.doesNotMatch(html, /noindex|\/src\/assets/)
     assert.match(html, /<main>Readable content<\/main>/)
   }
-  assert.doesNotMatch(sitemap, /#|caregivers\/|app\/|identity|account|selfie/)
+  assert.doesNotMatch(sitemap, /#|caregivers\/|app\/|identity\/|account|selfie/)
   const privateHtml = renderDocument(template, null, '', live)
   assert.match(privateHtml, /noindex, nofollow/)
   assert.doesNotMatch(privateHtml, /rel="canonical"/)
@@ -78,4 +79,16 @@ test('public pages have useful structured data and large share cards without inv
   assert.match(html, /https:\/\/example.test\/social-card.png/)
   assert.match(html, /google-site-verification/)
   assert.doesNotMatch(renderDocument(template, null, '', live), /application\/ld\+json/)
+})
+
+
+test('launch guides and homepage FAQs expose only real public information', () => {
+  for (const city of ['nairobi','mombasa','kisumu','nakuru','kiambu','eldoret']) assert.ok(publicPage(`/kenya/${city}/`))
+  assert.ok(publicPage('/safe-hiring/'))
+  assert.ok(publicPage('/identity-checks/'))
+  const data = structuredData(publicPage('/'), live)['@graph']
+  const faq = data.find(node => node['@type'] === 'FAQPage')
+  assert.ok(faq.mainEntity.length > 0)
+  for (const entry of faq.mainEntity) assert.ok(entry.name && entry.acceptedAnswer.text)
+  assert.doesNotMatch(JSON.stringify(data), /aggregateRating|reviewCount|Piloted with/)
 })

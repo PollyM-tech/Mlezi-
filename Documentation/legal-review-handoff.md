@@ -16,8 +16,8 @@ Do not set `LEGAL_REVIEW_COMPLETE=true` on the strength of this document alone.
 - Premium is paid visibility, not identity approval. Fees planned: employer
   KES 300/30 days or KES 500/90 days; caregiver Premium KES 500/365 days.
 - Renewals are manual, early renewals extend remaining time, and ordinary pass
-  expiry preserves unlocked contacts subject to safety/deletion restrictions.
-- Payments remain disabled. Paystack is the chosen planned gateway; its contracts,
+  expiry stops contact-detail access until renewal, subject to safety/deletion restrictions.
+- Public paid plans are labelled Coming soon. Membership shows checkout and prices only when backend configuration enables payments. Paystack checkout is unavailable; its contracts,
   live configuration and refund/cancellation policy have not been finalized.
 - Public personal contact details are not desired. Support uses tickets/private
   email follow-up with a 48-hour commitment. Domain confirmed by owner: mlezicare.com. Business email and hosting setup remain pending.

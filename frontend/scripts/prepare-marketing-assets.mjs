@@ -1,6 +1,6 @@
 import sharp from 'sharp'
 import { mkdir, stat } from 'node:fs/promises'
-const files = ['bg-image', 'Warm Family Reading Nook', 'Caring Playtime with Colorful Blocks', 'Joyful Block-Building with Mlezi Caregiver', 'Warm Mlezi Healthcare Bond', 'travelnanny', 'Joyful Family Day at the Playground', 'Warm Living Room Caregiver Cleaning']
+const files = ['bg-image', 'warm-family-reading-nook', 'caring-playtime-with-colorful-blocks', 'joyful-block-building-with-mlezi-caregiver', 'warm-mlezi-healthcare-bond', 'travelnanny', 'joyful-family-day-at-the-playground', 'warm-living-room-caregiver-cleaning']
 await mkdir('src/assets/marketing', { recursive: true })
 let original = 0, optimized = 0
 for (const name of files) {

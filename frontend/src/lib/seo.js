@@ -1,3 +1,4 @@
+import { FAQ_ENTRIES } from './faq.js'
 import { siteConfig } from './public-pages.js'
 
 export const SOCIAL_IMAGE = '/social-card.png'
@@ -16,6 +17,7 @@ export function structuredData(page, env) {
     { '@type': 'ListItem', position: 1, name: 'Mlezi', item: `${origin}/` },
     { '@type': 'ListItem', position: 2, name: page.heading || page.title.split(' | ')[0], item: url },
   ] })
+  if (page.path === '/') graph.push({ '@type': 'FAQPage', '@id': `${origin}/#faq`, mainEntity: FAQ_ENTRIES.filter(entry => entry.featured).map(entry => ({ '@type': 'Question', name: entry.question, acceptedAnswer: { '@type': 'Answer', text: entry.answer } })) })
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 

@@ -1,6 +1,6 @@
 import { internalMutation } from './_generated/server.js'
 import { v } from 'convex/values'
-import { accountIdentity } from './lib/permissions.js'
+import { accountIdentity, requireAccount } from './lib/permissions.js'
 import { consume, audit } from './lib/security.js'
 export const reserveUpload = internalMutation({ args: {}, handler: async ctx => {
   const account = await accountIdentity(ctx, 'caregiver')
@@ -10,6 +10,7 @@ export const reserveUpload = internalMutation({ args: {}, handler: async ctx => 
   return account._id
 } })
 export const documentAccess = internalMutation({ args: { submissionId: v.string(), kind: v.string() }, handler: async (ctx, args) => {
-  const account = await accountIdentity(ctx, 'admin')
+  const account = await requireAccount(ctx, 'admin')
+  await consume(ctx, `document-reads:${account._id}`, 30, 60000)
   await audit(ctx, account._id, `private_document_read:${args.kind}`, args.submissionId)
 } })

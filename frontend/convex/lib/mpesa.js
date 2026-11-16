@@ -1,3 +1,6 @@
+function validHttpOrigin(value) {
+  try { const url = new URL(value); return url.protocol === 'https:' && url.origin === value && !url.username && !url.password } catch { return false }
+}
 import { bytes64 } from './security.js'
 export function mpesaSettings() {
   const environment = process.env.MPESA_ENVIRONMENT
@@ -5,7 +8,7 @@ export function mpesaSettings() {
   const required = ['MPESA_CONSUMER_KEY','MPESA_CONSUMER_SECRET','MPESA_PASSKEY']
   const site = process.env.CONVEX_SITE_URL
   const enabled = process.env.MPESA_ENABLED === 'true' && ['sandbox','production'].includes(environment)
-    && /^\d{5,10}$/.test(shortcode || '') && required.every(key => !!process.env[key]) && /^https:\/\/[^/]+\.convex\.site$/.test(site || '')
+    && /^\d{5,10}$/.test(shortcode || '') && required.every(key => !!process.env[key]) && validHttpOrigin(site)
     && (environment !== 'sandbox' || shortcode !== '4125123')
     && (environment !== 'production' || process.env.MPESA_LIVE_APPROVED === 'true' && shortcode === '4125123' && /^https:\/\//.test(process.env.SITE_URL || ''))
   return { enabled: !!enabled, environment: environment || 'sandbox', shortcode, callbackUrl: site ? `${site}/payments/mpesa/callback` : null,

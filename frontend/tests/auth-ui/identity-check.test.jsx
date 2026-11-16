@@ -18,12 +18,12 @@ it('offers both ID and selfie when an existing caregiver has no stored ID',async
  expect(mocks.api.mock.calls.at(-1)[1].body.get('national_id').name).toBe('id.png')
  expect(mocks.api.mock.calls.at(-1)[1].body.get('selfie').name).toBe('selfie.png')
 })
-it('an approved caregiver is told the check is one-time and is not asked to resubmit',async()=>{
+it('an approved caregiver is told identity edits require review',async()=>{
  mocks.api.mockResolvedValue({verification_status:'verified'})
  render(<IdentityCheck profile={{id:'caregiver',national_id_uploaded:true}} onChanged={()=>{}}/> )
  await screen.findByText('Your identity has been checked.')
  expect(screen.queryByLabelText('A clear, recent selfie')).toBeNull()
- expect(screen.getByText(/Approved identity checks are one-time/)).toBeTruthy()
+ expect(screen.getByText(/Changing your profile name or photo removes approval/)).toBeTruthy()
 })
 it('shows the review timeframe while pending without offering duplicate submission or claiming approval',async()=>{
  mocks.api.mockResolvedValue({verification_status:'pending'})
