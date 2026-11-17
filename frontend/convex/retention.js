@@ -4,6 +4,7 @@ import { audit } from './lib/security.js'
 import { internal } from './_generated/api.js'
 const DAY = 86400000
 export const sweep = internalMutation({ args: {}, handler: async ctx => {
+  for (const draft of await ctx.db.query('onboardingDrafts').withIndex('by_expiry', q => q.lte('expiresAt', Date.now())).take(25)) await ctx.scheduler.runAfter(0, internal.onboarding.expire, { id: draft._id })
   for (const status of ['open', 'waiting', 'resolved']) {
     for (const ticket of await ctx.db.query('supportTickets').withIndex('by_status', q => q.eq('status', status).lt('updatedAt', Date.now() - (status === 'resolved' ? 90 : 180) * DAY)).take(10)) {
       for (const message of await ctx.db.query('supportMessages').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(100)) await ctx.db.delete(message._id)

@@ -13,7 +13,7 @@ vi.mock('@convex-dev/auth/react', () => ({
 }))
 vi.mock('convex/react', () => ({
   useConvexAuth: () => ({ isAuthenticated: !!sessionStorage.getItem('__convexAuthJWT_mleziconvexauth'), isLoading: false }),
-  useQuery: (ref,args) => args === 'skip' ? undefined : getFunctionName(ref) === 'jobs:alerts' ? {applications:0,offers:0,more:false} : getFunctionName(ref) === 'accounts:current' ? { status: state.status, account: { id: 'account1', email: 'member@example.test', role: state.role, phone: '0712345678' } } : undefined,
+  useQuery: (ref,args) => args === 'skip' ? undefined : getFunctionName(ref) === 'onboarding:current' ? null : getFunctionName(ref) === 'jobs:alerts' ? {applications:0,offers:0,more:false} : getFunctionName(ref) === 'accounts:current' ? { status: state.status, account: { id: 'account1', email: 'member@example.test', role: state.role, phone: '0712345678' } } : undefined,
   useMutation: () => vi.fn(),
 }))
 vi.mock('../../src/lib/convexClient.js', () => ({ getConvexClient: () => ({close:vi.fn()}), detachConvexClient: vi.fn() }))
@@ -63,13 +63,13 @@ it('allows a signed-in nanny or babysitter to visit home while their photo setup
   window.history.replaceState({}, '', '/')
   await open()
   expect(await screen.findByRole('link', { name: 'My workspace' })).toBeTruthy()
-  expect(screen.queryByRole('heading', { name: 'Your profile photo is required' })).toBeNull()
+  expect(screen.queryByRole('heading', { name: 'Tell us about your work' })).toBeNull()
   expect(screen.queryByRole('link', { name: 'Find your nanny or babysitter' })).toBeNull()
   expect(screen.queryByRole('link', { name: 'Find a nanny or babysitter', exact: true })).toBeNull()
   expect(screen.queryByLabelText('I’m looking for')).toBeNull()
   expect(screen.getAllByRole('link', { name: 'Find jobs', exact: true }).length).toBeGreaterThan(0)
   await act(async () => fireEvent.click(screen.getByRole('link', { name: 'My workspace' })))
-  expect(screen.getByRole('heading', { name: 'Your profile photo is required' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Tell us about your work' })).toBeTruthy()
   expect(state.revoke).not.toHaveBeenCalled()
 })
 it('signs out only when the homepage Sign out button is clicked, and permits a fresh sign-in afterward', async () => {

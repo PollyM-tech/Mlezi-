@@ -14,12 +14,12 @@ export function hasSession() { return !!convexSession?.authenticated }
 export async function clearSession() { await convexSession?.signOut() }
 
 // UI routes are dispatched to native Convex functions, never a Flask HTTP API.
-export async function api(path, { method = 'GET', body, authenticated = true } = {}) {
+export async function api(path, { method = 'GET', body, authenticated = true, onUploadProgress } = {}) {
   const session = convexSession, started = sessionGeneration
   const { nativeConvexApi } = await import('./convexApi.js')
   try {
     if (authenticated && !session?.authenticated) throw new ApiError('Please sign in to continue.', 401)
-    return await nativeConvexApi(path, { method, body }, session)
+    return await nativeConvexApi(path, { method, body, ...(onUploadProgress ? { onUploadProgress } : {}) }, session)
   } catch (error) {
     // A request from an earlier account must not sign out a newer session.
     if (started === sessionGeneration) {

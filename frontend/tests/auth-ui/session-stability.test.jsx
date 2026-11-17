@@ -36,7 +36,7 @@ it('preserves unfinished nanny requirements across the former 30-second session 
   fireEvent.click(screen.getByRole('button', { name: 'Filter nannies and babysitters' }))
   const keyword = screen.getByLabelText(/Name or keyword/)
   fireEvent.change(keyword, { target: { value: 'Travel nanny with newborn experience' } })
-  fireEvent.change(screen.getByLabelText('Nanny or babysitter category'), { target: { value: 'travel_nanny' } })
+  fireEvent.change(screen.getByLabelText('Service category'), { target: { value: 'travel_nanny' } })
   fireEvent.change(screen.getByLabelText(/Maximum budget/), { target: { value: '18000' } })
   act(() => vi.advanceTimersByTime(180000))
   // A reactive account update must also leave the same form mounted.
@@ -45,7 +45,7 @@ it('preserves unfinished nanny requirements across the former 30-second session 
   expect(new Set(state.queries)).toEqual(new Set([0]))
   expect(screen.getByLabelText(/Name or keyword/)).toBe(keyword)
   expect(keyword.value).toBe('Travel nanny with newborn experience')
-  expect(screen.getByLabelText('Nanny or babysitter category').value).toBe('travel_nanny')
+  expect(screen.getByLabelText('Service category').value).toBe('travel_nanny')
   expect(screen.getByLabelText(/Maximum budget/).value).toBe('18000')
   expect(screen.queryByText('Checking your sign-in…')).toBeNull()
 })

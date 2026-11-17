@@ -31,20 +31,20 @@ it('starts Find care with all listings, ignoring previously remembered filters a
   expect(screen.queryByText('Identity checked',{exact:true})).toBeNull()
   fireEvent.click(screen.getByRole('button',{name:'Use last search'}))
   expect(await screen.findByRole('heading',{name:'No matching nannies and babysitters yet'})).toBeTruthy()
-  expect(screen.getByLabelText('Nanny or babysitter category').value).toBe('babysitter')
+  expect(screen.getByLabelText('Service category').value).toBe('babysitter')
 })
 it('applies filters only on submit and offers all listings when nothing matches', async () => {
   render(<Discovery user={parent} />)
   await screen.findByRole('heading',{name:'Pending Nanny'})
   fireEvent.click(screen.getByRole('button',{name:'Filter nannies and babysitters'}))
   const count = mocks.api.mock.calls.filter(([p])=>p.startsWith('/caregivers?')).length
-  fireEvent.change(screen.getByLabelText('Nanny or babysitter category'),{target:{value:'babysitter'}})
+  fireEvent.change(screen.getByLabelText('Service category'),{target:{value:'babysitter'}})
   expect(mocks.api.mock.calls.filter(([p])=>p.startsWith('/caregivers?'))).toHaveLength(count)
   fireEvent.click(screen.getByRole('button',{name:'Find nannies and babysitters'}))
   expect(await screen.findByRole('heading',{name:'No matching nannies and babysitters yet'})).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'Show all available nannies and babysitters'}))
   expect(await screen.findByRole('heading',{name:'Pending Nanny'})).toBeTruthy()
-  expect(screen.getByLabelText('Nanny or babysitter category').value).toBe('')
+  expect(screen.getByLabelText('Service category').value).toBe('')
 })
 it('honors filters explicitly requested through a homepage or shared search link', async () => {
   render(<Discovery user={parent} initialFilters={{category:'babysitter'}} />)

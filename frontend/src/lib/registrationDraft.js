@@ -13,7 +13,8 @@ export function readRegistrationDraft(email) {
       if (!draft) continue
       if (!draft.expiresAt || draft.expiresAt <= Date.now()) { storage.removeItem(KEY); continue }
       // A cross-tab draft is used only for the email verified by the backend.
-      if (!email || draft.email !== email) continue
+      const googleReturn = name === 'sessionStorage' && draft.provider === 'google' && draft.email === ''
+      if (!email || draft.email !== email && !googleReturn) continue
       return draft
     } catch { /* Ignore unavailable storage and malformed drafts. */ }
   }
@@ -24,7 +25,7 @@ export function clearRegistrationDraft(email) {
     try {
       const storage = window[name]
       const draft = JSON.parse(storage.getItem(KEY) || 'null')
-      if (!email || draft?.email === email) storage.removeItem(KEY)
+      if (!email || draft?.email === email || draft?.provider === 'google' && draft?.email === '') storage.removeItem(KEY)
     } catch { /* Never block signup/sign-out on draft cleanup. */ }
   }
 }

@@ -16,6 +16,7 @@ it('password signup collects role details, then verifies the email code', async 
   await user.type(screen.getByLabelText('Contact phone'), '0712345678')
   await user.type(screen.getByLabelText('Email address'), 'PARENT@example.test')
   await user.type(screen.getByLabelText('Password'), 'Testing123!')
+  await user.click(screen.getByRole('checkbox', { name: /I am at least 18/ }))
   await user.click(screen.getByRole('button', { name: 'Create account →' }))
   expect(mocks.signIn).toHaveBeenCalledWith('password', expect.objectContaining({ email: 'parent@example.test', flow: 'signUp' }))
   expect(JSON.parse(sessionStorage.getItem('mlezi-registration-draft')).role).toBe('employer')
@@ -92,6 +93,7 @@ it.each(['password','magic','otp'].flatMap(method=>['caregiver','employer'].map(
  await user.type(screen.getByLabelText('Contact phone'),'0712345678')
  await user.type(screen.getByLabelText('Email address'),'person@example.test')
  if(method==='password')await user.type(screen.getByLabelText('Password'),'Testing123!')
+  await user.click(screen.getByRole('checkbox', { name: /I am at least 18/ }))
  await user.click(screen.getByRole('button',{name:method==='password'?'Create account →':method==='magic'?'Send magic link':'Send email code'}))
  const draft=JSON.parse(sessionStorage.getItem('mlezi-registration-draft'))
  expect(draft).toMatchObject({role,name:'Example Member',phone:'0712345678',email:'person@example.test'})
@@ -129,6 +131,7 @@ it('lets a failed signup continue through password recovery without losing the e
   await user.type(screen.getByLabelText('Email address'), 'retry@example.test')
   await user.type(screen.getByLabelText('Password'), 'DifferentPassword123!')
   mocks.signIn.mockRejectedValueOnce({ data: { code: 'ACCOUNT_EXISTS', message: 'An account already exists for this email. Sign in with your original password, or reset your password using an email code.' } })
+  await user.click(screen.getByRole('checkbox', { name: /I am at least 18/ }))
   await user.click(screen.getByRole('button', { name: 'Create account →' }))
   expect(screen.getByRole('alert').textContent).toContain('original password')
   expect(screen.getByRole('button', { name: 'Sign in to existing account' })).toBeTruthy()
@@ -179,6 +182,7 @@ it.each(['password', 'otp'])('keeps a newly verified %s account on the signed-in
   await user.type(screen.getByLabelText('Contact phone'), '0712345678')
   await user.type(screen.getByLabelText('Email address'), 'newcaregiver@example.test')
   if (method === 'password') await user.type(screen.getByLabelText('Password'), 'Testing123!')
+  await user.click(screen.getByRole('checkbox', { name: /I am at least 18/ }))
   await user.click(screen.getByRole('button', { name: method === 'password' ? 'Create account →' : 'Send email code' }))
   expect(screen.queryByRole('heading', { name: 'You’re signed in' })).toBeNull()
   await user.type(screen.getByLabelText(/Email verification code/), '12345678')
@@ -219,9 +223,13 @@ it.each([true,false])('returns administrator magic links to the protected entry 
  expect(screen.queryByRole('button',{name:'Create account'})).toBeNull()
 })
 
-it.each(['caregiver', 'employer'])('starts Google signup for a %s without requiring password or contact fields first', async role => {
+it.each(['caregiver', 'employer'])('starts Google signup for a %s only after the age declaration and signup details, without a password', async role => {
   mocks.settings = { googleReady: true, emailReady: false, allowedSignInOrigins: [] }
   render(<ConvexAuthForm initialRegistering initialRole={role} />)
+  expect(screen.getByRole('button', { name: 'Continue with Google' }).disabled).toBe(true)
+  await userEvent.type(screen.getByLabelText('Your full name'), 'Example Member')
+  await userEvent.type(screen.getByLabelText('Contact phone'), '0712345678')
+  await userEvent.click(screen.getByRole('checkbox', { name: /I am at least 18/ }))
   await userEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
   expect(mocks.signIn).toHaveBeenCalledExactlyOnceWith('google', { redirectTo: `/signin?role=${role}` })
 })
@@ -241,4 +249,15 @@ it.each([false, true])('hides Google until configured and keeps it out of admini
   mocks.settings.googleReady = adminOnly
   render(<ConvexAuthForm adminOnly={adminOnly} />)
   expect(screen.queryByRole('button', { name: 'Continue with Google' })).toBeNull()
+})
+
+it('requires the age and terms declaration on the first create-account screen', async () => {
+ mocks.settings.googleReady = true
+ render(<ConvexAuthForm initialRegistering />)
+ const age = screen.getByRole('checkbox', {name:/I am at least 18/})
+ expect(age.checked).toBe(false)
+ expect(screen.getByRole('button', {name:'Create account →'}).disabled).toBe(true)
+ expect(screen.getByRole('button', {name:'Continue with Google'}).disabled).toBe(true)
+ await userEvent.click(screen.getByRole('button', {name:'Continue with Google'}))
+ expect(mocks.signIn).not.toHaveBeenCalled()
 })

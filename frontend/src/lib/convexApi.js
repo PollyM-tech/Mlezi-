@@ -15,7 +15,21 @@ async function fileRequest(session, path, options = {}) {
   const site = convexSiteUrl()
   let response
   try {
-    response = await fetch(`${site}${path}`, { ...options, headers: { ...options.headers, Authorization: `Bearer ${token}` } })
+    if (options.onUploadProgress) {
+      response = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open(options.method || 'POST', `${site}${path}`)
+        xhr.timeout = 120000
+        for (const [key, value] of Object.entries({ ...options.headers, Authorization: `Bearer ${token}` })) xhr.setRequestHeader(key, value)
+        options.onUploadProgress(0)
+        xhr.upload.onprogress = event => { if (event.lengthComputable) options.onUploadProgress(Math.round(event.loaded / event.total * 100)) }
+        xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status, headers: { 'Content-Type': 'application/json' } }))
+        xhr.onerror = () => reject(new TypeError('Failed to fetch'))
+        xhr.ontimeout = () => reject(new Error('The upload timed out. Your other saved photos are safe; please try this photo again.'))
+        xhr.onabort = () => reject(new Error('Upload cancelled. Please try this photo again.'))
+        xhr.send(options.body)
+      })
+    } else response = await fetch(`${site}${path}`, { ...options, headers: { ...options.headers, Authorization: `Bearer ${token}` } })
   } catch (error) {
     if (!(error instanceof TypeError)) throw error
     // A blocked preflight appears to JavaScript as a generic network failure.
@@ -30,7 +44,7 @@ async function fileRequest(session, path, options = {}) {
   if (!response.ok) { const data = await response.json().catch(() => ({})); throw Object.assign(new Error(data.error || 'Unable to access this file.'), { status: response.status }) }
   return response
 }
-export async function nativeConvexApi(path, { method = 'GET', body } = {}, session) {
+export async function nativeConvexApi(path, { method = 'GET', body, onUploadProgress } = {}, session) {
   const url = new URL(path, 'https://mlezi.local')
   const client = getConvexClient()
   const params = Object.fromEntries(url.searchParams)
@@ -56,9 +70,14 @@ export async function nativeConvexApi(path, { method = 'GET', body } = {}, sessi
         if (value instanceof Blob) {
           if (!value.size) continue
           const image = await prepareUploadImage(value)
-          const response = await fileRequest(session, '/files/upload', { method: 'POST', headers: { 'Content-Type': image.type, 'X-Upload-Purpose': key, ...(['national_id', 'selfie'].includes(key) ? { 'X-Identity-Consent': body.get('consent') === 'true' ? 'true' : 'false' } : {}) }, body: image })
+          const response = await fileRequest(session, '/files/upload', { method: 'POST', headers: { 'Content-Type': image.type, 'X-Upload-Purpose': key, ...(['national_id', 'selfie'].includes(key) ? { 'X-Identity-Consent': body.get('consent') === 'true' ? 'true' : 'false' } : {}) }, body: image, ...(onUploadProgress ? { onUploadProgress } : {}) })
           fields[key] = (await response.json()).storageId
         } else fields[key] = value
+      }
+      if (url.pathname === '/onboarding/upload') {
+        const purpose = ['photo', 'national_id', 'selfie'].find(kind => fields[kind])
+        if (!purpose) throw new Error('Choose a photo to upload.')
+        return await client.mutation(functions.onboarding.attach, { purpose, storageId: fields[purpose], consent: fields.consent === 'true' })
       }
       body = fields
     }

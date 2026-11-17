@@ -20,3 +20,10 @@ it('clears both draft copies after account creation or logout',()=>{
  expect(sessionStorage.getItem('mlezi-registration-draft')).toBeNull()
  expect(localStorage.getItem('mlezi-registration-draft')).toBeNull()
 })
+
+it('keeps Google signup consent in the originating tab without trusting a cross-tab unknown email',()=>{
+ saveRegistrationDraft({role:'caregiver',name:'Njeri',phone:'0712345678',email:'',provider:'google',adultConfirmed:true,termsAccepted:true})
+ expect(readRegistrationDraft('selected-google@example.test')).toMatchObject({termsAccepted:true,adultConfirmed:true})
+ sessionStorage.clear()
+ expect(readRegistrationDraft('selected-google@example.test')).toEqual({})
+})

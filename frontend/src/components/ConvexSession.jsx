@@ -16,6 +16,8 @@ import LegalPage from './LegalPage'
 import SupportInbox from './SupportInbox.jsx'
 import AdminSecurity from './AdminSecurity'
 import ProfileForm from './ProfileForm'
+import NannyOnboarding from './NannyOnboarding.jsx'
+import SignupAgreement from './SignupAgreement.jsx'
 import PrivacyAccount from './PrivacyAccount'
 import CookieConsent from './CookieConsent'
 import App from '../App.jsx'
@@ -25,7 +27,7 @@ function initialDetails(email) {
   try {
     const routeRole = new URLSearchParams(currentAppRoute().split('?')[1] || '').get('role')
     const draft = readRegistrationDraft(email)
-    return { role: ['caregiver', 'employer'].includes(draft.role) ? draft.role : routeRole === 'employer' ? 'employer' : 'caregiver', phone: typeof draft.phone === 'string' ? draft.phone : '', name: typeof draft.name === 'string' ? draft.name : '' }
+    return { role: ['caregiver', 'employer'].includes(draft.role) ? draft.role : routeRole === 'employer' ? 'employer' : 'caregiver', phone: typeof draft.phone === 'string' ? draft.phone : '', name: typeof draft.name === 'string' ? draft.name : '', termsAccepted: draft.adultConfirmed === true && draft.termsAccepted === true && draft.termsVersion === LEGAL_VERSION }
   } catch { return { role: 'caregiver', phone: '', name: '' } }
 }
 
@@ -35,19 +37,29 @@ function CompleteAccount({ email }) {
   const signOut = useSignOut()
   const [checked, setChecked] = useState(false)
   const [details, setDetails] = useState(() => initialDetails(email))
+  const initial = useRef(details)
+  const [accepted, setAccepted] = useState(details.termsAccepted === true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     let active = true
-    ensureExisting().then(() => { if (active) setChecked(true) }).catch(err => { if (active) setError(typeof err.data === 'string' ? err.data : 'Unable to load your account. Please try again.') })
+    ensureExisting().then(async existing => {
+      if (!active) return
+      const draft = initial.current
+      if (!existing && draft.termsAccepted && draft.name.trim() && draft.phone.trim()) {
+        const account = await register({ role: draft.role, phone: draft.phone, name: draft.name, termsAccepted: true, adultConfirmed: true, termsVersion: LEGAL_VERSION })
+        clearRegistrationDraft(email)
+        if (active) navigateApp(account?.role === 'admin' ? '#/admin' : '#/workspace', { replace: true })
+      } else if (active) setChecked(true)
+    }).catch(err => { if (active) { setChecked(true); setError(typeof err.data === 'string' ? err.data : 'Unable to load your account. Please try again.') } })
     return () => { active = false }
-  }, [ensureExisting])
+  }, [ensureExisting, register, email])
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('')
-    try { const account = await register({ ...details, termsAccepted: new FormData(event.currentTarget).get('termsAccepted') === 'on', termsVersion: LEGAL_VERSION }); clearRegistrationDraft(email); navigateApp(account?.role === 'admin' ? '#/admin' : '#/workspace', { replace: true }) }
+    try { const account = await register({ ...details, termsAccepted: accepted, adultConfirmed: accepted, termsVersion: LEGAL_VERSION }); clearRegistrationDraft(email); navigateApp(account?.role === 'admin' ? '#/admin' : '#/workspace', { replace: true }) }
     catch (err) { setError(typeof err.data === 'string' ? err.data : 'Unable to save your account. Please try again.') } finally { setBusy(false) }
   }
-  return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">EMAIL VERIFIED</span><h1>Complete your account</h1><p>Tell us how you’ll use Mlezi.</p>{error && <p role="alert">{error}</p>}{!checked ? <p role="status">Checking your account…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Nanny / babysitter</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><label className="checkbox-label"><input name="termsAccepted" type="checkbox" required disabled={busy} />I am at least 18, agree to the <a href="/terms/" target="_blank" rel="noopener">Terms of use</a> and acknowledge the <a href="/privacy/" target="_blank" rel="noopener">Privacy notice</a>. Optional cookies are a separate choice.</label><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
+  return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">YOUR MLEZI ACCOUNT</span><h1>Create your Mlezi account</h1><p>Confirm your details to start. Accounts are for adults aged 18 or older.</p>{error && <p role="alert">{error}</p>}{!checked ? <p role="status">Finishing your signup…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Nanny / babysitter</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><SignupAgreement checked={accepted} onChange={setAccepted} disabled={busy} /><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
 }
 
 
@@ -68,7 +80,7 @@ function LinkReservedAdministrator() {
 function RestrictedAccount({ session }) {
   const signOut = useSignOut()
   const [privacy,setPrivacy] = useState(false)
-  return <main className="app-shell"><CookieConsent /><header className="site-header"><strong>Mlezi</strong><a href="/tickets">Support</a><button className="text-button" onClick={()=>setPrivacy(value=>!value)}>Privacy and account requests</button><button className="text-button" onClick={()=>signOut()}>Sign out</button></header>{privacy?<PrivacyAccount />:session.status==='restricted'?<section className="card state-panel"><h1>Account access restricted</h1><p>Your account has a pending deletion request or has been suspended. Use privacy requests to contact an administrator.</p></section>:<><section className="card form-section"><h1>Your profile photo is required</h1><p>Complete your nanny or babysitter profile to access Mlezi. Submit your profile photo, national ID and selfie for identity review. Review normally takes about 24 hours after submission; your identity stays unverified until an administrator approves it.</p></section><ProfileForm profile={session.setupProfile} user={session.account} onSaved={()=>{navigateApp('#/workspace')}} /></>}</main>
+  return <main className="app-shell"><CookieConsent /><header className="site-header"><strong>Mlezi</strong><a href="/tickets">Support</a><button className="text-button" onClick={()=>setPrivacy(value=>!value)}>Privacy and account requests</button><button className="text-button" onClick={()=>signOut()}>Sign out</button></header>{privacy?<PrivacyAccount />:session.status==='restricted'?<section className="card state-panel"><h1>Account access restricted</h1><p>Your account has a pending deletion request or has been suspended. Use privacy requests to contact an administrator.</p></section>:<>{session.setupProfile && <section className="card form-section"><h1>Your profile photo is required</h1><p>Complete your missing profile details and identity images below.</p></section>}{session.setupProfile ? <ProfileForm profile={session.setupProfile} user={session.account} onSaved={()=>{navigateApp('#/workspace')}} /> : <NannyOnboarding user={session.account} />}</>}</main>
 }
 
 function SessionContent({ publicRoute = false, publicPage }) {

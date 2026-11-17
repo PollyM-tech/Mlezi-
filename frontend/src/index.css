@@ -719,3 +719,15 @@ footer .official-brand img { width:245px; height:245px; left:-49px; top:-92px; }
 
 .admin-authenticator-qr{display:flex;justify-content:center;margin:20px 0}
 .admin-authenticator-qr svg{display:block;width:240px;max-width:100%;height:auto;background:#fff;border-radius:8px}
+
+.signup-agreement span { display: inline; line-height: 1.6; }
+.signup-agreement span a { display: inline; }
+.nanny-onboarding { max-width: 720px; margin: 24px auto; }
+.onboarding-steps { display: flex; flex-wrap: wrap; gap: 12px 24px; list-style: none; padding: 0; margin-bottom: 24px; }
+.onboarding-steps [aria-current="step"] { font-weight: 700; color: #235b45; }
+.onboarding-upload { padding: 20px 0; border-bottom: 1px solid #dfe4d5; }
+.onboarding-upload progress { display: block; width: 100%; margin-top: 8px; }
+.onboarding-form fieldset { border: 0; padding: 0; min-width: 0; }
+.auth-card label.signup-agreement,
+.onboarding-form label.checkbox-label { display: flex; align-items: flex-start; gap: 10px; }
+.auth-card label.signup-agreement input { flex: 0 0 auto; width: auto; margin-top: 4px; }

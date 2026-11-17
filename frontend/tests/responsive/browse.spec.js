@@ -10,7 +10,7 @@ test('employer workspace and Find care show cards before filters and fit the scr
     await expect(filter).toHaveAttribute('aria-expanded','false')
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize().width + 1)
     await filter.click()
-    await expect(page.getByRole('combobox',{name:'Nanny or babysitter category',exact:true})).toBeVisible()
+    await expect(page.getByRole('combobox',{name:'Service category',exact:true})).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize().width + 1)
     expect(errors).toEqual([])
   }

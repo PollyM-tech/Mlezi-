@@ -48,7 +48,7 @@ export const ensureExisting = mutation({ args: {}, handler: async ctx => {
 } })
 
 export const register = mutation({
-  args: { role: v.union(v.literal('caregiver'), v.literal('employer')), phone: v.string(), name: v.string(), termsAccepted: v.optional(v.boolean()), termsVersion: v.optional(v.string()) },
+  args: { role: v.union(v.literal('caregiver'), v.literal('employer')), phone: v.string(), name: v.string(), termsAccepted: v.optional(v.boolean()), adultConfirmed: v.optional(v.boolean()), termsVersion: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const identity = await verifiedIdentity(ctx)
     const owned = await ctx.db.query('accounts').withIndex('by_auth_subject', q => q.eq('authSubject', identity.userId)).unique()
@@ -61,8 +61,9 @@ export const register = mutation({
     }
     const details = registrationDetails(args)
     if (args.termsAccepted !== true || args.termsVersion !== LEGAL_VERSION) throw new ConvexError('Read and accept the current Terms of use and acknowledge the Privacy notice before completing your account.')
+    if (args.adultConfirmed !== true) throw new ConvexError('Confirm that you are at least 18 before creating an account.')
     const accountId = await ctx.db.insert('accounts', { authSubject: identity.userId, email: identity.email,
-      role: details.role, phone: details.phone, ...(details.name ? { name: details.name } : {}), termsAcceptedAt: Date.now(), termsVersion: LEGAL_VERSION, privacyNoticeVersion: LEGAL_VERSION, createdAt: Date.now() })
+      role: details.role, phone: details.phone, ...(details.name ? { name: details.name } : {}), adultDeclaredAt: Date.now(), termsAcceptedAt: Date.now(), termsVersion: LEGAL_VERSION, privacyNoticeVersion: LEGAL_VERSION, createdAt: Date.now() })
     if (details.role === 'employer') await ctx.db.insert('employers', { accountId, name: details.name })
     return ownAccount(await ctx.db.get(accountId))
   },

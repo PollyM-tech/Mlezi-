@@ -23,13 +23,14 @@ export const exportOwn = mutation({ args: {}, handler: async ctx => {
   const payments = await ctx.db.query('payments').withIndex('by_account', q => q.eq('accountId', a._id)).collect()
   const reviews = await ctx.db.query('reviews').withIndex('by_pair', q => q.eq('employerAccountId', a._id)).collect()
   await audit(ctx, a._id, 'personal_data_export')
-  return { exportedAt: Date.now(), account: { email: a.email, phone: a.phone || null, name: a.name || null, role: a.role, termsAcceptedAt: a.termsAcceptedAt || null, termsVersion: a.termsVersion || null, privacyNoticeVersion: a.privacyNoticeVersion || null }, profile: strip(caregiver || employer), payments: payments.map(strip), reviewsWritten: reviews.map(strip),
+  return { exportedAt: Date.now(), account: { email: a.email, phone: a.phone || null, name: a.name || null, role: a.role, termsAcceptedAt: a.termsAcceptedAt || null, termsVersion: a.termsVersion || null, privacyNoticeVersion: a.privacyNoticeVersion || null, adultDeclaredAt: a.adultDeclaredAt || null }, profile: strip(caregiver || employer), payments: payments.map(strip), reviewsWritten: reviews.map(strip),
     jobsPosted: (await ctx.db.query('jobs').withIndex('by_employer',q=>q.eq('employerAccountId',a._id)).collect()).map(j=>({title:j.title,description:j.description,category:j.category,location:j.location,serviceTypes:j.serviceTypes,payMin:j.payMin,payMax:j.payMax,payPeriod:j.payPeriod,status:j.status,createdAt:j.createdAt,updatedAt:j.updatedAt})),
     jobProposals: (await ctx.db.query('jobApplications').withIndex('by_caregiver',q=>q.eq('caregiverAccountId',a._id)).collect()).map(r=>({jobId:r.jobId,message:r.message,proposedPay:r.proposedPay,payPeriod:r.payPeriod,status:r.status,createdAt:r.createdAt,updatedAt:r.updatedAt})),
     shortlist: employer ? (await ctx.db.query('shortlists').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, createdAt: r.createdAt })) : [],
     contactUnlocks: employer ? (await ctx.db.query('contactUnlocks').withIndex('by_pair', q => q.eq('employerId', employer._id)).collect()).map(r => ({ caregiverId: r.caregiverId, unlockedAt: r.unlockedAt })) : [],
     identityRequests: caregiver ? (await ctx.db.query('verificationSubmissions').withIndex('by_caregiver', q => q.eq('caregiverId', caregiver._id)).collect()).map(strip) : [],
     supportTickets: await Promise.all((await ctx.db.query('supportTickets').withIndex('by_account', q => q.eq('accountId', a._id)).collect()).map(async ticket => ({ id: ticket._id, subject: ticket.subject, category: ticket.category, status: ticket.status, createdAt: ticket.createdAt, messages: (await ctx.db.query('supportMessages').withIndex('by_ticket', q => q.eq('ticketId', ticket._id)).take(100)).map(m => ({ sender: m.sender, body: m.body, createdAt: m.createdAt })) }))),
+    unfinishedProfile: await (async () => { const draft = await ctx.db.query('onboardingDrafts').withIndex('by_account', q => q.eq('accountId', a._id)).unique(); return draft ? { work: draft.work || null, uploaded: { photo: !!draft.photo, national_id: !!draft.national_id, selfie: !!draft.selfie }, consentAt: draft.consentAt || null, expiresAt: draft.expiresAt } : null })(),
     note: 'This portable account export excludes credentials, private file identifiers, and other users’ private contact details. Use a correction request for a copy of your identity evidence or any additional personal records.' }
 } })
 export const request = mutation({ args: { type: v.union(v.literal('deletion'), v.literal('correction')), details: v.string(), confirmEmail: v.optional(v.string()) }, handler: async (ctx, args) => {
@@ -84,6 +85,8 @@ export const purge = internalMutation({ args: { accountId: v.id('accounts') }, h
     return
   }
   const assets = new Set(), asset = value => { if (value?.provider === 'convex') assets.add(value.storageId) }
+  const draft = await ctx.db.query('onboardingDrafts').withIndex('by_account', q => q.eq('accountId', accountId)).unique()
+  if (draft) { for (const kind of ['photo', 'national_id', 'selfie']) if (draft[kind]) assets.add(draft[kind]); await ctx.db.delete(draft._id) }
   const caregiver = await ctx.db.query('caregivers').withIndex('by_account', q => q.eq('accountId', accountId)).unique()
   const employer = await ctx.db.query('employers').withIndex('by_account', q => q.eq('accountId', accountId)).unique()
   if (caregiver) {
@@ -113,7 +116,7 @@ export const purge = internalMutation({ args: { accountId: v.id('accounts') }, h
   for (const r of await ctx.db.query('reports').collect()) if (r.reporterId === accountId || r.reportedAccountId === accountId) await ctx.db.patch(r._id, { details: '[Personal details removed after account deletion]' })
   for (const p of await ctx.db.query('payments').withIndex('by_account', q => q.eq('accountId', accountId)).collect()) await ctx.db.patch(p._id, { phone: undefined, resultDescription: undefined })
   // Keep only a pseudonymous account key for financial/audit referential history.
-  await ctx.db.patch(accountId, { email: `deleted-${accountId}@deleted.invalid`, name: 'Deleted account', phone: undefined, termsAcceptedAt: undefined, termsVersion: undefined, privacyNoticeVersion: undefined, authSubject: undefined, legacyId: undefined, suspendedAt: Date.now(), suspensionReason: undefined })
+  await ctx.db.patch(accountId, { email: `deleted-${accountId}@deleted.invalid`, name: 'Deleted account', phone: undefined, adultDeclaredAt: undefined, termsAcceptedAt: undefined, termsVersion: undefined, privacyNoticeVersion: undefined, authSubject: undefined, legacyId: undefined, suspendedAt: Date.now(), suspensionReason: undefined })
   for (const r of await ctx.db.query('dataRequests').withIndex('by_account', q => q.eq('accountId', accountId)).collect()) await ctx.db.patch(r._id, { details: undefined, status: 'resolved' })
   await audit(ctx, undefined, 'account_personal_data_purged', accountId)
 } })

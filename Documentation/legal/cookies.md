@@ -13,7 +13,7 @@ Support route: /support/ and /privacy-account
 
 ## 1. Essential storage
 
-The mlezi-cookie-consent cookie remembers the optional accepted/declined choice for up to 180 days, with SameSite=Lax and Secure on HTTPS. Authentication credentials use sessionStorage in the browser tab. During account creation, a registration draft containing your role, name, phone and email is held in sessionStorage and localStorage so a magic link can continue setup in another tab. Drafts are accepted for 30 minutes, cleared after account completion or sign-out, and expired copies are removed when next accessed. Passwords and email codes are not included in these drafts. Availability also depends on browser tab/session-restoration behavior: closing a tab is not a substitute for signing out.
+The mlezi-cookie-consent cookie remembers the optional accepted/declined choice for up to 180 days, with SameSite=Lax and Secure on HTTPS. Authentication credentials use sessionStorage in the browser tab. During account creation, a registration draft containing your role, name, phone and email is held in sessionStorage and localStorage so a magic link can continue setup in another tab. The draft also records the age declaration and version of the terms accepted. Drafts are accepted for 30 minutes, cleared after account completion or sign-out, and expired copies are removed when next accessed. Passwords and email codes are not included in these drafts. Availability also depends on browser tab/session-restoration behavior: closing a tab is not a substitute for signing out.
 
 
 ## 2. Optional features

@@ -71,11 +71,11 @@ it.each(['#/browse', '#/account', '#/caregivers/12'])('preserves an authenticate
 it('restricts nannies and babysitters without a photo to setup instead of rendering the workspace', () => {
  state.auth.isAuthenticated=true;state.query={status:'profile_required',account:{id:'caregiver',role:'caregiver',phone:'0712345678'}}
  render(<ConvexSession />)
- expect(screen.getByRole('heading',{name:'Your profile photo is required'})).toBeTruthy()
+ expect(screen.getByRole('heading',{name:'Tell us about your work'})).toBeTruthy()
  expect(screen.queryByText('Regular Mlezi app')).toBeNull()
- expect(screen.getByLabelText(/Profile photo · required/).required).toBe(true)
- expect(screen.getByLabelText(/National ID image/).required).toBe(true)
- expect(screen.getByLabelText(/Recent selfie/).required).toBe(true)
+ expect(screen.getByLabelText('Your area or town').required).toBe(true)
+ expect(screen.getByLabelText('Preferred work arrangement').required).toBe(true)
+ expect(screen.queryByLabelText(/National ID image/)).toBeNull()
 })
 it('repairs a missing photo using the existing profile rather than creating a duplicate',()=>{
  state.auth.isAuthenticated=true;state.query={status:'profile_required',account:{id:'caregiver',role:'caregiver'},setupProfile:{id:'existing',name:'Nanny or babysitter',national_id_uploaded:false,photo_url:null,service_category:'nanny',service_types:['live_in'],phone:'0712345678'}}
@@ -177,7 +177,7 @@ it('takes a newly verified nanny or babysitter to signed-in profile setup with a
   state.query = { status: 'profile_required', account: { id: 'newcaregiver', role: 'caregiver' } }
   render(<ConvexSession />)
   expect(window.location.pathname).toBe('/workspace')
-  expect(screen.getByRole('heading', { name: 'Your profile photo is required' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Tell us about your work' })).toBeTruthy()
   expect(state.signIn).not.toHaveBeenCalled()
   expect(state.signOut).not.toHaveBeenCalled()
 })
@@ -190,7 +190,7 @@ it('continues a successful magic-link signup into account setup with one authent
     return { signingIn: true }
   })
   render(<ConvexSession />)
-  expect(await screen.findByRole('heading', { name: 'Complete your account' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'Create your Mlezi account' })).toBeTruthy()
   expect(window.location.pathname).toBe('/workspace')
   expect(window.location.search).toBe('')
   await screen.findByLabelText('Contact phone')
@@ -231,4 +231,18 @@ it.each(['caregiver', 'employer'])('keeps the %s role through a Google callback 
   expect(window.location.search).toBe(`?role=${role}`)
   expect(state.signIn).toHaveBeenCalledExactlyOnceWith(undefined, { code: 'google-callback' })
   expect(screen.getByRole('checkbox').required).toBe(true)
+})
+
+it('uses the first signup declaration to register after verification without repeating details', async () => {
+ const draft = {role:'caregiver', name:'Njeri', phone:'0712345678', email:'njeri@example.test', termsAccepted:true, adultConfirmed:true, termsVersion:LEGAL_VERSION, expiresAt:Date.now()+60000}
+ sessionStorage.setItem('mlezi-registration-draft',JSON.stringify(draft))
+ state.auth.isAuthenticated=true; state.query={status:'onboarding',account:null,email:draft.email}
+ const view=render(<ConvexSession />)
+ await waitFor(()=>expect(state.mutation).toHaveBeenCalledWith({role:'caregiver',name:'Njeri',phone:'0712345678',termsAccepted:true,adultConfirmed:true,termsVersion:LEGAL_VERSION}))
+ expect(screen.queryByLabelText('Contact phone')).toBeNull()
+ expect(screen.queryByRole('checkbox',{name:/I am at least 18/})).toBeNull()
+ expect(sessionStorage.getItem('mlezi-registration-draft')).toBeNull()
+ state.query={status:'ready',account:{id:'registered-nanny',role:'caregiver'}}
+ view.rerender(<ConvexSession />)
+ expect(screen.getByText('Regular Mlezi app')).toBeTruthy()
 })

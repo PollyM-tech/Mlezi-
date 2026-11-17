@@ -87,6 +87,7 @@ Cloud backups, provider logs and former migration/rollback copies need their own
 - National ID images in Convex storage: scheduled for deletion 30 days after the latest review decision, or expiry of an unanswered review. A minimal review receipt is retained; a new review after evidence deletion requires a new upload. Legacy provider evidence requires operator migration and deletion.
 - Reviewed selfies and obsolete identity evidence: scheduled for removal 30 days after the review decision. The current profile photo remains separately.
 - Pending identity requests: expire after 30 days; the expired selfie is removed and a fresh submission is needed.
+- Unfinished nanny/babysitter setup: work details and privately saved photos expire after 7 days without another save or upload. They are not published. Submitting the complete profile moves identity evidence into the review retention schedule.
 - Unclaimed uploads: expire after approximately one hour. Security audit events: scheduled for removal after 90 days.
 - Support conversations and associated email jobs: resolved tickets after 90 days without updates; other tickets after 180 days without activity. Account-linked tickets are also removed with account deletion.
 - Cookie choice: up to 180 days. Optional search preferences and authentication storage are tab-based, subject to browser behavior; optional search preferences are cleared when optional use is declined.
