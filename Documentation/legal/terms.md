@@ -1,18 +1,19 @@
 # Mlezi Terms of use
 
-Updated 14 November 2026 · Version 2026-11-04
+Updated 17 November 2026 · Version 2026-11-04
 
 **Internal legal review copy. Not a legal approval or publication authorization.**
 
-Operator name supplied: Mlezi
-Business structure: Sole proprietorship
+Service name: Mlezi
+Operator: Lintech Telecom
+Business structure: Registered sole proprietorship
 Registration: Confirm if applicable
 Service address: Not supplied — proprietor must provide before release
 Support route: /support/ and /privacy-account
 
 ## 1. The marketplace and eligibility
 
-Mlezi is a sole-proprietor marketplace service for adult nannies and babysitters and employers/parents. Its current service provides listings, search, shortlists, reviews and introductions. Families hire and pay nannies and babysitters directly. Mlezi does not currently recruit or place workers, employ/supervise nannies and babysitters, provide immigration services, or become a party to a family’s care/employment agreement.
+Mlezi is a project operated by Lintech Telecom, registered as a sole proprietorship. The service is a marketplace for adult nannies and babysitters and employers/parents. Its current service provides listings, search, shortlists, reviews and introductions. Families hire and pay nannies and babysitters directly. Mlezi does not currently recruit or place workers, employ/supervise nannies and babysitters, provide immigration services, or become a party to a family’s care/employment agreement.
 
 You must be at least 18, provide accurate information and control the account you use. Do not impersonate someone or share login codes. Keep profile/contact information current. Verification does not authorize you to act for another person.
 

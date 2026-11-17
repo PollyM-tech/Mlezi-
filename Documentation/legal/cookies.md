@@ -1,11 +1,12 @@
 # Mlezi Cookie policy
 
-Updated 14 November 2026 · Version 2026-11-04
+Updated 17 November 2026 · Version 2026-11-04
 
 **Internal legal review copy. Not a legal approval or publication authorization.**
 
-Operator name supplied: Mlezi
-Business structure: Sole proprietorship
+Service name: Mlezi
+Operator: Lintech Telecom
+Business structure: Registered sole proprietorship
 Registration: Confirm if applicable
 Service address: Not supplied — proprietor must provide before release
 Support route: /support/ and /privacy-account

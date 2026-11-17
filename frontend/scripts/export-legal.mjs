@@ -8,9 +8,9 @@ const legal = legalConfiguration({ ...loadEnv('production', process.cwd(), 'VITE
 const dir = new URL('../../Documentation/legal/', import.meta.url)
 await mkdir(dir, { recursive: true })
 for (const [type, page] of Object.entries(LEGAL_CONTENT)) {
-  const lines = [`# Mlezi ${page.title}`, '', `Updated 14 November 2026 · Version ${LEGAL_VERSION}`, '',
+  const lines = [`# Mlezi ${page.title}`, '', `Updated 17 November 2026 · Version ${LEGAL_VERSION}`, '',
     '**Internal legal review copy. Not a legal approval or publication authorization.**', '',
-    `Operator name supplied: ${legal.entity}`, `Business structure: ${legal.structure}`, `Registration: ${legal.registration || 'Confirm if applicable'}`, `Service address: ${legal.address || 'Not supplied — proprietor must provide before release'}`, 'Support route: /support/ and /privacy-account', '',
+    `Service name: ${legal.entity}`, `Operator: ${legal.operator}`, `Business structure: ${legal.structure}`, `Registration: ${legal.registration || 'Confirm if applicable'}`, `Service address: ${legal.address || 'Not supplied — proprietor must provide before release'}`, 'Support route: /support/ and /privacy-account', '',
     ...page.sections.flatMap((section, i) => [`## ${i + 1}. ${section.title}`, '', ...(section.paragraphs || []).flatMap(p => [p, '']), ...(section.items || []).map(item => `- ${item}`), '']),
     ...(type === 'privacy' ? ['ODPC complaint route: https://www.odpc.go.ke/file-a-complaint/', ''] : []),
     'Source: frontend/src/lib/legal-content.js. Export again after changing the live policy text.', '',

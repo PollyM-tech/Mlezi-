@@ -32,18 +32,29 @@ const careTypes = [
   { name: 'Travel nannies', detail: 'Childcare on trips & holidays', category: 'travel_nanny' },
   { name: 'Special needs nannies', detail: 'Support for your child’s needs', category: 'special_needs_nanny' },
 ]
+const searchOptions = [
+  { value: 'nanny', label: 'A nanny', filter: 'category' },
+  { value: 'babysitter', label: 'A babysitter', filter: 'category' },
+  { value: 'live_in', label: 'A live-in nanny', filter: 'service_type' },
+  { value: 'live_out', label: 'A live-out / day nanny', filter: 'service_type' },
+  { value: 'occasional_backup', label: 'On-call / occasional care', filter: 'service_type' },
+  { value: 'overnight', label: 'Overnight care', filter: 'service_type' },
+  { value: 'newborn_maternity_nanny', label: 'Newborn & maternity care', filter: 'category' },
+  { value: 'early_years_educator', label: 'An early-years educator', filter: 'category' },
+  { value: 'special_needs_nanny', label: 'A special needs nanny', filter: 'category' },
+  { value: 'travel_nanny', label: 'A travel nanny', filter: 'category' },
+]
 const questions = FAQ_ENTRIES.filter(entry => entry.featured)
 
 export default function Landing({ user, onSignOut, checkingSession = false }) {
   const caregiver = user?.role === 'caregiver'
   const [menuOpen, setMenuOpen] = useState(false)
-  const [category, setCategory] = useState('')
-  const [arrangement, setArrangement] = useState('')
+  const [searchChoice, setSearchChoice] = useState('')
   function findCare(event) {
     event.preventDefault()
     const params = new URLSearchParams()
-    if (category) params.set('category', category)
-    if (arrangement) params.set('service_type', arrangement)
+    const choice = searchOptions.find(option => option.value === searchChoice)
+    if (choice) params.set(choice.filter, choice.value)
     navigateApp(`/caregivers${params.size ? `?${params}` : ''}`)
   }
   return <div className="landing">
@@ -74,7 +85,7 @@ export default function Landing({ user, onSignOut, checkingSession = false }) {
       </div>
       </div>
     </section>
-    {!caregiver && <><section className="landing-search-wrap landing-container" aria-labelledby="landing-search-title"><form className="landing-search" onSubmit={findCare}><div><span className="eyebrow">START YOUR SEARCH</span><h2 id="landing-search-title">What care do you need?</h2></div><label>I’m looking for<select value={category} onChange={e => setCategory(e.target.value)}><option value="">Select care type</option><option value="nanny">A nanny</option><option value="babysitter">A babysitter</option><option value="newborn_maternity_nanny">Newborn & maternity care</option><option value="early_years_educator">An early-years educator</option><option value="special_needs_nanny">A special needs nanny</option><option value="travel_nanny">A travel nanny</option><option value="occasional_babysitter">On-call / occasional care</option></select></label><label>Work arrangement<select value={arrangement} onChange={e => setArrangement(e.target.value)}><option value="">Select work arrangement</option><option value="live_in">Live-in</option><option value="live_out">Live-out / day nanny</option><option value="overnight">Overnight</option><option value="travel">Travel & holidays</option><option value="occasional_backup">On-call / occasional</option></select></label><button className="button primary">Search nannies and babysitters <Icon name="arrow" width="18" /></button></form></section>
+    {!caregiver && <><section className="landing-search-wrap landing-container" aria-labelledby="landing-search-title"><form className="landing-search" onSubmit={findCare}><div><span className="eyebrow">START YOUR SEARCH</span><h2 id="landing-search-title">What care do you need?</h2></div><label>I’m looking for<select value={searchChoice} onChange={e => setSearchChoice(e.target.value)}><option value="">Select care type</option>{searchOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><button className="button primary">Search nannies and babysitters <Icon name="arrow" width="18" /></button></form></section>
     <section id="care-categories" className="landing-section landing-container"><div className="landing-section-heading"><div><span className="eyebrow">EVERY FAMILY IS DIFFERENT</span><h2>Choose the care your family needs.</h2></div><a className="landing-link" href="/caregivers">Explore all nannies and babysitters <span>↗</span></a></div><p className="landing-section-intro">From first cuddles to first school days, family trips, or a few hours while you work or cook — find care for the moment you’re in.</p><div className="landing-care-grid">{careTypes.map(type => <a key={type.category || type.service} className="landing-care-type" href={type.service ? `/caregivers?service_type=${type.service}` : `/caregivers?category=${type.category}`}><h3>{type.name}</h3><p>{type.detail}</p></a>)}</div></section>
     </>}
     <section id="how-mlezi-works" className="landing-how"><div className="landing-container"><div className="landing-section-heading"><div><span className="eyebrow">LESS SEARCHING. MORE CONNECTION.</span><h2>From searching to hiring, in three steps.</h2></div><p>Create a free employer account to browse.<br />Pay for contact access using M-Pesa STK Push.</p></div><div className="landing-steps"><article><span className="landing-step-number">01 <span /></span><h3>Search for the care you need</h3><p>Choose the care you need. Filter by experience, work arrangement, availability, and budget.</p></article><article><span className="landing-step-number">02 <span /></span><h3>Compare profiles & shortlist</h3><p>Explore profiles, read employer reviews, and privately save the nannies and babysitters you’d like to meet.</p></article><article><span className="landing-step-number">03 <span /></span><h3>Unlock contacts & arrange an interview</h3><p>With a contact-access pass, unlock contact details. Interview, check references, and agree the care together.</p></article></div><a className="button primary" href={caregiver ? "/jobs" : "/caregivers"}>{caregiver ? "Explore jobs" : "Start exploring"} <Icon name="arrow" width="18" /></a></div></section>

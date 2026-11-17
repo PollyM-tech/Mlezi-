@@ -42,11 +42,29 @@ it('applies the laptop review to homepage choices and decorative icons', () => {
   const {container}=render(<Website />)
   expect(screen.getByLabelText('I’m looking for').value).toBe('')
   expect(screen.getByRole('option',{name:'Select care type'})).toBeTruthy()
-  expect(screen.getByRole('option',{name:'Select work arrangement'})).toBeTruthy()
+  expect(screen.queryByLabelText('Work arrangement')).toBeNull()
+  expect(screen.getByRole('option',{name:'A live-in nanny'})).toBeTruthy()
+  expect(screen.getAllByRole('option',{name:'On-call / occasional care'})).toHaveLength(1)
   expect(container.querySelectorAll('#care-categories svg, #care-categories .care-type-icon')).toHaveLength(0)
   expect(container.querySelector('.landing-trust-signals').textContent).not.toMatch(/[☆✦]/)
   expect(screen.queryByText('Sponsors & Partners')).toBeNull()
   for (const link of screen.getAllByRole('link', {name:'How it works'})) expect(link.getAttribute('href')).toBe('#how-mlezi-works')
   for (const link of screen.getAllByRole('link', {name:'FAQs'})) expect(link.getAttribute('href')).toBe('#mlezi-questions')
   expect(screen.getByRole('link', {name:'Safe hiring checklist'}).getAttribute('href')).toBe('/safe-hiring/')
+})
+
+
+it.each([
+  ['occasional_backup', '?service_type=occasional_backup'],
+  ['live_in', '?service_type=live_in'],
+  ['nanny', '?category=nanny'],
+  ['', ''],
+])('searches from one homepage choice: %s', async (value, expected) => {
+  window.history.replaceState({}, '', '/')
+  render(<Website />)
+  const select = screen.getByLabelText('I’m looking for')
+  fireEvent.change(select, { target: { value } })
+  fireEvent.click(screen.getByRole('button', { name: 'Search nannies and babysitters' }))
+  await waitFor(() => expect(window.location.pathname).toBe('/caregivers'))
+  expect(window.location.search).toBe(expected)
 })

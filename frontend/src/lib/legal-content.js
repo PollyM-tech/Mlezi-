@@ -2,7 +2,7 @@
 export const LEGAL_CONTENT = {
   privacy: { title: 'Privacy notice', sections: [
     { id: 'scope', title: 'Who this notice covers', paragraphs: [
-      'Mlezi is a marketplace for adult nannies and babysitters and employers/parents. The launch focuses on families hiring in Kenya. Families and nannies and babysitters are responsible for confirming the right to work and any required permits. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.',
+      'Mlezi is a project operated by Lintech Telecom, registered as a sole proprietorship. It is a marketplace for adult nannies and babysitters and employers/parents. The launch focuses on families hiring in Kenya. Families and nannies and babysitters are responsible for confirming the right to work and any required permits. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.',
       'Accounts are for people aged 18 or older. We do not offer children accounts. Describe care needs by general age group; do not publish children’s names, photos, school details, medical records or exact addresses. Report an underage account or inappropriate information through Support.',
     ] },
     { id: 'information', title: 'Information we collect and its sources', items: [
@@ -70,7 +70,7 @@ export const LEGAL_CONTENT = {
   ] },
   terms: { title: 'Terms of use', sections: [
     { id: 'service', title: 'The marketplace and eligibility', paragraphs: [
-      'Mlezi is a sole-proprietor marketplace service for adult nannies and babysitters and employers/parents. Its current service provides listings, search, shortlists, reviews and introductions. Families hire and pay nannies and babysitters directly. Mlezi does not currently recruit or place workers, employ/supervise nannies and babysitters, provide immigration services, or become a party to a family’s care/employment agreement.',
+      'Mlezi is a project operated by Lintech Telecom, registered as a sole proprietorship. The service is a marketplace for adult nannies and babysitters and employers/parents. Its current service provides listings, search, shortlists, reviews and introductions. Families hire and pay nannies and babysitters directly. Mlezi does not currently recruit or place workers, employ/supervise nannies and babysitters, provide immigration services, or become a party to a family’s care/employment agreement.',
       'You must be at least 18, provide accurate information and control the account you use. Do not impersonate someone or share login codes. Keep profile/contact information current. Verification does not authorize you to act for another person.',
     ] },
     { id: 'care-agreements', title: 'Agree the work separately', paragraphs: [

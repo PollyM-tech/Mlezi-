@@ -4,15 +4,16 @@ import LegalPage from '../../src/components/LegalPage.jsx'
 import { legalConfiguration } from '../../src/lib/legal.js'
 
 afterEach(() => { cleanup(); vi.unstubAllEnvs() })
-it('uses Mlezi launch branding without draft labels, old operator branding or invented details', () => {
+it('identifies Mlezi as a Lintech Telecom project and registered sole proprietorship without draft labels', () => {
   vi.stubEnv('VITE_LEGAL_ENTITY', 'Lintech Telecom')
   vi.stubEnv('VITE_LEGAL_REVIEWED', 'true')
   vi.stubEnv('VITE_LEGAL_STRUCTURE', '')
   vi.stubEnv('VITE_LEGAL_SERVICE_ADDRESS', '')
   render(<LegalPage type="terms" />)
   expect(screen.queryByText('Pre-launch draft')).toBeNull()
-  expect(screen.queryByText('Lintech Telecom')).toBeNull()
-  expect(screen.getByText('Sole proprietorship')).toBeTruthy()
+  expect(screen.getByText('Lintech Telecom')).toBeTruthy()
+  expect(screen.getByText(/Mlezi is a project operated by Lintech Telecom/)).toBeTruthy()
+  expect(screen.getByText('Registered sole proprietorship')).toBeTruthy()
   expect(screen.queryByText(/to be confirmed/i)).toBeNull()
   expect(screen.getByText(/Mlezi does not currently recruit or place workers/)).toBeTruthy()
   expect(screen.getByText(/Manual Paybill receipt submissions and Paystack checkout are unavailable/)).toBeTruthy()

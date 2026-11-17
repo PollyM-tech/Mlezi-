@@ -1,18 +1,19 @@
 # Mlezi Privacy notice
 
-Updated 14 November 2026 · Version 2026-11-04
+Updated 17 November 2026 · Version 2026-11-04
 
 **Internal legal review copy. Not a legal approval or publication authorization.**
 
-Operator name supplied: Mlezi
-Business structure: Sole proprietorship
+Service name: Mlezi
+Operator: Lintech Telecom
+Business structure: Registered sole proprietorship
 Registration: Confirm if applicable
 Service address: Not supplied — proprietor must provide before release
 Support route: /support/ and /privacy-account
 
 ## 1. Who this notice covers
 
-Mlezi is a marketplace for adult nannies and babysitters and employers/parents. The launch focuses on families hiring in Kenya. Families and nannies and babysitters are responsible for confirming the right to work and any required permits. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.
+Mlezi is a project operated by Lintech Telecom, registered as a sole proprietorship. It is a marketplace for adult nannies and babysitters and employers/parents. The launch focuses on families hiring in Kenya. Families and nannies and babysitters are responsible for confirming the right to work and any required permits. Mlezi currently provides listings and introductions, rather than recruiting, placing, employing or supervising workers.
 
 Accounts are for people aged 18 or older. We do not offer children accounts. Describe care needs by general age group; do not publish children’s names, photos, school details, medical records or exact addresses. Report an underage account or inappropriate information through Support.
 
