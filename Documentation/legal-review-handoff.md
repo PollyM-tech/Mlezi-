@@ -1,5 +1,7 @@
 # Mlezi legal review and operator decisions
 
+> Status note — 17 November 2026: this document includes historical findings and decisions. Use [current status](current-status.md) and the [production acceptance checklist](production-acceptance-checklist.md) for the current release. STK is the customer checkout; new manual receipt submissions are disabled. Owner-reported working payments/OAuth are awaiting release acceptance evidence.
+
 Prepared 1 November 2026. **Status: service/code alignment reviewed; independent
 legal review, operator particulars and final publication approval remain pending.**
 Do not set `LEGAL_REVIEW_COMPLETE=true` on the strength of this document alone.

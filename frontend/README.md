@@ -2,6 +2,8 @@
 
 Mlezi uses JavaScript/React for the frontend and JavaScript functions on Convex for authentication, application data and uploads. Vite builds the frontend. There is no Flask server, Python application dependency, port-5000 proxy, or alternative authentication backend.
 
+Current release summary: [project status](../Documentation/current-status.md). The owner confirmed the [production acceptance checklist](../Documentation/production-acceptance-checklist.md) complete on 17 November 2026; checked items record owner confirmation. Dated implementation reports retain historical results.
+
 ## Run locally
 
 For Google signup configuration, see the [Google signup guide](../Documentation/google-signup.md).
@@ -47,13 +49,13 @@ Tests for the retired Flask HTTP/refresh bridge have been replaced by native Con
 
 ## Authentication and caregiver identity
 
-Convex Auth provides password signup/sign-in, email verification, OTP, magic links, reset and session revocation. Resend sends account emails; the test sender is restricted and must be replaced by a verified domain before public launch. Existing imported accounts link only after verified email ownership. Historical password hashes were not migrated.
+Convex Auth provides password signup/sign-in, email verification, OTP, magic links, reset and session revocation. Resend sends account emails. Verify the actual deployment uses a verified production sender and delivers to recipients outside the provider owner account. Existing imported accounts link only after verified email ownership. Historical password hashes were not migrated.
 
 The provider stores session credentials in the browser tab's sessionStorage. The application uses a single authenticated Convex client and never reads old Flask refresh tokens or calls `/api/auth/refresh`. Private file HTTP requests carry Convex authorization. Errors from an older account cannot sign out a newer account.
 
-Caregivers without a stored photo are restricted to profile setup, legal/privacy requests and sign-out. New profiles require a photo, private national ID, private selfie and consent. They enter administrator review. Employer publication/contact access requires a manual identity check and server-enforced 18+ DOB decision; image uploads alone do not prove age/authenticity. Changing name/photo invalidates approval. Employer/admin accounts do not require photos. Admins enroll TOTP before privileged access.
+Caregivers without a stored photo are restricted to profile setup, legal/privacy requests and sign-out. New profiles require a photo, private national ID, private selfie and consent. They enter administrator review. Eligible pending profiles can appear to signed-in employers with an explicit pending label; contact unlocking requires a manual identity check and server-enforced 18+ DOB decision. Image uploads alone do not prove age/authenticity. Changing name/photo invalidates approval. Employer/admin accounts do not require photos. Admins enroll TOTP before privileged access.
 
-New images are fully decoded and re-encoded without metadata; quotas, private-document access logs, suspension, data requests/deletion and retention jobs are implemented. See [security implementation](../Documentation/production-security-implementation.md) for limits and remaining operational checks.
+New images are fully decoded and re-encoded without metadata; quotas, private-document access logs, suspension, data requests/deletion and retention jobs are implemented. See [security implementation](../Documentation/production-security-implementation.md) for limits and operational procedures.
 
 ## Employer workspace, memberships and payments
 
@@ -61,7 +63,7 @@ Employers can search approved adult caregivers, shortlist, unlock contacts with 
 
 Plans remain KES 300/30 days and KES 500/90 days for employer access, and KES 500/365 days for caregiver Premium. Renewals are manual and extend an unexpired plan. Expiry preserves previously unlocked contacts, subject to identity/safety restrictions and deletion.
 
-Paystack is the chosen upcoming gateway for M-Pesa, cards and bank channels supported/enabled for the Kenyan business. Payment checkout remains disabled; no live payment integration is being activated by this cleanup. Direct Daraja draft code is not connected to the checkout. Never use sandbox confirmations to grant live membership.
+Customer checkout uses direct Daraja M-Pesa STK Push with server-side status reconciliation and one-time membership activation. The owner reports STK working; verify each release against the live payment acceptance checklist. Sandbox confirmations never grant live membership. New manual receipt submissions are disabled in the UI and backend; historical records remain available to administrators. Paystack card/bank checkout is not implemented. See [M-Pesa operations](../Documentation/mpesa-stk-push.md).
 
 ## Cookies and public pages
 
@@ -73,7 +75,7 @@ Cookie consent remembers accept/decline for 180 days. Optional search preference
 
 ## Production and retired files
 
-Lintech Telecom is the confirmed operator name and version 1 is marketplace-only. The domain is mlezicare.com. Its business structure/service address, hosting/DNS, email and guest-support configuration remain pending. Notices remain launch drafts. `npm run build:production` checks production configuration, legal review, backup restore, alerts and real Auth tests. At the owner’s request, Vercel now uses ordinary `npm run build` for deployment; run the production checks separately before a public launch. Normal `npm run build` remains available for development checks.
+The service is Mlezi and version 1 is marketplace-only, at mlezicare.com. Current legal configuration names Lintech Telecom as operator and describes a registered sole proprietorship; verify these particulars during qualified review. The owner confirmed all production acceptance sections complete on 17 November 2026, including operator particulars, qualified notice review, hosting, email and support. Detailed evidence was not supplied in this conversation; this documentation update does not change local or deployed configuration. `npm run build:production` checks production configuration, legal review, backup restore, alerts and real Auth tests. At the owner’s request, Vercel now uses ordinary `npm run build` for deployment; run the production checks separately before a public launch. Normal `npm run build` remains available for development checks.
 
 The retired `backend/` directory was removed on 29 October 2026 after checking the completed Convex migration. At the owner’s request, the private local Flask recovery archive and its now-empty `.backups/` directory were permanently deleted on 1 November 2026. No local Flask recovery archive remains. Existing Convex records and cloud assets were not deleted.
 
@@ -83,7 +85,7 @@ Older documents describe the historical migration and may contain retired Flask 
 
 Cookies and baseline access controls are already implemented. Run `npm run security:check` for the automated security regression/build checks, then `npm run test:preview` for a loopback built preview with response security headers. `npm run security:headers -- http://127.0.0.1:4173` checks those headers; use an HTTPS staging URL and `--require-https` for a hosted test. HTTP preview cannot validate TLS, HSTS or Secure-cookie behavior.
 
-Use the [tester guide](../Documentation/security-testing-guide.md) and [finding template](../Documentation/security-test-report-template.md). Use an isolated deployment with synthetic data and separate tester accounts. Resend's owner-only test sender currently limits friend signup until a verified sending domain is configured. Do not share your owner/admin credentials, MFA seed or API secrets. No public hosting or active penetration scan is started by these commands.
+Use the [tester guide](../Documentation/security-testing-guide.md) and [finding template](../Documentation/security-test-report-template.md). Use an isolated deployment with synthetic data and separate tester accounts. A Resend test sender limits delivery to its owner; verify the selected deployment's sender before inviting testers. Do not share your owner/admin credentials, MFA seed or API secrets. No public hosting or active penetration scan is started by these commands.
 
 
 ## Private support tickets
@@ -108,11 +110,11 @@ confirmed business scope, unresolved operator facts and qualified review questio
 New account completion requires acceptance of the current terms and acknowledgement
 of the privacy notice; the server records the version and timestamp. Optional
 cookies and identity-comparison permission remain separate. Existing/imported
-accounts are not backfilled with invented consent. Payments remain disabled.
+accounts are not backfilled with invented consent. STK payments are separate from identity approval and legal acknowledgement.
 
-Configure actual `VITE_LEGAL_ENTITY`, `VITE_LEGAL_STRUCTURE`,
-`VITE_LEGAL_SERVICE_ADDRESS` and registration number where applicable. Naming the
-operator alone does not hide draft status. Keep `VITE_LEGAL_REVIEWED=false` and
+Current `src/lib/legal.js` fixes the service/operator/structure labels; configure the actual
+`VITE_LEGAL_PROPRIETOR` and `VITE_LEGAL_SERVICE_ADDRESS`. Historical entity/structure
+environment names do not override these labels. Naming the operator alone does not complete review. Keep `VITE_LEGAL_REVIEWED=false` and
 `LEGAL_REVIEW_COMPLETE=false` until the final text and facts have qualified review.
 
 
@@ -126,9 +128,9 @@ a successful build does not complete the separate production readiness checks.
 
 See [registration, upload and one-time identity fixes](../Documentation/registration-upload-fixes.md) for local testing, trusted frontend origins and email-provider requirements.
 
-For the device-size and browser layout suite, run `npm run test:responsive` after installing Playwright browsers. See the [responsive audit](../Documentation/responsive-audit.md) for covered screens, viewport sizes, results and physical-device checks still required. The suite uses isolated sample data and sends no real emails or uploads.
+For the device-size and browser layout suite, run `npm run test:responsive` after installing Playwright browsers. See the [responsive audit](../Documentation/responsive-audit.md) for covered screens, viewport sizes, results and physical-device acceptance procedures. The suite uses isolated sample data and sends no real emails or uploads.
 
-Manual M-Pesa reporting and administrator-confirmed activation are implemented locally for Paybill **4125123**, account **mlezicare**. Automated checkout stays disabled until Paystack integration. See [manual payment workflow and tests](../Documentation/manual-payments.md).
+Current checkout is STK-only for Paybill **4125123**, account reference **mlezicare**. [Manual payment notes](../Documentation/manual-payments.md) describe the retained historical workflow; new receipt submissions are disabled.
 
 Administrator setup, restricted login, authenticator enrollment and live work queues are documented in [admin-workspace.md](../Documentation/admin-workspace.md).
 
@@ -142,4 +144,4 @@ This check does not deploy code, initialize a checkout, charge money, send email
 activate membership. A successful result does not test requests originating from
 Convex, individual payment channels, callback/webhook delivery or settlement.
 Paystack checkout and verified membership activation are not implemented yet;
-manual payment remains the application's available payment flow.
+direct Daraja STK Push is the current customer payment flow.

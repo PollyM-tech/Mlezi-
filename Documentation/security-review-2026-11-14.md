@@ -1,5 +1,7 @@
 # Mlezi security review — 14 November 2026
 
+> Status note — 17 November 2026: this document includes historical findings and decisions. Use [current status](current-status.md) and the [production acceptance checklist](production-acceptance-checklist.md) for the current release. STK is the customer checkout; new manual receipt submissions are disabled. Owner-reported working payments/OAuth are awaiting release acceptance evidence.
+
 Scope: local frontend and Convex source, existing automated tests, and provider documentation. This is not a penetration test, live infrastructure attestation, or legal certification. Changes are local and require backend/frontend deployment.
 
 ## Implemented in this change

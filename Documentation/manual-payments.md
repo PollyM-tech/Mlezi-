@@ -1,5 +1,7 @@
 # Manual M-Pesa payments — local implementation
 
+> Status note — 17 November 2026: this document includes historical findings and decisions. Use [current status](current-status.md) and the [production acceptance checklist](production-acceptance-checklist.md) for the current release. STK is the customer checkout; new manual receipt submissions are disabled. Owner-reported working payments/OAuth are awaiting release acceptance evidence.
+
 The operator supplied **Paybill 4125123**, **account mlezicare** as the interim destination before Paystack integration. These are configuration facts supplied by the operator; this work did not independently verify business ownership, initiate a transfer, change cloud settings or deploy the feature.
 
 ## Plans and activation

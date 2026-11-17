@@ -1,5 +1,7 @@
 # Launch feedback: decisions and remaining work
 
+> Status note — 17 November 2026: this document includes historical findings and decisions. Use [current status](current-status.md) and the [production acceptance checklist](production-acceptance-checklist.md) for the current release. STK is the customer checkout; new manual receipt submissions are disabled. Owner-reported working payments/OAuth are awaiting release acceptance evidence.
+
 14 November 2026. These are local changes, not evidence of a deployed release or certification.
 
 ## Addressed locally

@@ -1,6 +1,8 @@
 # Direct Daraja M-Pesa STK Push
 
-Implemented locally. This uses Safaricom Daraja directly, alongside the existing manual Paybill payment option. Paystack card/bank checkout remains separate and is not activated by this implementation.
+Current status — 17 November 2026: customer checkout uses Safaricom Daraja STK Push only. The owner reports it working; complete the [production acceptance checklist](production-acceptance-checklist.md) for release evidence. New manual Paybill receipt submissions are disabled in the UI and backend. Historical manual records remain available for administrator resolution. Paystack card/bank checkout is not implemented.
+
+The implementation history below includes earlier sandbox and manual-payment instructions; these do not enable manual checkout in the current release. See the final “Current release: STK-only checkout” section.
 
 ## Configure sandbox first
 

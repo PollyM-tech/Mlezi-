@@ -1,5 +1,7 @@
 # Memberships, discovery, contacts, and public reviews
 
+> Status note — 17 November 2026: this document includes historical findings and decisions. Use [current status](current-status.md) and the [production acceptance checklist](production-acceptance-checklist.md) for the current release. STK is the customer checkout; new manual receipt submissions are disabled. Owner-reported working payments/OAuth are awaiting release acceptance evidence.
+
 Implemented 23 October 2026 on the existing Flask/React stack. The approved
 pricing and contact-access rules remain in section 13 of the technical document.
 

@@ -1,6 +1,6 @@
 import { navigateApp } from '../lib/routes.js'
 import { useState } from 'react'
-import logo from '../assets/logo.svg'
+import BrandLogo from './BrandLogo.jsx'
 import travelNanny from '../assets/marketing/travelnanny.webp'
 import playground from '../assets/marketing/joyful-family-day-at-the-playground.webp'
 import blockBuilding from '../assets/marketing/joyful-block-building-with-mlezi-caregiver.webp'
@@ -59,7 +59,7 @@ export default function Landing({ user, onSignOut, checkingSession = false }) {
   }
   return <div className="landing">
     <header className="site-header landing-header">
-      <a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi — a little care, a brighter beginning" /></a>
+      <a className="brand official-brand" href="/" aria-label="Mlezi home"><BrandLogo alt="Mlezi — a little care, a brighter beginning" /></a>
       <button className="landing-menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} aria-controls="landing-navigation" onClick={() => setMenuOpen(open => !open)}>{menuOpen ? 'Close ×' : 'Menu ☰'}</button>
       <nav id="landing-navigation" className={`landing-navigation ${menuOpen ? 'is-open' : ''}`} aria-label="Main navigation">
         <a href="#how-mlezi-works" onClick={() => setMenuOpen(false)}>How it works</a>
@@ -99,7 +99,7 @@ export default function Landing({ user, onSignOut, checkingSession = false }) {
     <section className="landing-section landing-container"><span className="eyebrow">CARE FOR FAMILIES IN KENYA.</span><h2>Care begins with understanding.</h2><p className="landing-section-intro">Our launch focuses on families hiring in Kenya. Families and nannies and babysitters must confirm any required work permits before work begins. Looking for a nanny, househelp or maid? Start with the duties your family needs. Mlezi focuses on childcare; agree any additional household duties directly with the nanny or babysitter.</p><nav className="regional-links" aria-label="Regional care guides"><a href="/kenya/">Care in Kenya</a><a href="/uganda/">Joining from Uganda</a><a href="/burundi/">Joining from Burundi</a><a href="/rwanda/">Joining from Rwanda</a><a href="/east-africa/">East Africa guide</a></nav></section><section className="landing-final"><div className="landing-container"><span className="eyebrow">CARE BEGINS WITH PEOPLE</span><h2>Find your next<br /><em>brighter beginning.</em></h2><div className="landing-final-actions"><a className="button primary" href={caregiver ? "/jobs" : "/caregivers"}>{caregiver ? "Find jobs" : "I’m looking for care"} <Icon name="arrow" width="18" /></a><a className="button secondary" href={caregiver ? "/workspace" : "/caregiver"}>{caregiver ? "My profile" : "I’m a nanny or babysitter"} <Icon name="arrow" width="18" /></a></div></div></section>
     <Testimonials />
     <footer className="landing-footer landing-container">
-      <div className="landing-footer-brand"><a className="brand official-brand" href="/" aria-label="Mlezi home"><img src={logo} alt="Mlezi" /></a><p>A little care. A brighter beginning.</p><small>Connecting families and nannies and babysitters in Kenya.</small></div>
+      <div className="landing-footer-brand"><a className="brand official-brand" href="/" aria-label="Mlezi home"><BrandLogo /></a><p>A little care. A brighter beginning.</p><small>Connecting families and nannies and babysitters in Kenya.</small></div>
       <nav className="landing-footer-links" aria-label="Footer navigation">
         <div><h3>Explore Mlezi</h3><a href={caregiver ? "/jobs" : "/caregivers"}>{caregiver ? "Find jobs" : "Find a nanny or babysitter"}</a><a href="/caregiver">Join as a nanny or babysitter</a><a href="#how-mlezi-works" onClick={() => setMenuOpen(false)}>How it works</a></div>
         <div><h3>Help &amp; community</h3><a href="/support/">Support</a><a href="#mlezi-questions" onClick={() => setMenuOpen(false)}>FAQs</a><a href="/safe-hiring/">Safe hiring checklist</a></div>

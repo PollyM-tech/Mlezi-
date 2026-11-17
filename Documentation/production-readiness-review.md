@@ -1,5 +1,7 @@
 # Production readiness review — 24 October 2026
 
+> Status note — 17 November 2026: this document includes historical findings and decisions. Use [current status](current-status.md) and the [production acceptance checklist](production-acceptance-checklist.md) for the current release. STK is the customer checkout; new manual receipt submissions are disabled. Owner-reported working payments/OAuth are awaiting release acceptance evidence.
+
 **26 October update:** The hardening work requested after this review is implemented and enabled on the existing development deployment. See [implementation, evidence and remaining production blockers](production-security-implementation.md). The findings below describe the pre-hardening state and are retained for traceability. Domain/support/legal details, actual production hosting/configuration, live Auth/MFA acceptance, backup restore and alerts remain outstanding.
 
 

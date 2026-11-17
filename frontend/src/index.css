@@ -731,3 +731,10 @@ footer .official-brand img { width:245px; height:245px; left:-49px; top:-92px; }
 .auth-card label.signup-agreement,
 .onboarding-form label.checkbox-label { display: flex; align-items: flex-start; gap: 10px; }
 .auth-card label.signup-agreement input { flex: 0 0 auto; width: auto; margin-top: 4px; }
+
+/* Limit casual image saving without changing the home link or keyboard access. */
+.brand-logo {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

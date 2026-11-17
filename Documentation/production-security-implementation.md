@@ -2,7 +2,7 @@
 
 ## Delivered and enabled on the existing Convex development deployment
 
-The owner requested caregiver-only mandatory profile photos, all three identity images, and the production hardening roadmap. Employers/admins do not require photos. Public production publication is still blocked because the domain, legal operator name and public support email have not been chosen.
+The owner requested caregiver-only mandatory profile photos, all three identity images, and the production hardening roadmap. Employers/admins do not require photos. Current service domain is mlezicare.com. Actual proprietor details and qualified notice review remain required; support uses private tickets and configured email delivery, with no public inbox requirement. See [current status](current-status.md) and the [acceptance checklist](production-acceptance-checklist.md). Earlier deployment/test statements below describe their recorded date.
 
 ### Caregiver onboarding and adult identity checks
 
@@ -40,7 +40,7 @@ Users can download a portable account summary and request a complete data copy/c
 
 An authenticated deletion request confirms the account email, immediately restricts normal use and unlists the caregiver, and schedules purge after two hours. The owner can cancel during that interval. Purge removes profile/evidence/uploads and Auth credentials/sessions; it removes saved/contact relationships, anonymizes authored reviews and retains only pseudonymous financial/audit references. Financial receipt/reference fields may require further lawful-retention policy decisions before accepting payments. Admin self-deletion is blocked until an operator transfers responsibility. The original Cloudinary/SQLite rollback copies and external backups are outside this Convex purge and must be covered by the final retention procedure.
 
-A daily UTC 01:00 retention job removes stale rate-limit metadata, seven-day email-limit records, 90-day security audit events and expired admin grants. Pending identity requests expire after 30 days and their selfies are deleted. Reviewed selfies/obsolete identity evidence are removed 30 days after a decision while the current profile photo and active ID remain. Pending/active ID retention and financial/backup exceptions must be reviewed against the final privacy policy and applicable Kenyan requirements.
+A daily UTC 01:00 retention job removes stale rate-limit metadata, seven-day email-limit records, 90-day security audit events and expired admin grants. Pending identity requests expire after 30 days and their selfies are deleted. Convex national IDs are deleted 30 days after the latest review decision, or when a pending submission reaches the retention threshold. Reviewed selfies and obsolete submission images are also removed after 30 days; the current public profile photo is retained. A purged-document marker and review outcome remain. Legacy-provider IDs are skipped and need operator disposal; backup and financial exceptions require an approved retention procedure.
 
 ### Production setup and operations
 
@@ -48,7 +48,7 @@ Root and nested environment files are ignored by Git; example templates remain a
 
 Netlify/Cloudflare-compatible `_headers` and Vercel headers configure CSP, framing restrictions, MIME protection, referrer policy, permissions policy and HSTS. These must be checked on the actual HTTPS hosting response; Vite preview does not apply production-host headers. Consent still controls whether optional fonts/search preferences load.
 
-`npm run build:production` calls `production:check` before building. The prepared Vercel/Netlify configuration uses this gate. It rejects missing domain/contact/legal values, a selected dev deployment, missing operational attestations, mismatched server SITE_URL, a test email sender and missing admin encryption setup. Passing flags are operator attestations, not independent proof of legal approval or operational readiness. Do not mark them true until completed.
+`npm run build:production` calls `production:check` before building. Vercel currently uses ordinary `npm run build`, so a successful deployment does not enforce this gate; run it separately. Check other hosts individually. It rejects missing domain/contact/legal values, a selected dev deployment, missing operational attestations, mismatched server SITE_URL, a test email sender and missing admin encryption setup. Passing flags are operator attestations, not independent proof of legal approval or operational readiness. Do not mark them true until completed.
 
 `npm run convex:backup -- <new-private-directory>` prepares a restricted database-and-file export. Verify its intended deployment before running; it defaults to the current selected deployment. Configure recurring backups/retention and encrypted storage separately, including the MFA encryption key. Perform a restore drill to an isolated deployment (never import over the active database just to test).
 
@@ -64,10 +64,7 @@ A public `/health` HTTP endpoint is available for an uptime monitor and returns 
 
 ## Next operator actions
 
-1. Sign in as the administrator and enroll an authenticator. Verify a caregiver's ID DOB and all images before approval; reject underage or uncertain cases.
-2. Choose the domain, public support inbox and legal business name. Finalize notices/retention/legal review and production service configuration.
-3. Complete actual HTTPS role/identity/auth tests, restore drill, monitoring and header checks, then run the guarded production build. Do not call the app publicly production-ready before these pass.
-4. Integrate/test M-Pesa last, as previously agreed.
+Follow the [production acceptance checklist](production-acceptance-checklist.md) for current operator actions, including administrator MFA, identity review, legal particulars, HTTPS journeys, backups, monitoring and live STK verification. STK is implemented; the owner reports it working. Historical local test counts above are not the latest regression totals.
 
 ### Employer-only profile audience (3 November 2026)
 
