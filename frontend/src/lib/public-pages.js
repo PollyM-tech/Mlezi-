@@ -1,8 +1,9 @@
+import { SERVICE_GUIDES } from './service-guides.js'
 import { LAUNCH_GUIDES, CITY_GUIDES } from './launch-guides.js'
 import { appRoute, appHref } from './routes.js'
 // Public editorial pages only. Never add accounts, contacts or identity evidence here.
 export const PUBLIC_PAGES = [
-  ...LAUNCH_GUIDES, ...CITY_GUIDES,
+  ...LAUNCH_GUIDES, ...CITY_GUIDES, ...SERVICE_GUIDES,
   { path: '/support/', title: 'Support & private help tickets | Mlezi', description: 'Get help with your Mlezi account, profile or technical issue. Open a private support ticket or check replies without sharing the operator’s personal contact details.' },
   { path: '/', title: 'Mlezi | Nannies, babysitters & family care in Kenya', description: 'Find childcare that fits your family in Kenya. Mlezi is a nanny and babysitter marketplace, not a recruitment agency. Connect with nannies and babysitters, interview and hire directly.' },
   { path: '/east-africa/', title: 'Nanny or babysitter connections in East Africa | Mlezi', description: 'A guide for families in Kenya and nannies and babysitters from Kenya, Uganda, Burundi and Rwanda: care arrangements, languages, identity review and joining Mlezi.', heading: 'Care connects us across East Africa.', intro: 'Mlezi starts with families hiring in Kenya and welcomes adult nannies and babysitters to describe their experience. This guide helps people from Kenya, Uganda, Burundi and Rwanda understand the marketplace.', sections: [
@@ -38,7 +39,7 @@ for (const page of PUBLIC_PAGES.filter(p => ['/east-africa/', '/uganda/', '/buru
 }
 const kenya = PUBLIC_PAGES.find(page => page.path === '/kenya/')
 kenya.sections.push(...LAUNCH_GUIDES[0].sections.slice(1, 5))
-kenya.resources = [{ label: 'Safe hiring checklist', href: '/safe-hiring/' }, ...CITY_GUIDES.map(page => ({ label: page.navLabel, href: page.path }))]
+kenya.resources = [...SERVICE_GUIDES.map(page => ({ label: page.navLabel, href: page.path })), { label: 'Safe hiring checklist', href: '/safe-hiring/' }, ...CITY_GUIDES.map(page => ({ label: page.navLabel, href: page.path }))]
 
 export function publicPage(pathname) {
   const path = pathname === '/' ? '/' : `/${pathname.replace(/^\/+|\/+$/g, '')}/`

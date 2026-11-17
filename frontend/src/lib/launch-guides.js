@@ -24,10 +24,44 @@ const cities = [
   ['kiambu', 'Kiambu', 'Kiambu searches may cover very different journeys. Agree the specific general area privately, school-run duties and the expected start time before deciding whether a live-out arrangement is practical.'],
   ['eldoret', 'Eldoret', 'Discuss the actual work location and transport options alongside the care schedule. If work hours change from week to week, agree notice, rest time and any additional hours in advance.'],
 ]
+// Planning prompts for each search area, without claiming local supply or prices.
+const cityPlanning = {
+  nairobi: [
+    ['Narrow your Nairobi search to a practical journey', 'Before comparing profiles, choose the general area where care will take place and the time someone needs to arrive. Ask each candidate to describe a workable journey at those hours. Do not assume two people using “Nairobi” as their location are close enough for a daily commute.'],
+    ['Write down school-run responsibilities', 'If care includes school collection or activities, agree who provides transport, who may collect the child and what happens when a parent is delayed. Explain any split between morning and afternoon duties so the nanny can assess the whole day.'],
+    ['Questions for a Nairobi interview', 'Can you reliably reach our general area at the proposed start time? What finish time and transport arrangement would work for you? Would a regular daytime role or an agreed live-in arrangement better suit these hours? Discuss the answers before requesting a trial.'],
+  ],
+  mombasa: [
+    ['Distinguish home care from holiday care', 'Say whether you need an ongoing role at your home or temporary help during a stay in Mombasa. Give the actual dates and general area; a short holiday booking and a regular live-out role need different agreements on hours, accommodation and continuity.'],
+    ['Agree responsibilities during outings', 'For a family trip, explain whether the caregiver accompanies a parent or takes responsibility during a specific part of the day. Discuss transport and supervision for any planned beach or pool visit directly before the outing. Do not assume a babysitting role includes swimming instruction.'],
+    ['Questions for a Mombasa interview', 'Are you available for all the dates we need? Does the proposed journey work for the start and finish times? If the family changes its holiday plans, how should we handle extra hours or cancellation? Put the agreed answers in the booking details.'],
+  ],
+  kisumu: [
+    ['Describe the care location and daily routine', 'Explain whether the role takes place at one home or includes school collection and activities elsewhere in the Kisumu area. Share the general location initially and the necessary private details when arranging an interview. Ask the candidate to assess the journey rather than assuming a city label confirms it.'],
+    ['Prepare for changes between school and holidays', 'Write separate expectations for school days and days when children are home. Agree meal preparation, activity supervision and working hours for each routine. Discuss additional duties before changing the arrangement.'],
+    ['Questions for a Kisumu interview', 'Which parts of this routine match your previous experience? Can you manage the proposed collection and finish times? How much notice would you need for a change in hours? Use specific examples to compare candidates fairly.'],
+  ],
+  nakuru: [
+    ['Clarify what your Nakuru location means', 'Give the general area where the work will happen rather than relying on “Nakuru” alone. Explain whether the role stays within one home or involves journeys outside the usual work location. Check the candidate’s practical travel plan before agreeing to a live-out role.'],
+    ['Plan weekend and occasional care separately', 'If you need occasional weekends as well as weekday care, list those dates and hours explicitly. Agree how extra time, transport and rest will be handled; do not treat a regular daytime agreement as automatic availability for every weekend.'],
+    ['Questions for a Nakuru interview', 'Does this general location work for your daily journey? Are weekends part of the role you want? What arrangements would you need if a day finishes later than planned? Confirm those details before a paid trial.'],
+  ],
+  kiambu: [
+    ['Name the general area within Kiambu', 'A Kiambu search can mean the town or a wider county area. State the general town or neighbourhood where care is needed and ask the candidate to confirm it works for them. Keep the exact home address private until it is needed for an agreed meeting.'],
+    ['Check journeys between home and school', 'If school or activities are in a different area from the home, explain both journeys and who arranges transport. Include collection times, authorised handovers and the plan for delays. A nanny agreeing to care at home has not automatically agreed to every school-run route.'],
+    ['Questions for a Kiambu interview', 'Which general areas can you reach for these hours? Does the school-run plan fit your experience and availability? Would you prefer a live-out role or consider living in? Compare the practical arrangement rather than just matching the location text.'],
+  ],
+  eldoret: [
+    ['Explain fixed hours or a changing rota', 'For care in Eldoret, give the general work location and describe whether hours stay the same each week. If your schedule changes, share an example week and agree how much notice you will give. A candidate needs the expected range of hours to judge availability.'],
+    ['Plan handovers when schedules change', 'Agree who takes over at the end of a shift, how you will communicate a delay and what happens if the caregiver cannot extend the day. Discuss any early start or evening finish alongside transport and rest arrangements.'],
+    ['Questions for an Eldoret interview', 'Which days and hours can you commit to regularly? How would a changing rota affect your journey and other commitments? What notice would you need for extra care? Record any limits before confirming the role.'],
+  ],
+}
 export const CITY_GUIDES = cities.map(([slug, city, local]) => ({ path: `/kenya/${slug}/`, navLabel: city, title: `Nannies and babysitters in ${city} | Mlezi`, description: `Plan your nanny or babysitter search in ${city}: care duties, commuting, interviews, references and safe hiring through Mlezi.`, heading: `Finding childcare in ${city}.`, intro: `Start your ${city} care search with the hours, duties and experience your family needs. Mlezi connects families with adult nannies and babysitters; availability depends on actual listings, and we do not promise a nanny or babysitter in every area.`, sections: [
   ['Choose the care arrangement', `For regular childcare in ${city}, decide whether you need live-in, live-out, occasional or overnight help. Explain the ages of children and general schedule without publishing their names, school or home address. A free employer account is required to browse profiles and shortlist.`],
   ['Plan the daily journey', local],
+  ...cityPlanning[slug],
   ['Compare duties and experience', 'Ask about experience with the relevant age group and care needs. Discuss whether the role includes meals for children, school runs or other agreed duties. General cleaning and household cooking are not automatically included in childcare. Expected pay is discussed directly with the nanny or babysitter.'],
   ['Interview and check references', 'Speak with the nanny or babysitter, confirm the profile matches the person you meet, and contact references with permission. Identity review does not verify criminal history, training or references. Arrange a paid, supervised trial and put hours, pay, rest time and home rules in writing.'],
   ['Browse and plan your next steps', 'Use the location and live-out filters to explore relevant profiles after signing in. Pay for contact access using M-Pesa STK Push in Membership. Read the safe hiring checklist before making an agreement.'],
-], resources: [{ label: 'Safe hiring checklist', href: '/safe-hiring/' }, { label: 'Care in Kenya', href: '/kenya/' }] }))
+], resources: [{ label: 'Safe hiring checklist', href: '/safe-hiring/' }, { label: 'Care in Kenya', href: '/kenya/' }, { label: 'Newborn care', href: '/newborn-care/' }, { label: 'Occasional babysitting', href: '/babysitting/' }, { label: 'Live-in nanny care', href: '/live-in-nannies/' }, { label: 'Travel nanny care', href: '/travel-nannies/' }] }))

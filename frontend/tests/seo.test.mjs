@@ -92,3 +92,23 @@ test('launch guides and homepage FAQs expose only real public information', () =
   for (const entry of faq.mainEntity) assert.ok(entry.name && entry.acceptedAnswer.text)
   assert.doesNotMatch(JSON.stringify(data), /aggregateRating|reviewCount|Piloted with/)
 })
+
+test('service guides are distinct public documents linked to hiring and city guides', () => {
+  const paths = ['/newborn-care/', '/babysitting/', '/live-in-nannies/', '/travel-nannies/']
+  const { sitemap } = crawlerFiles(live)
+  assert.equal(new Set(PUBLIC_PAGES.map(page => page.path)).size, PUBLIC_PAGES.length)
+  for (const path of paths) {
+    const page = publicPage(path)
+    assert.ok(page?.sections.length >= 5)
+    assert.ok(sitemap.includes(`<loc>https://example.test${path}</loc>`))
+    assert.ok(page.resources.some(link => link.href === '/safe-hiring/'))
+    assert.ok(publicPage('/kenya/').resources.some(link => link.href === path))
+    for (const city of ['nairobi', 'mombasa', 'kisumu', 'nakuru', 'kiambu', 'eldoret']) {
+      const guide = publicPage(`/kenya/${city}/`)
+      assert.ok(guide.resources.some(link => link.href === path))
+      assert.ok(guide.sections.length >= 8)
+    }
+  }
+  const bodies = paths.map(path => publicPage(path).sections.map(([, body]) => body).join(' '))
+  assert.equal(new Set(bodies).size, paths.length)
+})
