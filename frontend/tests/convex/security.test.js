@@ -71,12 +71,27 @@ it('requires genuine admin MFA, rejects replay and expires the grant',async()=>{
  expect((await who.client.query(api.accounts.current,{})).status).toBe('admin_security')
  expect(await totp('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ',1)).toBe('287082')
 })
-it('locks MFA after five wrong attempts without rolling the counter back',async()=>{
- vi.stubEnv('AUTH_ADMIN_ENCRYPTION_KEY',btoa(String.fromCharCode(...new Uint8Array(32).fill(7))))
- const t=make(),who=await person(t,'admin');await who.client.mutation(api.adminSecurity.begin)
- for(let i=0;i<5;i++)expect((await who.client.mutation(api.adminSecurity.verify,{code:'bad'})).ok).toBe(false)
- expect((await who.client.mutation(api.adminSecurity.verify,{code:'bad'})).error).toContain('Too many')
- expect((await t.run(ctx=>ctx.db.query('adminMfa').first())).attempts).toBe(5)
+it('locks MFA for three minutes after five wrong attempts', async () => {
+ const started = Date.now()
+ vi.useFakeTimers()
+ vi.setSystemTime(started)
+ vi.stubEnv('AUTH_ADMIN_ENCRYPTION_KEY', btoa(String.fromCharCode(...new Uint8Array(32).fill(7))))
+ const t = make(), who = await person(t, 'admin')
+ const setup = await who.client.mutation(api.adminSecurity.begin)
+ for (let i = 0; i < 4; i++) {
+   expect((await who.client.mutation(api.adminSecurity.verify, { code: 'bad' })).ok).toBe(false)
+ }
+ const lockedAt = started + 60_000
+ vi.setSystemTime(lockedAt)
+ const locked = { ok: false, error: 'Too many attempts. Wait three minutes before trying again.' }
+ expect(await who.client.mutation(api.adminSecurity.verify, { code: 'bad' })).toEqual(locked)
+ vi.setSystemTime(lockedAt + 179_999)
+ const code = await totp(setup.secret, Math.floor(Date.now() / 30_000))
+ expect(await who.client.mutation(api.adminSecurity.verify, { code })).toEqual(locked)
+ expect((await t.run(ctx => ctx.db.query('adminMfa').first())).attempts).toBe(5)
+ vi.setSystemTime(lockedAt + 180_000)
+ const freshCode = await totp(setup.secret, Math.floor(Date.now() / 30_000))
+ expect(await who.client.mutation(api.adminSecurity.verify, { code: freshCode })).toEqual({ ok: true })
 })
 it('allows export and deletion cancellation, then purges personal files and auth data after the grace period',async()=>{
  const t=make(),who=await person(t),result=await profile(t,who)

@@ -3,6 +3,8 @@ import { getAuthSessionId } from '@convex-dev/auth/server'
 import { v, ConvexError } from 'convex/values'
 import { accountIdentity } from './lib/permissions.js'
 import { bytes64, from64, audit, consume } from './lib/security.js'
+const MFA_ATTEMPT_LIMIT = 5
+const MFA_RETRY_WINDOW_MS = 3 * 60_000
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 function base32(bytes) { let bits = 0, value = 0, result = ''; for (const b of bytes) { value = value * 256 + b; bits += 8; while (bits >= 5) { bits -= 5; result += alphabet[(value >>> bits) & 31] }; value &= (1 << bits) - 1 }; if (bits) result += alphabet[(value << (5 - bits)) & 31]; return result }
 async function key() {
@@ -25,21 +27,34 @@ export const begin = mutation({ args: {}, handler: async ctx => {
   const old = await ctx.db.query('adminMfa').withIndex('by_account', q => q.eq('accountId', a._id)).unique()
   if (old?.enabled) throw new ConvexError('An authenticator is already enrolled.')
   const secret = base32(crypto.getRandomValues(new Uint8Array(20)))
-  const fields = { accountId: a._id, encryptedSecret: await encrypt(secret), enabled: false, setupExpiresAt: Date.now() + 600000, attempts: 0 }
+  const fields = { accountId: a._id, encryptedSecret: await encrypt(secret), enabled: false, setupExpiresAt: Date.now() + 600000, attempts: 0, attemptsExpireAt: undefined }
   if (old) await ctx.db.patch(old._id, fields); else await ctx.db.insert('adminMfa', fields)
   await audit(ctx, a._id, 'admin_mfa_setup_started')
   return { secret, uri: `otpauth://totp/Mlezi:${encodeURIComponent(a.email)}?secret=${secret}&issuer=Mlezi&algorithm=SHA1&digits=6&period=30` }
 } })
 export const verify = mutation({ args: { code: v.string() }, handler: async (ctx, { code }) => {
   const a = await accountIdentity(ctx, 'admin'); const record = await ctx.db.query('adminMfa').withIndex('by_account', q => q.eq('accountId', a._id)).unique()
-  if (!record || !record.enabled && record.setupExpiresAt < Date.now()) throw new ConvexError('Start authenticator setup again.')
-  // Persist failed attempts by returning an error result rather than throwing.
-  if (record.attempts >= 5 && record.setupExpiresAt > Date.now()) return { ok: false, error: 'Too many attempts. Wait ten minutes before trying again.' }
-  const step = Math.floor(Date.now() / 30000), secret = await decrypt(record.encryptedSecret)
+  const now = Date.now()
+  if (!record || !record.enabled && record.setupExpiresAt <= now) throw new ConvexError('Start authenticator setup again.')
+  // Older records stored the attempt window in setupExpiresAt.
+  const attemptsExpireAt = record.attemptsExpireAt ?? record.setupExpiresAt
+  const attempts = attemptsExpireAt > now ? record.attempts : 0
+  const locked = { ok: false, error: 'Too many attempts. Wait three minutes before trying again.' }
+  if (attempts >= MFA_ATTEMPT_LIMIT) return locked
+  const step = Math.floor(now / 30000), secret = await decrypt(record.encryptedSecret)
   let accepted
   for (const offset of [-1, 0, 1]) if (/^\d{6}$/.test(code) && code === await totp(secret, step + offset) && step + offset > (record.lastStep ?? -1)) accepted = step + offset
-  if (accepted === undefined) { await ctx.db.patch(record._id, { attempts: record.setupExpiresAt > Date.now() ? record.attempts + 1 : 1, setupExpiresAt: record.setupExpiresAt > Date.now() ? record.setupExpiresAt : Date.now() + 600000 }); await audit(ctx, a._id, 'admin_mfa_failed'); return { ok: false, error: 'Invalid or already used authenticator code.' } }
-  await ctx.db.patch(record._id, { enabled: true, attempts: 0, lastStep: accepted, setupExpiresAt: Date.now() + 600000 })
+  if (accepted === undefined) {
+    const nextAttempts = attempts + 1
+    await ctx.db.patch(record._id, {
+      attempts: nextAttempts,
+      attemptsExpireAt: nextAttempts === 1 || nextAttempts === MFA_ATTEMPT_LIMIT ? now + MFA_RETRY_WINDOW_MS : attemptsExpireAt,
+    })
+    await audit(ctx, a._id, 'admin_mfa_failed')
+    // Returning the error commits the attempt count and the lockout.
+    return nextAttempts === MFA_ATTEMPT_LIMIT ? locked : { ok: false, error: 'Invalid or already used authenticator code. Check that your phone uses automatic time, then try a fresh code from your Mlezi entry.' }
+  }
+  await ctx.db.patch(record._id, { enabled: true, attempts: 0, attemptsExpireAt: undefined, lastStep: accepted })
   const sessionId = await getAuthSessionId(ctx), old = await ctx.db.query('adminSessions').withIndex('by_session', q => q.eq('sessionId', sessionId)).unique()
   const fields = { accountId: a._id, sessionId, expiresAt: Date.now() + 2 * 60 * 60000 }
   if (old) await ctx.db.patch(old._id, fields); else await ctx.db.insert('adminSessions', fields)
