@@ -100,10 +100,10 @@ it('requires an unchecked terms acknowledgement when completing a new verified a
   const checkbox = screen.getByRole('checkbox', { name: /I am at least 18/ })
   expect(checkbox.checked).toBe(false); expect(checkbox.required).toBe(true)
   await userEvent.type(phone, '0712345678')
-  await userEvent.click(screen.getByRole('button', { name: 'Continue to my workspace' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Continue to registration' }))
   expect(state.mutation).toHaveBeenCalledTimes(1)
   await userEvent.click(checkbox)
-  await userEvent.click(screen.getByRole('button', { name: 'Continue to my workspace' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Continue to registration' }))
   await waitFor(() => expect(state.mutation).toHaveBeenCalledWith(expect.objectContaining({ termsAccepted: true, termsVersion: LEGAL_VERSION })))
 })
 
@@ -169,6 +169,34 @@ it('takes a verified new employer from account completion directly into the work
   expect(screen.getByText('Regular Mlezi app')).toBeTruthy()
   expect(state.signIn).not.toHaveBeenCalled()
   expect(state.signOut).not.toHaveBeenCalled()
+})
+
+it('retries account completion and opens the nanny registration form after saving', async () => {
+  window.history.replaceState({}, '', '/caregiver')
+  state.auth.isAuthenticated = true
+  state.query = { status: 'onboarding', account: null, email: 'nanny@example.test' }
+  const view = render(<ConvexSession />)
+  const user = userEvent.setup()
+  await user.type(await screen.findByLabelText('Your name'), 'Example Nanny')
+  await user.type(screen.getByLabelText('Contact phone'), '0712345678')
+  await user.click(screen.getByRole('checkbox', { name: /I am at least 18/ }))
+  state.mutation.mockRejectedValueOnce({ data: { message: 'Check your contact phone.' } })
+  await user.click(screen.getByRole('button', { name: 'Continue to registration' }))
+  expect((await screen.findByRole('alert')).textContent).toBe('Check your contact phone.')
+  expect(screen.getByLabelText('Contact phone').value).toBe('0712345678')
+
+  const account = { id: 'newcaregiver', role: 'caregiver', name: 'Example Nanny' }
+  state.mutation.mockResolvedValueOnce(account)
+  await user.click(screen.getByRole('button', { name: 'Continue to registration' }))
+  expect(state.mutation).toHaveBeenLastCalledWith({
+    role: 'caregiver', name: 'Example Nanny', phone: '0712345678',
+    adultConfirmed: true, termsAccepted: true, termsVersion: LEGAL_VERSION,
+  })
+  state.query = { status: 'profile_required', account }
+  view.rerender(<ConvexSession />)
+  expect(window.location.pathname).toBe('/workspace')
+  expect(screen.getByRole('heading', { name: 'Tell us about your work' })).toBeTruthy()
+  expect(screen.getByLabelText('Your name').value).toBe('Example Nanny')
 })
 
 it('takes a newly verified nanny or babysitter to signed-in profile setup with a workspace URL', () => {

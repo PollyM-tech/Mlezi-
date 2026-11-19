@@ -31,6 +31,12 @@ function initialDetails(email) {
   } catch { return { role: 'caregiver', phone: '', name: '' } }
 }
 
+function accountError(error, fallback) {
+  if (typeof error?.data === 'string') return error.data
+  if (typeof error?.data?.message === 'string') return error.data.message
+  return fallback
+}
+
 function CompleteAccount({ email }) {
   const ensureExisting = useMutation(api.accounts.ensureExisting)
   const register = useMutation(api.accounts.register)
@@ -51,15 +57,28 @@ function CompleteAccount({ email }) {
         clearRegistrationDraft(email)
         if (active) navigateApp(account?.role === 'admin' ? '#/admin' : '#/workspace', { replace: true })
       } else if (active) setChecked(true)
-    }).catch(err => { if (active) { setChecked(true); setError(typeof err.data === 'string' ? err.data : 'Unable to load your account. Please try again.') } })
+    }).catch(err => {
+      if (active) {
+        setChecked(true)
+        setError(accountError(err, 'We couldn’t finish setting up your account. Try continuing below or contact Mlezi Support.'))
+      }
+    })
     return () => { active = false }
   }, [ensureExisting, register, email])
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('')
-    try { const account = await register({ ...details, termsAccepted: accepted, adultConfirmed: accepted, termsVersion: LEGAL_VERSION }); clearRegistrationDraft(email); navigateApp(account?.role === 'admin' ? '#/admin' : '#/workspace', { replace: true }) }
-    catch (err) { setError(typeof err.data === 'string' ? err.data : 'Unable to save your account. Please try again.') } finally { setBusy(false) }
+    const { role, name, phone } = details
+    try {
+      const account = await register({ role, name: name.trim(), phone: phone.trim(), termsAccepted: accepted, adultConfirmed: accepted, termsVersion: LEGAL_VERSION })
+      clearRegistrationDraft(email)
+      navigateApp(account?.role === 'admin' ? '#/admin' : '#/workspace', { replace: true })
+    } catch (err) {
+      setError(accountError(err, 'We couldn’t save your account. Try again or contact Mlezi Support.'))
+    } finally {
+      setBusy(false)
+    }
   }
-  return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">YOUR MLEZI ACCOUNT</span><h1>Create your Mlezi account</h1><p>Confirm your details to start. Accounts are for adults aged 18 or older.</p>{error && <p role="alert">{error}</p>}{!checked ? <p role="status">Finishing your signup…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Nanny / babysitter</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><SignupAgreement checked={accepted} onChange={setAccepted} disabled={busy} /><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
+  return <main className="card auth-card" style={{ maxWidth: 550, margin: '60px auto' }}><CookieConsent /><span className="eyebrow">YOUR MLEZI ACCOUNT</span><h1>Create your Mlezi account</h1><p>{details.role === 'caregiver' ? 'Confirm your account details to open the nanny and babysitter registration form.' : 'Confirm your details to open your workspace.'}</p>{error && <><p className="alert error" role="alert">{error}</p><p><a href="/support/">Contact Mlezi Support</a></p></>}{!checked ? <p role="status">Finishing your signup…</p> : <form onSubmit={submit}><label>I am joining as<select value={details.role} onChange={event => setDetails({ ...details, role: event.target.value })} disabled={busy}><option value="caregiver">Nanny / babysitter</option><option value="employer">Employer / parent</option></select></label><label>Your name<input value={details.name} onChange={event => setDetails({ ...details, name: event.target.value })} maxLength={120} required={details.role === 'employer'} disabled={busy} /></label><label>Contact phone<input value={details.phone} onChange={event => setDetails({ ...details, phone: event.target.value })} type="tel" autoComplete="tel" maxLength={32} required disabled={busy} /></label><SignupAgreement checked={accepted} onChange={setAccepted} disabled={busy} /><button className="button primary full" disabled={busy}>{busy ? 'Saving…' : details.role === 'caregiver' ? 'Continue to registration' : 'Continue to my workspace'}</button></form>}<button className="text-button" onClick={() => signOut()}>Sign out</button></main>
 }
 
 
